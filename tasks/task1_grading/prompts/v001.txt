@@ -1,0 +1,3 @@
+# Task 1 prompt version v001 — scaffold only.
+# Add the approved structured rubric prompt here after the input schema is frozen.
+# Do not include feedback in the Task 1 prompt.

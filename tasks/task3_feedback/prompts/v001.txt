@@ -1,0 +1,2 @@
+# Task 3 prompt version v001 — scaffold only.
+# Add the approved Vietnamese feedback prompt after the level policy is frozen.
