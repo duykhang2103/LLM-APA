@@ -1,0 +1,17 @@
+# Task 2 configuration placeholder. Thresholds belong in task2.thresholds.
+task: task2
+
+model:
+  name: null
+  revision: null
+
+task2:
+  use_compile_log: true
+  use_test_report: true
+  use_retrieval: false
+  threshold_mode: per_label
+  prompt_version: v001
+  thresholds: {}
+
+project:
+  seed: 42

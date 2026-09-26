@@ -1,0 +1,25 @@
+# Shared configuration skeleton. Replace example values only after the data
+# schema and environment are agreed by the team.
+project:
+  seed: 42
+
+paths:
+  data_root: data
+  output_root: outputs
+  experiment_root: experiments/runs
+
+model:
+  name: null
+  revision: null
+
+generation:
+  temperature: 0.0
+  max_new_tokens: 512
+
+training:
+  learning_rate: 2.0e-5
+  batch_size: 1
+  gradient_accumulation_steps: 1
+  epochs: 3
+
+task: null

@@ -1,0 +1,15 @@
+# Task 1 configuration placeholder. Confirm the model and revision before use.
+task: task1
+
+model:
+  name: null
+  revision: null
+
+task1:
+  use_compile_log: true
+  use_test_report: true
+  use_retrieval: false
+  prompt_version: v001
+
+project:
+  seed: 42

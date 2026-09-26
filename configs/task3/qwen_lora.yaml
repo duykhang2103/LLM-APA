@@ -1,0 +1,15 @@
+# Task 3 configuration placeholder. Keep level policy centralized in the task.
+task: task3
+
+model:
+  name: null
+  revision: null
+
+task3:
+  prompt_version: v001
+  level_policy_version: v001
+  use_compliance_checker: true
+  regenerate_on_violation: true
+
+project:
+  seed: 42
