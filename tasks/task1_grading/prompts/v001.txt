@@ -1,3 +1,10 @@
-# Task 1 prompt version v001 — scaffold only.
-# Add the approved structured rubric prompt here after the input schema is frozen.
-# Do not include feedback in the Task 1 prompt.
+# Task 1 prompt version v001 - scaffold only.
+#
+# Suggested sections for the first implementation:
+# 1. Role and grading policy.
+# 2. Problem statement and student code.
+# 3. Optional compile/test evidence with a warning that it is evidence only.
+# 4. Six component definitions and allowed ranges.
+# 5. Exact JSON output schema.
+#
+# Do not include rubric, labels, or feedback as inference-time input.

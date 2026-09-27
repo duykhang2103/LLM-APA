@@ -16,3 +16,5 @@ Primary: macro-F1. Secondary: micro-F1, per-label precision/recall/F1, support, 
 - `pipeline.py`: task interface and orchestration boundary.
 - `thresholds.py`: config-driven global/per-label threshold handling.
 - `prompts/`: immutable prompt versions.
+
+Start with `examples/normalized_sample.json` and `examples/predictions/task2.json` before implementing these files.

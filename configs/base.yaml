@@ -1,5 +1,8 @@
 # Shared configuration skeleton. Replace example values only after the data
 # schema and environment are agreed by the team.
+#
+# New contributors should change config files, not hard-coded Python values.
+# Every official run should copy the effective config into its run directory.
 project:
   seed: 42
 

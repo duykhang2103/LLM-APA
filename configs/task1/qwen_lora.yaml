@@ -1,4 +1,5 @@
 # Task 1 configuration placeholder. Confirm the model and revision before use.
+# The filename describes a possible method, not a selected model.
 task: task1
 
 model:

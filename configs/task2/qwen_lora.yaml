@@ -1,4 +1,5 @@
 # Task 2 configuration placeholder. Thresholds belong in task2.thresholds.
+# Tune thresholds on validation data only and record the resulting values.
 task: task2
 
 model:

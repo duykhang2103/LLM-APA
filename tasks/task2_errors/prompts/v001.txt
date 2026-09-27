@@ -1,3 +1,7 @@
-# Task 2 prompt version v001 — scaffold only.
-# Add the approved structured taxonomy prompt after the official labels are frozen.
+# Task 2 prompt version v001 - scaffold only.
+# Suggested sections:
+# 1. Problem statement and code.
+# 2. Official label definitions and short examples.
+# 3. Instruction that multiple labels and an empty list are valid.
+# 4. Exact JSON output schema.
 # Do not include feedback in the Task 2 prompt.

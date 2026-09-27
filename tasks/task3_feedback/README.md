@@ -19,3 +19,5 @@ Evaluate diagnosis correctness and level compliance separately. Record violation
 - `compliance.py`: centralized checker interface.
 - `prompts/level_policy.md`: one policy for all experiments.
 - `prompts/`: immutable prompt versions.
+
+Start with `examples/normalized_sample.json` and `examples/predictions/task3.json` before implementing these files.

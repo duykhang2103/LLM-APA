@@ -27,3 +27,5 @@ Primary: QWK on total score. Secondary: MAE and exact match per component.
 - `pipeline.py`: task interface and orchestration boundary.
 - `postprocess.py`: future structured-output and score-range handling.
 - `prompts/`: immutable prompt versions.
+
+Start with `examples/normalized_sample.json` and `examples/predictions/task1.json` before implementing these files.

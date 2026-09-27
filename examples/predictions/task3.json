@@ -1,0 +1,13 @@
+[
+  {
+    "sample_id": "synthetic-001",
+    "output": {
+      "feedback": "Hãy kiểm tra lại phép toán được sử dụng khi kết hợp hai số đầu vào.",
+      "feedback_level": 1,
+      "compliance": {
+        "pass": true,
+        "violations": []
+      }
+    }
+  }
+]

@@ -1,4 +1,5 @@
 # Task 3 configuration placeholder. Keep level policy centralized in the task.
+# The checker and regeneration switches should be comparable across methods.
 task: task3
 
 model:

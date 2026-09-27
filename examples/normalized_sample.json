@@ -1,0 +1,21 @@
+{
+  "sample_id": "synthetic-001",
+  "problem_id": "SYNTHETIC_SUM",
+  "problem_type": "single_problem",
+  "problem_statement": "Read two integers and print their sum.",
+  "code_file": "submissions/SYNTHETIC_SUM/SYNTHETIC_SUM-student.cpp",
+  "code": "#include <iostream>\nint main() { int a, b; std::cin >> a >> b; std::cout << a - b; }",
+  "compile_log": "compile succeeded",
+  "test_report": "1/2 tests passed; negative-value case failed",
+  "rubric": {
+    "compilable": 1,
+    "io_format": 1,
+    "logic": 1,
+    "edge_case": 1,
+    "complexity": 1,
+    "code_quality": 1
+  },
+  "error_labels": ["LABEL_02"],
+  "feedback": "Hãy kiểm tra lại phép toán được sử dụng khi kết hợp hai số đầu vào.",
+  "feedback_level": 1
+}

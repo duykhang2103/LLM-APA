@@ -1,0 +1,14 @@
+[
+  {
+    "sample_id": "synthetic-001",
+    "output": {
+      "error_labels": ["LABEL_02"]
+    }
+  },
+  {
+    "sample_id": "synthetic-clean-001",
+    "output": {
+      "error_labels": []
+    }
+  }
+]
