@@ -1,11 +1,24 @@
-"""Central random-seed setup for reproducible experiments.
-
-Call this once near the start of train/evaluate/predict. Record the same seed
-in the run metadata and avoid silently overriding it in task modules.
-"""
+"""Central random-seed setup for reproducible experiments."""
 
 
 def set_seed(seed: int) -> None:
-    """Seed every supported random source and deterministic backend setting."""
-    # TODO: Seed Python, NumPy, PyTorch, and deterministic backend settings.
-    raise NotImplementedError("Seed setup is not implemented in the scaffold.")
+    """Seed Python and optional NumPy/PyTorch random sources."""
+    import os
+    import random
+
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    try:
+        import numpy as np
+
+        np.random.seed(seed)
+    except ImportError:
+        pass
+    try:
+        import torch
+
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+    except ImportError:
+        pass

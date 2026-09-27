@@ -1,10 +1,8 @@
-# Standalone shared smoke configuration. Task configs copy this shape instead
-# of relying on hidden base-config merge order.
 experiment:
-  id: "BASE-001"
-  name: "shared_smoke_baseline"
-  description: "Runnable synthetic-data configuration"
-  tags: [shared, smoke, baseline]
+  id: "T1-001"
+  name: "task1_heuristic_baseline"
+  description: "Runnable deterministic baseline for task1"
+  tags: [task1, baseline, heuristic]
 
 task: "task1"
 method: "heuristic"
@@ -38,13 +36,13 @@ logging:
   report_to: []
 
 saving:
-  output_dir: "outputs/BASE-001"
+  output_dir: "outputs/T1-001"
   save_strategy: "no"
   save_total_limit: 1
 
 evaluation:
   evaluation_strategy: "epoch"
-  metric_for_best_model: "primary_metric"
+  metric_for_best_model: "qwk_total"
   greater_is_better: true
   load_best_model_at_end: false
 
@@ -53,3 +51,8 @@ generation:
   max_length: 512
   max_new_tokens: 512
   num_beams: 1
+
+task1:
+  use_compile_log: true
+  use_test_report: true
+  use_retrieval: false

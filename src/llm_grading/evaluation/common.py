@@ -10,5 +10,7 @@ from typing import Any, Iterable, Mapping
 
 def summarize_results(metrics: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     """Combine task metrics with experiment and split metadata."""
-    # TODO: Normalize metric output and attach experiment metadata.
-    raise NotImplementedError("Common evaluation is not implemented in the scaffold.")
+    combined: dict[str, Any] = {}
+    for item in metrics:
+        combined.update(dict(item))
+    return combined

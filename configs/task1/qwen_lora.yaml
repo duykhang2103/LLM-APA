@@ -1,16 +1,60 @@
-# Task 1 configuration placeholder. Confirm the model and revision before use.
-# The filename describes a possible method, not a selected model.
-task: task1
+# Fine-tuning configuration. The runnable heuristic configs are the smoke
+# baseline; this config records the planned Qwen3.5-4B adapter target.
+experiment:
+  id: "T1-101"
+  name: "task1_qwen35_4b_lora"
+  description: "LoRA fine-tuning configuration for Qwen3.5-4B"
+  tags: [task1, finetuning, lora, qwen3.5-4b]
+
+task: "task1"
+method: "lora"
 
 model:
-  name: null
+  name_or_path: "Qwen/Qwen3.5-4B"
   revision: null
+
+data:
+  input_path: "examples/normalized_sample.json"
+  train_path: null
+  validation_path: null
+  test_path: null
+  dataset_version: "synthetic-v1"
+  split_version: "synthetic-v1"
+  max_samples: null
+  max_source_length: 1024
+  max_target_length: 512
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 5.0e-5
+  lr_scheduler_type: "linear"
+  warmup_ratio: 0.06
+
+logging:
+  logging_steps: 10
+  report_to: ["tensorboard"]
+
+saving:
+  output_dir: "outputs/T1-101"
+  save_strategy: "epoch"
+  save_total_limit: 2
+
+evaluation:
+  evaluation_strategy: "epoch"
+  metric_for_best_model: "qwk_total"
+  greater_is_better: true
+  load_best_model_at_end: true
+
+generation:
+  temperature: 0.0
+  max_length: 512
+  max_new_tokens: 512
+  num_beams: 1
 
 task1:
   use_compile_log: true
   use_test_report: true
   use_retrieval: false
-  prompt_version: v001
-
-project:
-  seed: 42

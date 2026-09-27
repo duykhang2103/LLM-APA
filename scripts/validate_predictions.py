@@ -1,20 +1,30 @@
-"""Future CLI for validating leaderboard prediction JSON files.
+"""Validate the JSON shape before sharing or submitting predictions."""
 
-Target command:
-`python scripts/validate_predictions.py --task task1 --input outputs/task1_predictions.json`
+from pathlib import Path
+import argparse
+import sys
 
-Implementation checklist:
-1. Load the selected task schema and canonical labels.
-2. Check JSON shape and required ``sample_id`` values.
-3. Check score ranges, totals, labels, empty-label behavior, and feedback fields.
-4. Print actionable errors and return a non-zero status for invalid output.
-"""
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+
+from llm_grading.validation.predictions import validate_predictions
 
 
-def main() -> None:
-    # TODO: Validate sample IDs and task-specific output before submission.
-    raise NotImplementedError("Prediction validation is not implemented in the scaffold.")
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--task", required=True, choices=("task1", "task2", "task3"))
+    parser.add_argument("--input", required=True)
+    args = parser.parse_args()
+    messages = validate_predictions(args.input, args.task)
+    if messages:
+        print("Prediction validation failed:")
+        for message in messages:
+            print(f"- {message}")
+        return 1
+    print(f"Prediction file is valid for {args.task}: {args.input}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

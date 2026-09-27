@@ -21,8 +21,14 @@ def build_task1_input(sample: NormalizedSample) -> dict[str, Any]:
 
     ``rubric``, ``error_labels``, and ``feedback`` must not be included.
     """
-    # TODO: Select problem/code/auxiliary signals and assert feedback is absent.
-    raise NotImplementedError("Task 1 preprocessing is not implemented in the scaffold.")
+    result = {
+        "problem_statement": sample.get("problem_statement", ""),
+        "code": sample.get("code", ""),
+        "compile_log": sample.get("compile_log", ""),
+        "test_report": sample.get("test_report", ""),
+    }
+    assert "feedback" not in result
+    return result
 
 
 def build_task2_input(sample: NormalizedSample) -> dict[str, Any]:
@@ -31,8 +37,14 @@ def build_task2_input(sample: NormalizedSample) -> dict[str, Any]:
     The target labels are reference data for training/evaluation, not input
     fields. A future implementation should make this boundary easy to audit.
     """
-    # TODO: Select problem/code/auxiliary signals and assert feedback is absent.
-    raise NotImplementedError("Task 2 preprocessing is not implemented in the scaffold.")
+    result = {
+        "problem_statement": sample.get("problem_statement", ""),
+        "code": sample.get("code", ""),
+        "compile_log": sample.get("compile_log", ""),
+        "test_report": sample.get("test_report", ""),
+    }
+    assert "feedback" not in result
+    return result
 
 
 def build_task3_input(sample: NormalizedSample) -> dict[str, Any]:
@@ -46,5 +58,9 @@ def build_task3_input(sample: NormalizedSample) -> dict[str, Any]:
     The reference ``feedback`` remains a training target or evaluation
     reference and is not copied into the inference prompt.
     """
-    # TODO: Include the label context and level policy required for generation.
-    raise NotImplementedError("Task 3 preprocessing is not implemented in the scaffold.")
+    return {
+        "problem_statement": sample.get("problem_statement", ""),
+        "code": sample.get("code", ""),
+        "error_labels": list(sample.get("error_labels", [])),
+        "feedback_level": int(sample.get("feedback_level", 1)),
+    }

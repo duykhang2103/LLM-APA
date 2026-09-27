@@ -406,35 +406,76 @@ tasks/task1_grading/        rubric task prompts and pipeline
 tasks/task2_errors/         error-label task prompts and thresholds
 tasks/task3_feedback/       feedback policy, prompts, and compliance checker
 examples/                   synthetic normalized sample and prediction fixtures
-scripts/                    future prepare/train/evaluate/predict/validate CLIs
+scripts/                    prepare/train/evaluate/predict/validate CLIs
 experiments/                experiment registry and run metadata
-tests/                      future tests for shared contracts and metrics
+tests/                      executable tests for shared contracts and metrics
 reports/                    EDA, ablation, error analysis, and figures
 ```
 
-The current Python files are scaffold placeholders. They intentionally do not implement model inference, training, data loading, metrics, or prediction validation yet.
+The repository now includes a runnable deterministic baseline for data loading, Task 1/2/3 prediction, evaluation, and prediction validation. Real prompting and LoRA adapter execution remain explicit extension points; unsupported model methods fail instead of silently falling back to the heuristic.
 
-## 12. Setup and future commands
+## 12. Runnable local baseline
 
-The target environment is Python 3.10 or 3.11. The scaffold does not install dependencies or run these commands yet.
+The supported environment is Python 3.10 or 3.11 with `uv`. From the repository root:
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+uv sync --all-groups
 ```
 
-Future shared commands are:
+The first smoke run uses synthetic data and does not download a model:
+
+```powershell
+uv run python scripts/prepare_data.py `
+  --config configs/base.yaml `
+  --input examples/normalized_sample.json
+
+uv run python scripts/train.py `
+  --config configs/task1/heuristic.yaml
+
+uv run python scripts/predict.py `
+  --config configs/task1/heuristic.yaml `
+  --split test `
+  --output outputs/task1_predictions.json
+
+uv run python scripts/evaluate.py `
+  --config configs/task1/heuristic.yaml `
+  --predictions outputs/task1_predictions.json
+
+uv run python scripts/validate_predictions.py `
+  --task task1 `
+  --input outputs/task1_predictions.json
+```
+
+Run the same prediction command with `configs/task2/heuristic.yaml` or `configs/task3/heuristic.yaml` for the other tasks. The generated JSON always preserves `sample_id` and is validated before it is written.
+
+## 13. Configuration and fine-tuning handoff
+
+Every experiment config uses the same readable sections:
 
 ```text
-python scripts/prepare_data.py --config configs/base.yaml
-python scripts/train.py --config configs/task1/qwen_lora.yaml
-python scripts/evaluate.py --config configs/task1/qwen_lora.yaml --split val
-python scripts/predict.py --config configs/task1/qwen_lora.yaml --split test --output outputs/task1_predictions.json
-python scripts/validate_predictions.py --task task1 --input outputs/task1_predictions.json
+experiment, task, method, model, data, training, logging,
+saving, evaluation, generation, task-specific settings
 ```
 
-## 13. Definition of done
+The deterministic configs use `method: heuristic`. The fine-tuning configs use `method: lora` and record the agreed model target:
+
+```yaml
+model:
+  name_or_path: "Qwen/Qwen3.5-4B"
+method: "lora"
+```
+
+Those configs are ready for the fine-tuning team to extend, but the current baseline intentionally raises an explicit `Model adapter not configured` error until the Qwen3.5-4B training/inference adapter is implemented. This prevents an experiment from being mislabeled as fine-tuning.
+
+The current baseline implements:
+
+- Task 1 score ranges, deterministic totals, QWK, MAE, and component exact match.
+- Task 2 centralized taxonomy validation, empty-label handling, macro/micro-F1, and per-label metrics.
+- Task 3 feedback generation, basic Level 1/2 compliance checks, and compliance-rate diagnostics.
+- Feedback-free Task 1/2 input whitelists.
+- Five CLI entry points with actionable errors and JSON output.
+
+## 14. Definition of done
 
 The project is ready for final submission only when:
 
@@ -452,7 +493,7 @@ The project is ready for final submission only when:
 
 ## References
 
-- [PROJECT_PLAN.md](PROJECT_PLAN.md): ownership, workstreams, integration gates, experiments, and completion criteria.
-- [SOURCE_SETUP.md](SOURCE_SETUP.md): repository contracts and contributor workflow.
-- [DoAn-LLM-Challenge.docx](DoAn-LLM-Challenge.docx): official challenge description.
+- [PROJECT_PLAN.md](docs/project/PROJECT_PLAN.md): ownership, workstreams, integration gates, experiments, and completion criteria.
+- [SOURCE_SETUP.md](docs/project/SOURCE_SETUP.md): repository contracts and contributor workflow.
+- [DoAn-LLM-Challenge.docx](docs/project/DoAn-LLM-Challenge.docx): official challenge description.
 - [LLM_project_meeting_brief.md](docs/project/LLM_project_meeting_brief.md): meeting preparation, hypotheses, risks, and suggested ownership.

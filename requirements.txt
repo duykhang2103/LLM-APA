@@ -1,13 +1,3 @@
-# Add exact, verified versions after the first shared environment is tested.
-# Do not install this scaffold's dependencies yet.
-torch
-transformers
-datasets
-accelerate
-peft
-trl
-scikit-learn
-numpy
-pandas
-pyyaml
-tqdm
+# UV is the supported dependency workflow for this repository.
+# Run: uv sync --all-groups
+# Dependency source of truth: pyproject.toml.

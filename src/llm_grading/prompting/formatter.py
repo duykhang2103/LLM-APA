@@ -10,5 +10,9 @@ from typing import Any, Mapping
 
 def format_prompt(template: str, values: Mapping[str, Any]) -> str:
     """Fill a versioned template from an explicit task input dictionary."""
-    # TODO: Make field inclusion explicit so Task 1/2 feedback cannot leak.
-    raise NotImplementedError("Prompt formatting is not implemented in the scaffold.")
+    if not isinstance(template, str):
+        raise TypeError("Prompt template must be a string")
+    try:
+        return template.format_map(dict(values))
+    except KeyError as error:
+        raise ValueError(f"Prompt template requested unavailable field: {error.args[0]}") from error

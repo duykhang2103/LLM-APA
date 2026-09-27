@@ -17,5 +17,7 @@ from pathlib import Path
 
 def load_prompt(path: str | Path) -> str:
     """Read one immutable prompt file and return its text."""
-    # TODO: Read a versioned prompt file and record its identity in experiments.
-    raise NotImplementedError("Prompt loading is not implemented in the scaffold.")
+    prompt_path = Path(path)
+    if not prompt_path.exists():
+        raise FileNotFoundError(f"Prompt file does not exist: {prompt_path}")
+    return prompt_path.read_text(encoding="utf-8")

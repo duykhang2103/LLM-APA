@@ -1,40 +1,40 @@
-"""Task 2 multi-label classification pipeline boundary.
-
-Implementation sequence for the owner:
-
-1. Build a feedback-free input.
-2. Generate one score per canonical taxonomy label.
-3. Apply config-driven global or per-label thresholds.
-4. Validate labels and allow an empty set.
-5. Evaluate macro-F1, micro-F1, and per-label behavior.
-"""
+"""Runnable Task 2 pipeline and extension boundary for model adapters."""
 
 from typing import Any
 
+from llm_grading.data.preprocess import build_task2_input
+from llm_grading.data.taxonomy import ERROR_LABELS
+from llm_grading.evaluation.task2 import evaluate_task2
+from .thresholds import apply_thresholds
+
 
 class TaskPipeline:
-    """Future Task 2 implementation surface used by shared CLI scripts."""
+    """Deterministic local baseline for multi-label error classification."""
+
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
+        self.config = dict(config or {})
 
     def build_input(self, sample: dict[str, object]) -> dict[str, object]:
-        """Expected output: problem/code/evidence fields, never feedback."""
-        # TODO: Delegate to the shared leakage-safe Task 2 preprocessing.
-        raise NotImplementedError
+        return build_task2_input(sample)
 
     def predict(self, sample: dict[str, object]) -> dict[str, object]:
-        """Expected output: label scores or a structured candidate."""
-        # TODO: Produce label scores or structured labels from the selected model.
-        raise NotImplementedError
+        view = self.build_input(sample)
+        code = str(view.get("code", ""))
+        statement = str(view.get("problem_statement", "")).lower()
+        report = str(view.get("test_report", "")).lower()
+        suspicious = ("sum" in statement and "-" in code) or any(word in report for word in ("failed", "fail", "error"))
+        return {"scores": {"LABEL_02": 1.0 if suspicious else 0.0}}
 
     def postprocess(self, raw_output: object) -> dict[str, object]:
-        """Expected output: labels from the central taxonomy only."""
-        # TODO: Apply centralized taxonomy and configured thresholds.
-        raise NotImplementedError
+        if not isinstance(raw_output, dict):
+            raise ValueError("Task 2 output must be an object")
+        if "error_labels" in raw_output:
+            labels = raw_output["error_labels"]
+            if not isinstance(labels, list) or not set(labels).issubset(ERROR_LABELS):
+                raise ValueError("Task 2 output contains invalid labels")
+            return {"error_labels": sorted(labels, key=ERROR_LABELS.index)}
+        thresholds = self.config.get("task2", {}).get("thresholds", {})
+        return {"error_labels": apply_thresholds(raw_output.get("scores", {}), thresholds)}
 
-    def evaluate(
-        self,
-        predictions: list[dict[str, object]],
-        references: list[dict[str, object]],
-    ) -> dict[str, float]:
-        """Expected output: macro/micro-F1 and per-label metrics."""
-        # TODO: Delegate to macro-F1, micro-F1, and per-label metrics.
-        raise NotImplementedError
+    def evaluate(self, predictions: list[dict[str, object]], references: list[dict[str, object]]) -> dict[str, Any]:
+        return evaluate_task2(predictions, references)

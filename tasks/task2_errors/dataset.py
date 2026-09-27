@@ -16,5 +16,6 @@ from typing import Any, Mapping
 
 def build_dataset_view(sample: Mapping[str, Any]) -> dict[str, Any]:
     """Build the Task 2 input/target view from one normalized sample."""
-    # TODO: Select code, problem, and permitted auxiliary signals only.
-    raise NotImplementedError("Task 2 dataset preparation is not implemented.")
+    from llm_grading.data.preprocess import build_task2_input
+
+    return {"input": build_task2_input(sample), "target": {"error_labels": list(sample.get("error_labels", []))}}

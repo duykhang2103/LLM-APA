@@ -255,12 +255,14 @@ Không cho phép mỗi task tự xây một pipeline hoàn toàn khác.
 Một task phải chạy được kiểu:
 
 ```bash
-python scripts/train.py --config configs/task1/qwen_lora.yaml
-python scripts/evaluate.py --config configs/task1/qwen_lora.yaml
-python scripts/predict.py \
-  --config configs/task1/qwen_lora.yaml \
-  --input data/test \
-  --output predictions.json
+uv run python scripts/train.py --config configs/task1/heuristic.yaml
+uv run python scripts/predict.py \
+  --config configs/task1/heuristic.yaml \
+  --split test \
+  --output outputs/task1_predictions.json
+uv run python scripts/evaluate.py \
+  --config configs/task1/heuristic.yaml \
+  --predictions outputs/task1_predictions.json
 ```
 
 ---

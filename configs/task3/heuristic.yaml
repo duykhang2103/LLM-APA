@@ -1,16 +1,14 @@
-# Fine-tuning configuration. The runnable heuristic configs are the smoke
-# baseline; this config records the planned Qwen3.5-4B adapter target.
 experiment:
-  id: "T3-101"
-  name: "task3_qwen35_4b_lora"
-  description: "LoRA fine-tuning configuration for Qwen3.5-4B"
-  tags: [task3, finetuning, lora, qwen3.5-4b]
+  id: "T3-001"
+  name: "task3_heuristic_baseline"
+  description: "Runnable deterministic baseline for task3"
+  tags: [task3, baseline, heuristic]
 
 task: "task3"
-method: "lora"
+method: "heuristic"
 
 model:
-  name_or_path: "Qwen/Qwen3.5-4B"
+  name_or_path: null
   revision: null
 
 data:
@@ -25,28 +23,28 @@ data:
   max_target_length: 512
 
 training:
-  num_train_epochs: 3
+  num_train_epochs: 1
   per_device_train_batch_size: 1
   per_device_eval_batch_size: 1
-  gradient_accumulation_steps: 4
+  gradient_accumulation_steps: 1
   learning_rate: 5.0e-5
   lr_scheduler_type: "linear"
-  warmup_ratio: 0.06
+  warmup_ratio: 0.0
 
 logging:
   logging_steps: 10
-  report_to: ["tensorboard"]
+  report_to: []
 
 saving:
-  output_dir: "outputs/T3-101"
-  save_strategy: "epoch"
-  save_total_limit: 2
+  output_dir: "outputs/T3-001"
+  save_strategy: "no"
+  save_total_limit: 1
 
 evaluation:
   evaluation_strategy: "epoch"
   metric_for_best_model: "compliance_pass_rate"
   greater_is_better: true
-  load_best_model_at_end: true
+  load_best_model_at_end: false
 
 generation:
   temperature: 0.0

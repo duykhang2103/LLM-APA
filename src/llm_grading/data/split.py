@@ -7,6 +7,7 @@ dataset manifest and experiment metadata.
 """
 
 from typing import Any
+import random
 
 from .schema import NormalizedSample
 
@@ -18,5 +19,17 @@ def create_splits(samples: list[NormalizedSample], seed: int) -> dict[str, list[
 
         {"train": ["synthetic-001"], "val": [], "test": []}
     """
-    # TODO: Choose and document submission/problem grouping and stratification rules.
-    raise NotImplementedError("Dataset splitting is not implemented in the scaffold.")
+    ids = [str(sample["sample_id"]) for sample in samples]
+    if len(ids) != len(set(ids)):
+        raise ValueError("Sample IDs must be unique before splitting")
+    shuffled = list(ids)
+    random.Random(seed).shuffle(shuffled)
+    if len(shuffled) < 3:
+        return {"train": shuffled, "val": [], "test": []}
+    val_count = max(1, round(len(shuffled) * 0.1))
+    test_count = max(1, round(len(shuffled) * 0.1))
+    return {
+        "train": shuffled[: len(shuffled) - val_count - test_count],
+        "val": shuffled[len(shuffled) - val_count - test_count : len(shuffled) - test_count],
+        "test": shuffled[len(shuffled) - test_count :],
+    }

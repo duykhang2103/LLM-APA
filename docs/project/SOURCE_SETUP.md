@@ -192,30 +192,17 @@ Recommended Python:
 Python 3.10 or 3.11
 ```
 
-Use one common environment definition.
-
-Preferred:
-
-```bash
-python -m venv .venv
-```
-
-Linux/macOS:
-
-```bash
-source .venv/bin/activate
-```
-
-Windows PowerShell:
+Use one common `uv` environment definition:
 
 ```powershell
-.venv\Scripts\Activate.ps1
+uv sync --all-groups
 ```
 
-Install:
+Run project commands through the same environment:
 
-```bash
-pip install -r requirements.txt
+```powershell
+uv run python scripts/predict.py --config configs/task1/heuristic.yaml
+uv run pytest
 ```
 
 ---
@@ -224,30 +211,15 @@ pip install -r requirements.txt
 
 Do not allow every member to freely upgrade core ML libraries.
 
-Core packages should be pinned.
-
-Example:
-
-```text
-torch==
-transformers==
-datasets==
-accelerate==
-peft==
-trl==
-scikit-learn==
-numpy==
-pandas==
-pyyaml==
-tqdm==
-```
-
-Exact versions must be chosen after the first working environment is verified.
+Keep the dependency source of truth in `pyproject.toml`, and commit the
+generated `uv.lock` after the first successful shared setup. Runtime packages
+are in `[project.dependencies]`; development and model-training packages are
+in `[dependency-groups]`.
 
 When changing a core dependency:
 1. explain why in PR;
 2. test all shared scripts;
-3. update lock/requirements;
+3. update `pyproject.toml` and `uv.lock`;
 4. record compatibility issue if any.
 
 ---
@@ -256,47 +228,68 @@ When changing a core dependency:
 
 Do not hardcode experiment parameters inside Python files.
 
-Example `configs/base.yaml`:
+Every config is standalone and uses the same readable sections. Example
+`configs/task1/heuristic.yaml`:
 
 ```yaml
-project:
-  seed: 42
+experiment:
+  id: "T1-001"
+  name: "task1_heuristic_baseline"
+  description: "Runnable deterministic baseline"
+  tags: [task1, baseline, heuristic]
 
-paths:
-  data_root: data
-  output_root: outputs
-  experiment_root: experiments/runs
+task: task1
+method: heuristic
 
 model:
-  name: null
+  name_or_path: null
   revision: null
+
+data:
+  input_path: examples/normalized_sample.json
+  dataset_version: synthetic-v1
+  split_version: synthetic-v1
+  max_samples: null
+
+training:
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 1
+  learning_rate: 5.0e-5
+  lr_scheduler_type: linear
+  warmup_ratio: 0.0
+
+logging:
+  logging_steps: 10
+  report_to: []
+
+saving:
+  output_dir: outputs/T1-001
+  save_strategy: no
+  save_total_limit: 1
+
+evaluation:
+  evaluation_strategy: epoch
+  metric_for_best_model: qwk_total
+  greater_is_better: true
+  load_best_model_at_end: false
 
 generation:
   temperature: 0.0
+  max_length: 512
   max_new_tokens: 512
-
-training:
-  learning_rate: 2.0e-5
-  batch_size: 1
-  gradient_accumulation_steps: 1
-  epochs: 3
-```
-
-Task config extends/overrides base config.
-
-Example:
-
-```yaml
-task: task1
-
-model:
-  name: some-open-weight-model
+  num_beams: 1
 
 task1:
   use_compile_log: true
   use_test_report: true
   use_retrieval: false
 ```
+
+The fine-tuning configs use `method: lora` and target
+`Qwen/Qwen3.5-4B`; they are an explicit adapter handoff, not the local
+heuristic baseline.
 
 ---
 
