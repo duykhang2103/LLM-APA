@@ -2,9 +2,9 @@
 
 Example scores and thresholds::
 
-    scores = {"LABEL_01": 0.80, "LABEL_02": 0.22}
-    thresholds = {"LABEL_01": 0.50, "LABEL_02": 0.30}
-    output = ["LABEL_01"]
+    scores = {"Lỗi biên dịch": 0.80, "Lỗi logic": 0.22}
+    thresholds = {"Lỗi biên dịch": 0.50, "Lỗi logic": 0.30}
+    output = ["Lỗi biên dịch"]
 
 Thresholds are tuned on validation data and must be stored in config or run
 metadata. Never tune them on the private test set.

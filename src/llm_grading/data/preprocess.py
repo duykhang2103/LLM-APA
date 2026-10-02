@@ -27,6 +27,9 @@ def build_task1_input(sample: NormalizedSample) -> dict[str, Any]:
         "compile_log": sample.get("compile_log", ""),
         "test_report": sample.get("test_report", ""),
     }
+    for key in ("problem_type", "language", "problems", "grading_policy"):
+        if key in sample:
+            result[key] = sample[key]
     assert "feedback" not in result
     return result
 
@@ -43,6 +46,9 @@ def build_task2_input(sample: NormalizedSample) -> dict[str, Any]:
         "compile_log": sample.get("compile_log", ""),
         "test_report": sample.get("test_report", ""),
     }
+    for key in ("problem_type", "language", "problems", "grading_policy"):
+        if key in sample:
+            result[key] = sample[key]
     assert "feedback" not in result
     return result
 
@@ -53,14 +59,18 @@ def build_task3_input(sample: NormalizedSample) -> dict[str, Any]:
     Example shape::
 
         {"problem_statement": "...", "code": "...",
-         "error_labels": ["LABEL_02"], "feedback_level": 1}
+         "error_labels": ["Lỗi logic"], "feedback_level": 1}
 
     The reference ``feedback`` remains a training target or evaluation
     reference and is not copied into the inference prompt.
     """
-    return {
+    result = {
         "problem_statement": sample.get("problem_statement", ""),
         "code": sample.get("code", ""),
         "error_labels": list(sample.get("error_labels", [])),
         "feedback_level": int(sample.get("feedback_level", 1)),
     }
+    for key in ("problem_type", "language", "problems", "grading_policy"):
+        if key in sample:
+            result[key] = sample[key]
+    return result

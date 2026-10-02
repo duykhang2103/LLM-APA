@@ -23,7 +23,7 @@ class TaskPipeline:
         statement = str(view.get("problem_statement", "")).lower()
         report = str(view.get("test_report", "")).lower()
         suspicious = ("sum" in statement and "-" in code) or any(word in report for word in ("failed", "fail", "error"))
-        return {"scores": {"LABEL_02": 1.0 if suspicious else 0.0}}
+        return {"scores": {"Lỗi logic": 1.0 if suspicious else 0.0}}
 
     def postprocess(self, raw_output: object) -> dict[str, object]:
         if not isinstance(raw_output, dict):

@@ -2,6 +2,8 @@
 
 These files are safe teaching fixtures. They are not copied from the course dataset and must not be treated as real training or validation data.
 
+Their code and annotations are invented, while Task 2 label names match the supplied official taxonomy. Former `LABEL_01`-style placeholders have been replaced. These flat normalized fixtures remain supported alongside the teacher's nested task JSON format.
+
 ## Files
 
 - `normalized_sample.json`: the common record shape after loading one submission.

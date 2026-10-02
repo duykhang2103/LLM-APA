@@ -3,7 +3,7 @@
 Input example::
 
     {"problem_statement": "...", "code": "...",
-     "error_labels": ["LABEL_02"], "feedback_level": 1}
+     "error_labels": ["Lỗi logic"], "feedback_level": 1}
 
 Target example::
 
