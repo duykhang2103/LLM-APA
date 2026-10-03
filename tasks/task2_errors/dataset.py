@@ -6,7 +6,7 @@ Input example::
 
 Target example::
 
-    {"error_labels": ["LABEL_02"]}
+    {"error_labels": ["Lỗi logic"]}
 
 The target can also be ``{"error_labels": []}`` for a clean submission.
 """

@@ -15,7 +15,7 @@
     "complexity": 1,
     "code_quality": 1
   },
-  "error_labels": ["LABEL_02"],
+  "error_labels": ["Lỗi logic"],
   "feedback": "Hãy kiểm tra lại phép toán được sử dụng khi kết hợp hai số đầu vào.",
   "feedback_level": 1
 }

@@ -9,12 +9,16 @@ from .utils.paths import resolve_path
 
 
 def load_samples_for_config(config: Mapping[str, Any], split: str = "test") -> list[dict[str, Any]]:
-    """Load the configured split, falling back to the synthetic input path."""
+    """Load one task's configured split; val and validation are aliases."""
     data = config.get("data", {})
-    source = data.get(f"{split}_path") or data.get("input_path")
+    split_key = "validation" if split == "val" else split
+    source = data.get(f"{split_key}_path")
+    if split_key == "validation":
+        source = source or data.get("val_path")
+    source = source or data.get("input_path")
     if not source:
         raise ValueError(f"No input path configured for split '{split}'")
-    return load_samples(resolve_path(source), data.get("max_samples"))
+    return load_samples(resolve_path(source), data.get("max_samples"), task=config.get("task"))
 
 
 def write_json(path: str | Path, payload: Any) -> Path:

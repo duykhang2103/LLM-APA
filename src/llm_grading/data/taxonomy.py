@@ -1,20 +1,19 @@
 """Canonical location for the official ten-label error taxonomy.
 
-Do not duplicate label order in prompts, metrics, thresholds, or notebooks.
-After the official data is inspected, replace the safe placeholders below and
-document the label meaning, positive examples, and known imbalance.
+Names and order match the supplied ``label_space.json``. Task pipelines,
+metrics, and validators import this module; private data is not needed at
+import time. The former LABEL_01 through LABEL_10 placeholders are retired.
 """
 
-# TODO: Replace these safe placeholders with the labels from the distributed dataset.
 ERROR_LABELS = [
-    "LABEL_01",
-    "LABEL_02",
-    "LABEL_03",
-    "LABEL_04",
-    "LABEL_05",
-    "LABEL_06",
-    "LABEL_07",
-    "LABEL_08",
-    "LABEL_09",
-    "LABEL_10",
+    "Lỗi biên dịch",
+    "Lỗi nhập/xuất",
+    "Lỗi logic",
+    "Lỗi vòng lặp",
+    "Lỗi mảng/chuỗi",
+    "Lỗi hàm",
+    "Lỗi edge case",
+    "Lỗi thuật toán",
+    "Lỗi hard-code",
+    "Lỗi style",
 ]

@@ -1,4 +1,4 @@
-"""Load normalized JSON and write a small data-audit report."""
+"""Normalize teacher-format or flat JSON and write a small data-audit report."""
 
 from pathlib import Path
 import argparse
@@ -24,9 +24,10 @@ def main() -> int:
     source = args.input or config["data"].get("input_path")
     if not source:
         raise ValueError("Provide --input or configure data.input_path")
-    samples = load_samples(resolve_path(source), config["data"].get("max_samples"))
+    samples = load_samples(resolve_path(source), config["data"].get("max_samples"), task=config["task"])
     report = {
         "experiment_id": config["experiment"]["id"],
+        "task": config["task"],
         "dataset_version": config["data"].get("dataset_version"),
         "sample_count": len(samples),
         "sample_ids": [sample["sample_id"] for sample in samples],

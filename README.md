@@ -75,16 +75,16 @@ Secondary metrics: MAE and exact match for every rubric component.
 
 Predict a set of error labels from the official ten-label taxonomy. An empty set is valid when the submission has no recognized error.
 
-Illustrative example only:
+Example using the supplied taxonomy:
 
 ```json
 {
   "sample_id": "example-001",
-  "error_labels": ["logic_error", "edge_case_error"]
+  "error_labels": ["Lỗi logic", "Lỗi edge case"]
 }
 ```
 
-Do not copy these illustrative names into production code. The official labels must be loaded from one central taxonomy file after the dataset is inspected.
+The ten supplied labels and their order are centralized in `src/llm_grading/data/taxonomy.py`, matching `label_space.json`. Pipelines, metrics, and validators use that one definition. The synthetic fixtures use these label names with invented code.
 
 The important difficulty is imbalance. Some labels may be common, rare, or absent in a small split. A model that predicts only common labels may look acceptable on accuracy but fail the official macro-F1 metric.
 
@@ -447,6 +447,55 @@ uv run python scripts/validate_predictions.py `
 ```
 
 Run the same prediction command with `configs/task2/heuristic.yaml` or `configs/task3/heuristic.yaml` for the other tasks. The generated JSON always preserves `sample_id` and is validated before it is written.
+
+### Teacher-format sample data
+
+The supplied `sample_dataset/` contains 32 submissions: 15 for the multi-problem EX01 exam and 17 for the single-problem EX02 exam. It is a format-demonstration dataset, not the official train/dev/test data. Keep it unchanged and local; the whole directory is ignored by Git. Place the full dataset under `data/raw/` when it arrives, preserving the supplied layout:
+
+```text
+<dataset-root>/
+  exams.json
+  label_space.json
+  task1_grading.json
+  task2_error_taxonomy.json
+  task3_feedback.json
+  submissions/<exam_id>/<sample_id>.cpp
+```
+
+Each task JSON has a `samples` list. Every record contains `sample_id`, nested `input`, and reference `output` when labels are available. The shared loader reads one task file, joins the exam statement from the sibling `exams.json`, and resolves `input.code_file` below the dataset root. It also continues to accept the flat object/list format in `examples/normalized_sample.json`.
+
+| Supplied field | Shared normalized field |
+|---|---|
+| `input.exam_id` | `problem_id` and the lookup into `exams.json` |
+| `input.exam_type` | `problem_type` |
+| Exam `statement`, `problems`, `grading_policy` | `problem_statement`, `problems`, `grading_policy` |
+| `input.code_file` | `code_file` plus resolved C++ text in `code` |
+| `input.compile_log`, `input.test_report` | Preserved evidence, including null or structured reports |
+| Task 1 `output.rubric`, `output.total_score` | `rubric`, checked reference `total_score` |
+| Task 2 `output.taxonomy_error` | Reference `error_labels` |
+| Task 3 `input.taxonomy_error`, `input.target_feedback_level` | Known `error_labels`, integer `feedback_level` (1-4) |
+| Task 3 `output.feedback` | Reference `feedback`, excluded from inference input |
+
+When given a dataset directory, the CLI selects the task using the config's `task` field. It does not merge the three files, which deliberately share sample IDs. Direct Python callers can use `load_samples("sample_dataset", task="task1")` or pass the task JSON path. The loader rejects missing code, paths escaping the dataset root, duplicate IDs, invalid rubric values, and inconsistent reference totals. Task 1/2 input builders exclude labels, totals, and feedback; allowed exam policies remain available to the pipeline.
+
+Run the complete Task 1 format check with the existing heuristic:
+
+```powershell
+uv run python scripts/prepare_data.py --config configs/task1/sample_heuristic.yaml
+uv run python scripts/predict.py --config configs/task1/sample_heuristic.yaml
+uv run python scripts/evaluate.py --config configs/task1/sample_heuristic.yaml --predictions outputs/T1-002/predictions.json
+uv run python scripts/validate_predictions.py --task task1 --input outputs/T1-002/predictions.json
+```
+
+Use `configs/task2/sample_heuristic.yaml` and `configs/task3/sample_heuristic.yaml` for the other tasks; their output directories are `outputs/T2-002/` and `outputs/T3-002/`. Each config evaluates all 32 samples as a smoke check, using `data.input_path` without claiming an official test or validation split. Predictions, metrics, and preparation reports stay in ignored `outputs/` directories. The heuristic checks plumbing; its scores are not Qwen prompting results. Saved predictions retain the shared `{sample_id, output}` contract: Task 1 uses flat components plus computed `total`, Task 2 uses `error_labels`, and Task 3 includes feedback and compliance diagnostics. The teacher's nested reference format is normalized on input, not adopted as a new internal prediction format.
+
+For future full-data experiments, configure fixed `train_path`, `validation_path`, and `test_path` records and record the split version. `--split val` and `--split validation` both use `validation_path`; a split path falls back to `input_path` only when none is configured. Do not silently regenerate or tune on the 32 demonstration samples as if they were an official validation benchmark.
+
+Known sample limitations are preserved rather than repaired:
+
+- EX01's statement assigns question weights 1/4/2/3, while its `problems` metadata assigns 2.5 each. Both remain available; clarify the intended weights and their mapping to the six rubric dimensions before implementing deterministic prerequisite scoring.
+- EX01 requires P1 before P2-P4. The loader carries that policy through, but the current heuristic does not enforce it. EX01 expects function-only submissions, so absence of `main` is not a grading failure by itself.
+- Compiler logs are auxiliary evidence, not labels. Four samples have nonempty diagnostics while the teacher assigns `compilable = 1`; all 32 reference rubric totals match their component sums.
 
 ## 13. Configuration and fine-tuning handoff
 

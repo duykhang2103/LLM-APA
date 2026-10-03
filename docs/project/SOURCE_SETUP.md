@@ -322,6 +322,18 @@ Raw loader may contain all fields.
 
 Task-specific dataset classes decide which fields are exposed.
 
+### Supplied dataset format (October 2026)
+
+The loader now supports the teacher's `samples` wrapper and nested `input`/`output` records, alongside existing flat normalized records. Keep `sample_dataset/` unchanged and ignored; place future full data under `data/raw/` with the same layout. Raw task JSON files require sibling `exams.json` and `submissions/` files.
+
+`load_samples(source, max_samples=None, *, task=None)` selects `task1_grading.json`, `task2_error_taxonomy.json`, or `task3_feedback.json` when `source` is a teacher-format directory. Shared CLIs pass the config's task. Multiple task files are not concatenated because their sample IDs overlap.
+
+Normalize `input.exam_id` to `problem_id`, `input.exam_type` to `problem_type`, and the joined exam statement to `problem_statement`. Preserve subproblem metadata and `grading_policy`. Resolve `input.code_file` below the dataset root. Map Task 1 references to `rubric` and a checked `total_score`, Task 2 output `taxonomy_error` to reference `error_labels`, and Task 3 input labels/`target_feedback_level` to known labels/integer `feedback_level`. Reference feedback remains a target. The ten supplied labels are centralized in `src/llm_grading/data/taxonomy.py`.
+
+`validation_path` is canonical; both `--split val` and `--split validation` select it. Sample smoke configs under `configs/task*/sample_heuristic.yaml` use all 32 examples for format checks, not an official split. Existing prediction contracts stay unchanged; see the main README for commands and raw-to-normalized field mappings.
+
+EX01's statement weights (1/4/2/3) conflict with metadata weights (2.5 each). Preserve the source values and clarify rubric aggregation before enforcing prerequisite scoring. Normalization does not imply deterministic policy enforcement by the heuristic.
+
 ---
 
 # 7. Leakage Guard

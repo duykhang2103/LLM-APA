@@ -2,7 +2,7 @@
   {
     "sample_id": "synthetic-001",
     "output": {
-      "error_labels": ["LABEL_02"]
+      "error_labels": ["Lỗi logic"]
     }
   },
   {
