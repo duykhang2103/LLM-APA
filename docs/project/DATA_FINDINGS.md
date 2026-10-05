@@ -1,6 +1,6 @@
 # Preliminary Sample Findings
 
-These are **sample-only observations**, supplied by the team and earlier sample notes, not full-dataset conclusions or a fresh audit in this checkout. Preserve originals; investigate private flagged sample IDs rather than silently correcting annotations.
+These are **sample-only observations**. A fresh local inspection of `data/sample_dataset` confirmed 32 submissions (15 EX01, 17 EX02), aligned task IDs, valid rubric sums, no whitespace-normalized duplicate source, zero support for the edge-case taxonomy label, and no Level 4 feedback. Preserve originals; investigate private flagged sample IDs rather than silently correcting annotations. This sample is a format fixture, not an official training/test split.
 
 | Finding | Sample evidence | Implementation/analysis implication | Verify on full data? |
 |---|---|---|---|
@@ -13,4 +13,4 @@ These are **sample-only observations**, supplied by the team and earlier sample 
 | Feedback supervision noise | Levels are imbalanced/confounded with exam identity; some feedback seems too explicit. | Condition on requested level, filter RAG by level, review correctness/compliance separately. | Yes |
 | Memorization risk | Few exam contexts and possible near-duplicate templates. | Group exact normalized code for splits; log/restrict retrieval duplicates and compare gains. | Yes |
 
-Preparation writes conflict-review flags and persisted split IDs. Response artifacts retain exam/type/level/hash and retrieval audit fields; metrics include slices and label support. These hooks expose issues without changing teacher targets. More complete test-conflict/source-version review remains manual research work. Detailed evidence stays private.
+Preparation writes per-split coverage and annotation flags. Training writes inclusion decisions and bounded repetition counts to `training_data_audit.json`. Compiler/test and EX01 weight conflicts default to review-only; policy or private review decisions can exclude training records without rewriting targets. Heuristically detected feedback-level violations are excluded from training/RAG by default. Validation membership and annotations remain intact. Semantic review, source-version reconciliation, whitespace test behavior, and an authoritative EX01 score mapping still require lecturer evidence. Detailed evidence stays private.

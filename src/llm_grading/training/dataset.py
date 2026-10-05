@@ -2,12 +2,15 @@
 
 import json
 
+from llm_grading.data.quality import select_training_samples
 from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
 from llm_grading.prompting.formatter import render_task_prompt
 
 
-def build_training_dataset(samples, task, config=None):
+def build_training_dataset(samples, task, config=None, *, training=True):
+    if training:
+        samples, _ = select_training_samples(samples, task, config or {})
     records = []
     for s in samples:
         if s.get("_has_reference") is False:

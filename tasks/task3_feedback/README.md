@@ -20,4 +20,4 @@ Evaluate diagnosis correctness and level compliance separately. Record violation
 - `prompts/level_policy.md`: one policy for all experiments.
 - `prompts/`: immutable prompt versions.
 
-The current model baseline uses one-pass level-conditioned generation, with teacher feedback only as a training/RAG target. RAG filters by requested level. Regeneration is optional after failure analysis; overlap/compliance checks do not establish semantic correctness. Follow [RUN_EXPERIMENTS.md](../../docs/project/RUN_EXPERIMENTS.md).
+The v002 prompt follows the supplied level definitions. Training and RAG exclude heuristic feedback-level violations by default, with auditable private review overrides. Validation references are preserved. Model generation allows one bounded compliance retry, then fails rather than returning a detected violation. Heuristic compliance cannot establish semantic correctness; independent judgments are required to report diagnosis accuracy. Follow [RUN_EXPERIMENTS.md](../../docs/project/RUN_EXPERIMENTS.md).

@@ -48,15 +48,28 @@ class ModelPipeline:
         )
         prompt = render_task_prompt(sample, self.task, self.config, examples)
         error = None
-        attempts = 1 if self.task == "task3" else 2
+        retries = self.config.get("task3", {}).get("max_compliance_retries", 1)
+        if (
+            isinstance(retries, bool)
+            or not isinstance(retries, int)
+            or not 0 <= retries <= 3
+        ):
+            raise ValueError("task3.max_compliance_retries must be between 0 and 3")
+        attempts = retries + 1 if self.task == "task3" else 2
         for retry in range(attempts):
-            retry_prompt = (
-                prompt
-                if retry == 0
-                else prompt
-                + "\nYour previous response was invalid. Return only the requested JSON schema. Error: "
-                + str(error)
-            )
+            retry_prompt = prompt
+            if retry:
+                instruction = (
+                    "Rewrite the feedback at the requested level; do not reveal a fix or diagnosis beyond that level."
+                    if self.task == "task3"
+                    else "Return only the requested JSON schema."
+                )
+                retry_prompt += (
+                    "\nPrevious response rejected. "
+                    + instruction
+                    + " Error: "
+                    + str(error)
+                )
             try:
                 raw = self.runner.generate(retry_prompt)
             except Exception as exc:
@@ -74,6 +87,11 @@ class ModelPipeline:
                 ) from exc
             try:
                 parsed = parse_response(raw, self.task, sample)
+                if self.task == "task3" and not parsed["compliance"]["pass"]:
+                    raise ValueError(
+                        "Feedback policy violation: "
+                        + ", ".join(parsed["compliance"]["violations"])
+                    )
                 error = None
             except ValueError as exc:
                 parsed = None
@@ -92,8 +110,9 @@ class ModelPipeline:
             )
             if parsed is not None:
                 return parsed
+        retry_description = "one retry" if attempts == 2 else f"{attempts - 1} retries"
         raise ValueError(
-            f"Invalid response for {sample['sample_id']} after one retry: {error}; see {self.log_path}"
+            f"Invalid response for {sample['sample_id']} after {retry_description}: {error}; see {self.log_path}"
         )
 
     def postprocess(self, output):

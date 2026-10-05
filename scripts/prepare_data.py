@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from llm_grading.data.loader import load_samples
+from llm_grading.data.quality import audit_dataset
 from llm_grading.data.split import check_split_overlap, create_splits
 from llm_grading.runtime import write_json
 from llm_grading.utils.config import load_config
@@ -36,6 +37,7 @@ def main():
             {
                 "task": task,
                 "sample_count": len(samples),
+                "quality": audit_dataset(samples, task),
                 "samples": [sample_metadata(s) for s in samples],
             },
         )
@@ -119,6 +121,10 @@ def main():
         {
             "samples": [sample_metadata(s) for s in samples],
             "counts": {k: len(v) for k, v in ids.items()},
+            "quality_by_split": {
+                split: audit_dataset([by_id[sid] for sid in split_ids], task)
+                for split, split_ids in ids.items()
+            },
         },
     )
     print(f"Prepared splits: {directory}; use --config {config_file}")

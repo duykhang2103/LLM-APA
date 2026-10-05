@@ -61,12 +61,15 @@ def test_mask_budget_and_padding(tmp_path):
     assert collated["attention_mask"][1, -1].item() == 0
 
 
-def test_train_save_reload_resume(tmp_path):
+@pytest.mark.parametrize(
+    "task,generated_metrics", [("task1", False), ("task1", True), ("task3", True)]
+)
+def test_train_save_reload_resume(tmp_path, task, generated_metrics):
     path = tmp_path / "model"
     tiny_model(path)
     cfg = {
         "experiment": {"id": "cpu-smoke"},
-        "task": "task1",
+        "task": task,
         "method": "lora",
         "seed": 42,
         "model": {
@@ -76,7 +79,7 @@ def test_train_save_reload_resume(tmp_path):
             "revision": "main",
         },
         "data": {"dataset_version": "synthetic", "split_version": "cpu"},
-        "prompt": {"version": "v001"},
+        "prompt": {"version": "v002" if task == "task3" else "v001"},
         "quantization": {"load_in_4bit": False},
         "lora": {"rank": 2, "alpha": 4, "dropout": 0.0, "target_modules": "all-linear"},
         "training": {
@@ -95,13 +98,27 @@ def test_train_save_reload_resume(tmp_path):
             "save_steps": 1,
             "save_total_limit": 3,
         },
-        "evaluation": {"strategy": "steps", "eval_steps": 1},
+        "evaluation": {
+            "strategy": "steps",
+            "eval_steps": 1,
+            "generated_metrics": generated_metrics,
+        },
         "generation": {"max_input_tokens": 1024, "max_new_tokens": 2},
     }
     tr = [sample("train", "int main() {}")]
     val = [sample("val", "int f() {return 2;}")]
     result = train(cfg, tr, val, smoke=True)
     assert result["status"] == "completed" and result["lora_parameters_updated"]
+    assert (tmp_path / "run" / "training_data_audit.json").exists()
+    if generated_metrics:
+        if task == "task3":
+            assert result["best_checkpoint"] is None and result["best_metric"] is None
+            assert "eval_heuristic_compliance_score" in result["training_metrics"]
+            assert "eval_selection_score" not in result["training_metrics"]
+        else:
+            assert result["best_checkpoint"]
+            assert "eval_selection_score" in result["training_metrics"]
+        assert (tmp_path / "run" / "generated_validation" / "step-1.json").exists()
     cp = resume_path(str(tmp_path / "run" / "checkpoint-1"), tmp_path / "run")
     assert Path(cp, "optimizer.pt").exists()
     assert resume_path(True, tmp_path / "run").endswith("checkpoint-2")
@@ -119,6 +136,26 @@ def test_train_save_reload_resume(tmp_path):
 def test_invalid_checkpoint(tmp_path):
     with pytest.raises(ValueError, match="Not a resumable"):
         resume_path(str(tmp_path), tmp_path)
+
+
+def test_coverage_failure_writes_audit_before_model_load(tmp_path, monkeypatch):
+    import json
+
+    from llm_grading.data.quality import TrainingQualityError
+
+    def unexpected_load(*args, **kwargs):
+        raise AssertionError("Model must not load before coverage is checked")
+
+    monkeypatch.setattr("llm_grading.training.trainer.load_model", unexpected_load)
+    cfg = {
+        "task": "task2",
+        "data": {"quality": {"require_coverage": True}},
+        "saving": {"output_dir": str(tmp_path)},
+    }
+    with pytest.raises(TrainingQualityError):
+        train(cfg, [sample("train", "int a(){}")], [sample("val", "int b(){}")])
+    report = json.loads((tmp_path / "training_data_audit.json").read_text())
+    assert len(report["retained_coverage"]["missing_labels"]) == 10
 
 
 def test_qwen_text_loader_preserves_full_checkpoint_weights(tmp_path):

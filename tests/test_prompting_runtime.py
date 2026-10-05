@@ -135,3 +135,27 @@ def test_f0_needs_adapter(tmp_path):
     cfg.update(method="lora", model={})
     with pytest.raises(ValueError, match="requires model.adapter_path"):
         ModelPipeline(cfg, Runner([]))
+
+
+def test_feedback_violation_is_retried_and_persistent_failure_stops(tmp_path):
+    cfg = config(tmp_path, "task3")
+    row = sample()
+    pipeline = ModelPipeline(
+        cfg, Runner(["Chỉ cần thêm cur = cur->next;", "Vòng lặp thiếu cập nhật."])
+    )
+    assert pipeline.predict(row)["compliance"]["pass"]
+    logs = [
+        json.loads(line)
+        for line in (tmp_path / "responses.jsonl").read_text().splitlines()
+    ]
+    assert logs[0]["parse_error"] and logs[1]["retry_count"] == 1
+    pipeline = ModelPipeline(cfg, Runner(["Chỉ cần thêm cur = cur->next;"] * 2))
+    with pytest.raises(ValueError, match="retry"):
+        pipeline.predict(row)
+
+
+def test_feedback_does_not_claim_input_labels_as_a_diagnosis(tmp_path):
+    row = sample()
+    row["error_labels"] = ["Lỗi logic"]
+    output = ModelPipeline(config(tmp_path, "task3"), Runner(["Tốt."])).predict(row)
+    assert "diagnosed_labels" not in output

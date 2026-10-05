@@ -25,6 +25,9 @@ def main():
         "--split", default="val", choices=["train", "val", "validation", "test"]
     )
     parser.add_argument("--output")
+    parser.add_argument(
+        "--judgments", help="Private Task 3 review JSON keyed by sample_id"
+    )
     args = parser.parse_args()
     config = load_config(args.config)
     task = config["task"]
@@ -37,6 +40,17 @@ def main():
     if {p["sample_id"] for p in predictions} != set(by_id):
         raise ValueError("Prediction IDs must exactly match configured reference split")
     references = [by_id[p["sample_id"]] for p in predictions]
+    if args.judgments:
+        judgments = read_json(args.judgments)
+        if (
+            task != "task3"
+            or not isinstance(judgments, dict)
+            or set(judgments) - set(by_id)
+        ):
+            raise ValueError("Judgments must reference only Task 3 prediction IDs")
+        for prediction in predictions:
+            if prediction["sample_id"] in judgments:
+                prediction["output"]["judgment"] = judgments[prediction["sample_id"]]
     target_key = {"task1": "rubric", "task2": "error_labels", "task3": "feedback"}[task]
     if any(s.get("_has_reference") is False or target_key not in s for s in references):
         raise ValueError(
@@ -70,7 +84,7 @@ def main():
             "task": task,
             "metrics": metrics,
             "slices": slices,
-            "metric_semantics": "Task2: all ten labels, zero_division=0; Task3 overlap/compliance are diagnostics only",
+            "metric_semantics": "Task2: all ten labels, zero_division=0; Task3 heuristic compliance plus optional independent semantic judgments",
         },
     )
     print(f"Evaluated {len(predictions)} predictions: {output}")

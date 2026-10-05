@@ -6,6 +6,12 @@ import math
 import time
 from pathlib import Path
 
+from llm_grading.data.quality import (
+    TrainingQualityError,
+    audit_dataset,
+    balance_training_samples,
+    select_training_samples,
+)
 from llm_grading.data.split import check_split_overlap
 from llm_grading.models.loader import load_model
 from llm_grading.prompting.formatter import prompt_hash
@@ -17,6 +23,7 @@ from llm_grading.training.dataset import (
     tokenize_record,
 )
 from llm_grading.training.lora import configure_lora
+from llm_grading.training.validation import make_task_trainer
 from llm_grading.utils.logging import run_metadata, save_run_config
 from llm_grading.utils.seed import set_seed
 
@@ -53,7 +60,7 @@ def train(
     dry_run=False,
 ):
     import torch
-    from transformers import Trainer, TrainingArguments
+    from transformers import TrainingArguments
 
     check_split_overlap(train_samples, validation_samples)
     if not train_samples or not validation_samples:
@@ -63,6 +70,21 @@ def train(
     set_seed(config.get("seed", 42))
     directory = Path(config["saving"]["output_dir"])
     directory.mkdir(parents=True, exist_ok=True)
+    try:
+        train_samples, quality_audit = select_training_samples(
+            train_samples, config["task"], config
+        )
+    except TrainingQualityError as error:
+        write_json(directory / "training_data_audit.json", error.audit)
+        raise
+    quality_audit["validation"] = audit_dataset(validation_samples, config["task"])
+    train_samples, repetitions = balance_training_samples(
+        train_samples, config["task"], config
+    )
+    quality_audit["training_repetitions"] = repetitions
+    write_json(directory / "training_data_audit.json", quality_audit)
+    if not train_samples:
+        raise ValueError("No training references remain after quality exclusions")
     if config["model"].get("provider", "local") != "local":
         raise ValueError("Fine-tuning requires a local model")
     checkpoint = resume_path(
@@ -78,8 +100,10 @@ def train(
         raise ValueError(
             "Checkpoints already exist; choose --resume-from-checkpoint or a new version/output directory"
         )
-    rows = build_training_dataset(train_samples, config["task"], config)
-    val_rows = build_training_dataset(validation_samples, config["task"], config)
+    rows = build_training_dataset(train_samples, config["task"], config, training=False)
+    val_rows = build_training_dataset(
+        validation_samples, config["task"], config, training=False
+    )
     bundle = load_model(config, training=True)
     tokenizer = bundle["tokenizer"]
     max_length = int(config["training"]["max_sequence_length"])
@@ -98,6 +122,13 @@ def train(
         "quantization": config.get("quantization", {}),
         "seed": config.get("seed", 42),
         "max_sequence_length": max_length,
+        "quality_policy": quality_audit["policy"],
+        "review_sha256": quality_audit["review_sha256"],
+        "balancing": {
+            key: config["training"].get(key) for key in ("balance_by", "max_repeat")
+        },
+        "evaluation": config["evaluation"],
+        "generation": config.get("generation", {}),
         "optimizer_settings": {
             key: config["training"].get(key)
             for key in [
@@ -219,12 +250,24 @@ def train(
         remove_unused_columns=False,
         dataloader_pin_memory=torch.cuda.is_available(),
         optim=training.get("optim", "adamw_torch"),
-        load_best_model_at_end=False,
+        load_best_model_at_end=evaluation.get("generated_metrics", False)
+        and config["task"] != "task3",
+        metric_for_best_model="eval_selection_score"
+        if evaluation.get("generated_metrics", False) and config["task"] != "task3"
+        else None,
+        greater_is_better=True,
     )
     args = TrainingArguments(**kwargs)
     if smoke:
         encoded = encoded[: min(2, len(encoded))]
         val_encoded = val_encoded[:1]
+    Trainer = make_task_trainer(
+        evaluation.get("generated_metrics", False),
+        bundle,
+        validation_samples[:1] if smoke else validation_samples,
+        config,
+        directory,
+    )
     trainer = Trainer(
         model=model,
         args=args,
@@ -274,6 +317,12 @@ def train(
             elapsed_seconds=time.perf_counter() - start,
             model_revision=bundle["revision"],
             training_metrics=metrics,
+            best_checkpoint=trainer.state.best_model_checkpoint
+            if config["task"] != "task3"
+            else None,
+            best_metric=trainer.state.best_metric
+            if config["task"] != "task3"
+            else None,
             resumed_from=checkpoint,
         )
         if torch.cuda.is_available():

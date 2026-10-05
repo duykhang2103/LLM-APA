@@ -1,6 +1,6 @@
 experiment:
-  id: task3-P0-v1
-  name: task3_P0-v1
+  id: task3-P0-v2
+  name: task3_P0-v2
   notes: Change one hypothesis per version
 task: task3
 method: zero_shot
@@ -13,13 +13,13 @@ model:
   attn_implementation: eager
   adapter_path: null
 prompt:
-  version: v001
+  version: v002
 data:
   input_path: data/raw
   train_path: null
   validation_path: null
   test_path: null
-  prepared_dir: data/processed/task3-v1
+  prepared_dir: data/processed/task3-v2
   dataset_version: lecturer-v1
   split_version: grouped-v1
   validation_fraction: 0.2
@@ -52,7 +52,7 @@ logging:
   logging_steps: 10
   report_to: []
 saving:
-  output_dir: outputs/task3/P0-v1
+  output_dir: outputs/task3/P0-v2
   save_strategy: epoch
   save_steps: 50
   save_total_limit: 2
@@ -66,5 +66,6 @@ generation:
   max_new_tokens: 512
   num_beams: 1
 task3:
+  max_compliance_retries: 1
   use_compile_log: true
   use_test_report: true

@@ -7,6 +7,7 @@ import platform
 import subprocess
 from pathlib import Path
 
+from llm_grading.data.quality import audit_sample
 from llm_grading.data.split import code_hash
 from llm_grading.prompting.formatter import prompt_hash
 from llm_grading.runtime import write_json
@@ -62,11 +63,8 @@ def run_metadata(config):
 
 
 def sample_metadata(sample):
-    log = str(sample.get("compile_log") or "").lower()
-    # A flag for later review, not a correction to teacher annotations.
-    conflict = sample.get("rubric", {}).get("compilable") == 1 and any(
-        x in log for x in ["error", "fail"]
-    )
+    flags = audit_sample(sample, "task1")
+    conflict = bool(set(flags) & {"compiler_rubric_conflict", "test_rubric_conflict"})
     return {
         "sample_id": sample["sample_id"],
         "exam_id": sample.get("problem_id"),
@@ -74,7 +72,7 @@ def sample_metadata(sample):
         "feedback_level": sample.get("feedback_level"),
         "code_hash": code_hash(sample.get("code", "")),
         "evidence_conflict_flag": conflict,
-        "review_flags": sample.get("review_flags", []),
+        "review_flags": flags,
     }
 
 

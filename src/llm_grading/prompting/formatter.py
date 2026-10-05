@@ -81,7 +81,6 @@ def parse_response(text, task, sample):
         return {
             "feedback": text.strip(),
             "feedback_level": level,
-            "diagnosed_labels": list(sample.get("error_labels", [])),
             "compliance": check_compliance(text, level),
         }
     try:

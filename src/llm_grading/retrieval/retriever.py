@@ -3,6 +3,7 @@
 import json
 from difflib import SequenceMatcher
 
+from llm_grading.data.quality import select_training_samples
 from llm_grading.data.split import code_hash, normalized_code
 from llm_grading.prompting.formatter import BUILDERS
 from llm_grading.retrieval.index import DenseIndex
@@ -16,6 +17,7 @@ def retrieval_text(sample, task):
 
 class Retriever:
     def __init__(self, samples, task, config, encoder=None):
+        samples, self.quality_audit = select_training_samples(samples, task, config)
         if not samples:
             raise ValueError("Empty training retrieval corpus")
         self.samples, self.task, self.settings = (
@@ -25,7 +27,7 @@ class Retriever:
         )
         if self.settings.get("k", 3) not in {1, 3, 5}:
             raise ValueError("retrieval.k must be 1, 3, or 5")
-        records = build_training_dataset(samples, task, config)
+        records = build_training_dataset(samples, task, config, training=False)
         self.targets = [row["target"] for row in records]
         self.index = DenseIndex(
             [retrieval_text(s, task) for s in samples], self.settings, encoder
@@ -35,6 +37,7 @@ class Retriever:
         scores = self.index.scores(retrieval_text(query, self.task))
         candidates = []
         audit = {
+            "quality_exclusions": self.quality_audit["excluded"],
             "embedding": self.index.metadata,
             "self_excluded": [],
             "exact_matches": [],
