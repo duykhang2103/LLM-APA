@@ -1,0 +1,70 @@
+experiment:
+  id: task1-F0-v0-smoke
+  name: task1_F0-v1
+  notes: Change one hypothesis per version
+task: task1
+method: lora
+seed: 42
+model:
+  provider: local
+  name_or_path: Qwen/Qwen3.5-4B
+  revision: main
+  dtype: bfloat16
+  attn_implementation: eager
+  adapter_path: null
+prompt:
+  version: v001
+data:
+  input_path: data/raw
+  train_path: null
+  validation_path: null
+  test_path: null
+  prepared_dir: data/processed/task1-v1
+  dataset_version: lecturer-v1
+  split_version: grouped-v1
+  validation_fraction: 0.2
+  test_fraction: 0
+  max_samples: null
+quantization:
+  load_in_4bit: true
+  quant_type: nf4
+  double_quant: true
+lora:
+  rank: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules: all-linear
+training:
+  max_sequence_length: 4096
+  learning_rate: 0.0001
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 1
+  warmup_ratio: 0.06
+  lr_scheduler_type: linear
+  gradient_checkpointing: true
+  max_steps: 2
+  resume_from_checkpoint: null
+  warm_start_adapter: null
+  optim: adamw_torch
+logging:
+  logging_steps: 10
+  report_to: []
+saving:
+  output_dir: outputs/task1/F0-v0-smoke
+  save_strategy: steps
+  save_steps: 1
+  save_total_limit: 2
+evaluation:
+  strategy: steps
+  eval_steps: 1
+generation:
+  do_sample: false
+  temperature: 0
+  max_input_tokens: 4096
+  max_new_tokens: 192
+  num_beams: 1
+task1:
+  use_compile_log: true
+  use_test_report: true

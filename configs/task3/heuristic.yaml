@@ -1,0 +1,58 @@
+experiment:
+  id: "T3-001"
+  name: "task3_heuristic_baseline"
+  description: "Runnable deterministic baseline for task3"
+  tags: [task3, baseline, heuristic]
+
+task: "task3"
+method: "heuristic"
+
+model:
+  name_or_path: null
+  revision: null
+
+data:
+  input_path: "examples/normalized_sample.json"
+  train_path: null
+  validation_path: null
+  test_path: null
+  dataset_version: "synthetic-v1"
+  split_version: "synthetic-v1"
+  max_samples: null
+  max_source_length: 1024
+  max_target_length: 512
+
+training:
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 1
+  learning_rate: 5.0e-5
+  lr_scheduler_type: "linear"
+  warmup_ratio: 0.0
+
+logging:
+  logging_steps: 10
+  report_to: []
+
+saving:
+  output_dir: "outputs/T3-001"
+  save_strategy: "no"
+  save_total_limit: 1
+
+evaluation:
+  evaluation_strategy: "epoch"
+  metric_for_best_model: "compliance_pass_rate"
+  greater_is_better: true
+  load_best_model_at_end: false
+
+generation:
+  temperature: 0.0
+  max_length: 512
+  max_new_tokens: 512
+  num_beams: 1
+
+task3:
+  level_policy_version: "v001"
+  use_compliance_checker: true
+  regenerate_on_violation: true

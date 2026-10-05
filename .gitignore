@@ -1,0 +1,53 @@
+# Superpowers execution scratch space
+.superpowers/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+
+# Private dataset material
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+
+# Models and checkpoints
+checkpoints/
+models/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Generated outputs
+outputs/
+predictions*.json
+
+# Logs and experiment tool state
+logs/
+wandb/
+
+# OS and editors
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Private teaching samples and research notebook runtime files
+sample_dataset/
+.ipynb_checkpoints/
+
+# Dedicated Python 3.11 execution environment for notebook kernels
+.notebook-venv/
+.ruff_cache/

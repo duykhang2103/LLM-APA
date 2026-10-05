@@ -1,0 +1,14 @@
+[
+  {
+    "sample_id": "synthetic-001",
+    "output": {
+      "compilable": 1,
+      "io_format": 1,
+      "logic": 1,
+      "edge_case": 1,
+      "complexity": 1,
+      "code_quality": 1,
+      "total": 6
+    }
+  }
+]
