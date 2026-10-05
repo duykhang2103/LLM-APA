@@ -66,6 +66,30 @@ def test_prepare_predict_evaluate_package(tmp_path):
         tmp_path / "submission.zip",
     )
     assert (tmp_path / "submission.zip").exists()
+    import zipfile
+
+    with zipfile.ZipFile(tmp_path / "submission.zip") as archive:
+        challenge = json.loads(archive.read("predictions.json"))
+    assert set(challenge[0]["output"]) == {"rubric", "total_score"}
+    exported = tmp_path / "challenge.json"
+    run(
+        "scripts/package_predictions.py",
+        "--task",
+        "task1",
+        "--input",
+        output,
+        "--output",
+        exported,
+    )
+    run(
+        "scripts/validate_predictions.py",
+        "--task",
+        "task1",
+        "--input",
+        exported,
+        "--format",
+        "challenge",
+    )
 
 
 def test_config_validation_and_notebooks(tmp_path):

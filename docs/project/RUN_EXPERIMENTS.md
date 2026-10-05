@@ -40,12 +40,28 @@ Task 1 examples expose rubric targets; Task 2 exposes taxonomy; neither exposes 
 
 ## F0: smoke, train, reload, resume
 
+The current F0 configs use version 2 and new output/preparation directories. Task 3 P0/P1 also use the stricter `v002` prompt; `v001` is preserved for recorded runs. The 32 supplied samples are format fixtures. Inspect them without loading a model:
+
+```bash
+uv run python scripts/prepare_data.py --config configs/task3/qwen_lora.yaml --input data/sample_dataset --output outputs/sample-quality/task3.json
+```
+
+Preparation reports coverage separately for train/validation/test. Training writes `training_data_audit.json` with flags, inclusion reasons, review-file hash, retained support, unchanged validation membership, and repetition counts. `data.quality.exclude_flags` defaults to feedback-level violations; compiler/test and question-weight conflicts remain review-only because logs are not lecturer ground truth. Private `data.quality.review_file` decisions can explicitly keep or exclude training records, with nonempty reasons. Every ID must belong to the training split; never review/relabel the private test set. Example review file:
+
+```json
+{"synthetic-001": {"action": "exclude", "reason": "Confirmed source-version mismatch"}}
+```
+
+Default Task 2/3 fine-tuning configs require all ten labels/four levels in the retained training data. Missing support stops training and saves the audit before model loading. For a deliberately small smoke/ablation, explicitly set `data.quality.require_coverage: false` in a new experiment config; do not invent missing labels or claim official quality from this sample. Task 2 balances observed labels and Task 3 balances observed feedback levels by repeating existing training references at most three times. Validation is never balanced or filtered; coverage and duplicates remain visible.
+
+Generated validation runs at each evaluation interval and saves first-pass raw/parsed completions under `generated_validation/step-*.json`. Task 1 selection uses `(QWK + 1) / 2 * valid_rate`; Task 2 uses `macro_F1 * valid_rate`, retaining the fixed ten-label definition. Invalid responses are counted and penalized, not replaced with teacher answers. The selected checkpoint is reloaded for the final adapter. Task 3 logs heuristic compliance only; automatic best-checkpoint selection is disabled because that proxy cannot measure diagnosis quality. Review generated feedback independently before choosing the Task 3 adapter. Generated checkpoint evaluation currently supports single-process training, and adds generation time to validation.
+
 Edit `qwen_lora.yaml`, then prepare the same data contract:
 
 ```bash
 uv run python scripts/prepare_data.py --config configs/task1/qwen_lora.yaml --training
-uv run python scripts/smoke.py --config data/processed/task1-v1/config-task1-F0-v1.json --training
-uv run python scripts/train.py --config data/processed/task1-v1/config-task1-F0-v1.json
+uv run python scripts/smoke.py --config data/processed/task1-v2/config-task1-F0-v2.json --training
+uv run python scripts/train.py --config data/processed/task1-v2/config-task1-F0-v2.json
 ```
 
 Smoke checks tokenizer/model, finite loss, LoRA updates, checkpoint save, adapter reload, one validation prediction/schema/evaluator, in a separate `smoke/` folder. Full training saves adapter/tokenizer, train/validation losses, base revision, metadata, and optimizer-bearing checkpoints. Check the longest input budget, not just a short sample, before spending GPU hours. No GPU run has been demonstrated by the CPU test suite.
@@ -53,9 +69,9 @@ Smoke checks tokenizer/model, finite loss, LoRA updates, checkpoint save, adapte
 Use the **exact revision recorded in `run_manifest.json`** for inference; set it in the materialized config, and provide the adapter:
 
 ```bash
-uv run python scripts/predict.py --config data/processed/task1-v1/config-task1-F0-v1.json --split val --adapter-path outputs/task1/F0-v1/adapter
-uv run python scripts/evaluate.py --config data/processed/task1-v1/config-task1-F0-v1.json --split val --predictions outputs/task1/F0-v1/predictions.json
-uv run python scripts/train.py --config data/processed/task1-v1/config-task1-F0-v1.json --resume-from-checkpoint outputs/task1/F0-v1/checkpoint-100
+uv run python scripts/predict.py --config data/processed/task1-v2/config-task1-F0-v2.json --split val --adapter-path outputs/task1/F0-v2/adapter
+uv run python scripts/evaluate.py --config data/processed/task1-v2/config-task1-F0-v2.json --split val --predictions outputs/task1/F0-v2/predictions.json
+uv run python scripts/train.py --config data/processed/task1-v2/config-task1-F0-v2.json --resume-from-checkpoint outputs/task1/F0-v2/checkpoint-100
 ```
 
 Replace `checkpoint-100` with an existing checkpoint. Resume restores optimizer/scheduler state and rejects changed data/model/template/LoRA settings. A completed run needs additional epochs/steps to continue; it does not repeat completed steps automatically. For a new hypothesis, use F0-v2/new output path; optionally set `training.warm_start_adapter` to start from old adapter weights with a fresh optimizer. An `adapter/` folder alone cannot resume Trainer state.
@@ -64,7 +80,11 @@ Cloud notebooks use the same scripts and path-based persistent storage (Drive/mo
 
 ## Fair comparison and final acceptance
 
-Use identical inputs, splits, evaluator and prediction contract. Task 2 uses fixed ten-label sklearn-style zero_division=0; confirm lecturer semantics when supplied. Task 3 overlap/compliance are diagnostics requiring feedback review. Inspect label support and exam/level/conflict slices, plus RAG duplicate audits. Preserve sample annotations; see [DATA_FINDINGS.md](DATA_FINDINGS.md).
+Task 3 generation makes at most one compliance retry by default (`task3.max_compliance_retries`, bounded 0–3). A persistent detected violation stops the prediction command. The checker catches common code/fix/location patterns, not arbitrary semantic disclosure. It is labeled heuristic in artifacts and cannot certify correctness. Evaluation recomputes compliance rather than trusting stored `pass` values; input labels are never counted as predicted diagnoses.
+
+Use `scripts/evaluate.py --judgments path/to/private-review.json` for independent Task 3 semantic judgments on a held-out subset. The file maps prediction IDs to `judge` (reviewer/model and version), `feedback_sha256` (SHA-256 of the exact UTF-8 feedback), `feedback_level`, `diagnosis_correct`, and `level_compliant`. Boolean ratings are required; mismatched text/level is rejected. Without judgments, diagnosis accuracy is reported as unavailable, not inferred from the supplied labels. Review-count and semantic metrics are reported separately from heuristic compliance.
+
+Use identical inputs, splits, evaluator and prediction contract. Task 2 uses fixed ten-label sklearn-style zero_division=0; confirm lecturer semantics when supplied. Task 3 heuristic compliance is a diagnostic; diagnosis accuracy requires independent feedback judgments. Inspect label support and exam/level/conflict slices, plus RAG duplicate audits. Preserve sample annotations; see [DATA_FINDINGS.md](DATA_FINDINGS.md).
 
 Freeze the selected inference config/adapter before final test material. Only configure paths:
 
@@ -74,6 +94,6 @@ uv run python scripts/validate_predictions.py --task task1 --input outputs/final
 uv run python scripts/package_predictions.py --task task1 --input outputs/final/predictions.json --output outputs/final/submission.zip
 ```
 
-No retraining or target inspection is involved. Packaging retains `{sample_id, output}`; confirm any different lecturer submission schema. Keep code/data/checkpoints/response logs private. SemIf/F1 remains a later optional extension, not a training dependency.
+No retraining or target inspection is involved. Packaging defaults to the lecturer sample contract: Task 1 nested `rubric` and `total_score`, Task 2 `taxonomy_error`, Task 3 `feedback` only. Use `--format internal` solely for internal artifacts. Export to `.json` or `.zip`; validate exported JSON with `scripts/validate_predictions.py --format challenge`. Confirm this contract against the official validator when supplied. Keep code/data/checkpoints/response logs private. SemIf/F1 remains a later optional extension, not a training dependency.
 
 Implementation follows [Qwen text-only loading](https://huggingface.co/docs/transformers/model_doc/qwen3_5), [PEFT quantized training](https://huggingface.co/docs/peft/developer_guides/quantization), and [Trainer resume](https://huggingface.co/docs/transformers/main_classes/trainer#transformers.Trainer.train). GPU memory/quality must be measured on the team's platform.
