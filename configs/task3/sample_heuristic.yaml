@@ -13,7 +13,7 @@ model:
   revision: null
 
 data:
-  input_path: "sample_dataset"
+  input_path: "data/sample_dataset"
   train_path: null
   validation_path: null
   test_path: null

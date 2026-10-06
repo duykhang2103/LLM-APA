@@ -1,39 +1,62 @@
-"""Create a reproducible run manifest for the local baseline.
+"""Train QLoRA or resume a Trainer checkpoint; heuristic runs only write a manifest."""
 
-The heuristic method intentionally does not pretend to train. The Qwen3.5-4B
-LoRA config is recorded, but its model adapter is an explicit future extension.
-"""
-
-from pathlib import Path
 import argparse
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "src"))
-
-from llm_grading.pipeline import build_task_pipeline
+sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from llm_grading.runtime import load_samples_for_config, write_json
 from llm_grading.utils.config import load_config
+from llm_grading.utils.logging import run_metadata
 
 
-def main() -> int:
+def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True)
+    parser.add_argument("--resume-from-checkpoint")
+    parser.add_argument("--smoke", action="store_true")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Tokenize and check split/budget without optimization; loads the configured model",
+    )
     args = parser.parse_args()
     config = load_config(args.config)
-    build_task_pipeline(config)
-    samples = load_samples_for_config(config, "train")
-    output = ROOT / config["saving"]["output_dir"] / "run_manifest.json"
-    write_json(output, {
-        "experiment": config["experiment"],
-        "method": config["method"],
-        "model": config["model"],
-        "sample_count": len(samples),
-        "status": "heuristic_baseline_ready",
-        "note": "No model weights were trained by the deterministic baseline.",
-    })
-    print(f"Prepared heuristic run manifest for {config['task']} at {output}")
+    try:
+        if config["method"] == "heuristic":
+            samples = load_samples_for_config(config, "train")
+            write_json(
+                Path(config["saving"]["output_dir"]) / "run_manifest.json",
+                {
+                    "status": "heuristic_baseline_ready",
+                    "sample_count": len(samples),
+                    "note": "No weights trained",
+                },
+            )
+        elif config["method"] in {"lora", "qlora"}:
+            from llm_grading.training.trainer import train
+
+            train(
+                config,
+                load_samples_for_config(config, "train"),
+                load_samples_for_config(config, "val"),
+                resume=args.resume_from_checkpoint,
+                smoke=args.smoke,
+                dry_run=args.dry_run,
+            )
+        else:
+            raise ValueError(
+                "train.py requires method: lora/qlora (or heuristic manifest)"
+            )
+    except Exception as exc:
+        failed = {**run_metadata(config), "status": "failed", "error": str(exc)}
+        directory = Path(config["saving"]["output_dir"])
+        write_json(directory / "last_training_error.json", failed)
+        if not (directory / "run_manifest.json").exists():
+            write_json(directory / "run_manifest.json", failed)
+        raise
+    print(f"Run artifacts: {config['saving']['output_dir']}")
     return 0
 
 

@@ -4,6 +4,10 @@ This repository is the starting point for a group project in the Large Language 
 
 The goal is to build an automated system that reads anonymized C++ programming submissions and produces useful grading and feedback outputs. The project is not only about finding the strongest model. The team must also show that the system is reproducible, respects grading policies, protects private student data, and can explain why it succeeds or fails.
 
+This is a **four-week university product-research project**, with about two weeks for model experiments. The operating sequence is implement → smoke-test → freeze a working baseline → version prompting/training → resume/retrain → final lecturer acceptance.
+
+Start with [RUN_EXPERIMENTS.md](docs/project/RUN_EXPERIMENTS.md), [the QLoRA notebook](notebooks/train_qwen_qlora.ipynb), or [the prompting notebook](notebooks/run_prompting.ipynb).
+
 This README is written as a beginner guide. It explains what the project means, what each group should do, how the two technical approaches connect, and what evidence the team must save.
 
 ## 1. The challenge in plain language
@@ -65,7 +69,7 @@ Example prediction:
 }
 ```
 
-For a `multi_problem` submission, the model must understand the problem policy. If question B depends on question A and A fails its prerequisite, the deterministic policy layer may prevent B from receiving points. This rule must not be left entirely to a free-form model response.
+For a `multi_problem` submission, the model must understand the problem policy. If question B depends on question A and A fails its prerequisite, a deterministic policy layer could enforce it once an authoritative rubric mapping exists. EX01 currently has conflicting weights and no per-question-to-rubric mapping; preserve the supplied policy and do not invent a score conversion.
 
 Primary metric: QWK on the total score.
 
@@ -113,22 +117,7 @@ Em hay kiem tra lai dieu kien dung cua vong lap va thu voi truong hop dau vao nh
 
 This points to an area for review without giving the complete fix. A response containing a finished replacement program at Level 1 is a compliance violation even if the diagnosis is correct.
 
-Recommended flow:
-
-```text
-generate candidate feedback
-        |
-        v
-check level compliance
-        |
-   +----+----+
-   |         |
- pass      violation
-   |         |
- output   regenerate or revise
-```
-
-Evaluation must report diagnosis correctness and level compliance separately.
+Use one-pass generation and the existing compliance diagnostics first. Task 3 follows the supplied level; teacher supervision may be noisy. Regeneration or typed decisions can be later experiments, not prerequisites.
 
 ## 3. Non-negotiable project rules
 
@@ -165,153 +154,30 @@ Evaluation must report diagnosis correctness and level compliance separately.
 | Macro-F1 | Average F1 across labels, giving rare labels equal importance to common labels. |
 | QWK | A score-agreement metric useful when predicted and reference grades are ordered. |
 
-## 5. Overall architecture
-
-Use one shared diagnostic backbone so that the three tasks do not become three unrelated notebooks:
+## 5. Existing architecture
 
 ```text
-problem metadata + statement + code + optional logs
-                         |
-                         v
-              normalized submission record
-                         |
-                         v
-              shared diagnostic evidence
-             /            |              \
-            v             v               v
-       Task 1 rubric  Task 2 labels  Task 3 feedback
-            |             |               |
-       score rules    thresholds     level checker
-            \             |               /
-             \            |              /
-              v           v             v
-                 validated predictions
+normalized loader → task input whitelist → versioned prompt/target formatter
+  → heuristic / local HF / API runner / QLoRA adapter
+  → task parsing → prediction validator → shared evaluator
 ```
 
-The model handles semantic reasoning. Deterministic code should handle rules that can be expressed exactly: score ranges, totals, prerequisite policies, label validation, thresholds, JSON schema, and feedback-level checks.
+Keep this direct Python structure. Task 2 is not a bottleneck for Task 1. Logs are auxiliary evidence. Shared validators enforce rubric ranges, calculated totals, and taxonomy membership; EX01 policy conversion remains unresolved.
 
-## 6. Workstreams: start prompting and fine-tuning in parallel
+## 6. Runnable workstreams
 
-Do not wait for one approach to finish before starting the other. The groups can work in parallel after the shared data contract and evaluation contract are agreed.
+- **P0:** `method: zero_shot`, separate Task 1/2/3 prompts, deterministic local HF or a simple configured chat API. Task 1/2 use strict JSON with one format-repair retry; unresolved failures stop and are logged, without heuristic fallback.
+- **P1:** `method: rag`, training-only dense retrieval in memory. Configure `k: 1`, `3`, or `5`; self matches are excluded. Compare normal vs normalized-code/optional near-duplicate restriction. Task 3 filters candidates to the requested level. Task 1/2 examples never include feedback.
+- **F0:** Qwen3.5-4B text backbone + 4-bit NF4 QLoRA, task-specific completion-only targets, PEFT adapter save/reload, Trainer checkpoint resume. Use the same code locally and in notebooks.
+- **F1:** SemIf-style typed decisions remain an optional later TODO. No services, vector database, tracking platform, or orchestration framework is required.
 
-### Shared foundation: everyone depends on this
+## 7. Comparison and readiness
 
-Before either technical group trusts its results, the shared owners should provide:
+Use the same dataset/split IDs, input rules, evaluator, and `{sample_id, output}` contract. The splitter keeps exact normalized-code groups together with seeded exam-type stratification; official split paths override local splitting. Preparation persists IDs and rejects changed source/split settings under the same prepared directory.
 
-1. A loader that resolves `code_file` and produces one normalized sample shape.
-2. A fixed train/validation split, with the grouping rule documented.
-3. Task-specific input builders that exclude `feedback` for Tasks 1 and 2.
-4. Evaluation functions for QWK, MAE, exact match, macro-F1, micro-F1, and Task 3 compliance diagnostics.
-5. A prediction schema and validator.
-6. A configuration file for every experiment.
-7. Seed setup, logging, and an experiment registry.
+Task 2 now averages all ten labels using sklearn-style `zero_division=0`; always report per-label support. Confirm this against lecturer evaluator semantics when supplied. Task 3 label-overlap and compliance checks are diagnostics, not semantic correctness evaluation. Inspect EX01/EX02, conflict flags, rare labels, feedback levels, and retrieval duplicates. Read [sample findings](docs/project/DATA_FINDINGS.md).
 
-If one of these is missing, both groups may appear to improve only because they used different data, splits, or metrics.
-
-### Group A: Prompting and Retrieval
-
-This group changes instructions, examples, retrieval, and post-processing while keeping the model weights fixed.
-
-#### Recommended order
-
-1. Start with zero-shot prompts for all three tasks.
-2. Make the output structured JSON rather than free-form text.
-3. Add deterministic post-processing and validation.
-4. Add a small few-shot prompt using only training examples.
-5. Add similarity-based retrieval from the training split.
-6. Add Task 1 prerequisite rules, Task 2 per-label thresholds, and Task 3 compliance checking.
-7. Save the best prompt and every ablation as a versioned experiment.
-
-#### What to implement
-
-- Prompt templates under `tasks/*/prompts/`.
-- Input formatting under `src/llm_grading/prompting/`.
-- Retrieval index and retriever under `src/llm_grading/retrieval/`.
-- Structured parsing and post-processing for each task.
-- A Task 3 generator/checker/regeneration loop.
-
-#### Simple prompt pattern
-
-```text
-SYSTEM: You are grading a C++ submission.
-RULES: Return only the required JSON fields. Do not use feedback for Task 1.
-PROBLEM: <problem statement>
-CODE: <student code>
-AUXILIARY EVIDENCE: <compile log or test report when allowed>
-OUTPUT SCHEMA: <exact JSON shape>
-```
-
-The exact prompt must be saved as `v001`, `v002`, and so on. Do not edit an old prompt in place after using it for an official experiment.
-
-#### Group A checklist
-
-- [ ] Can explain every input field in the prompt.
-- [ ] Has one zero-shot baseline per task.
-- [ ] Has structured output examples and invalid-output handling.
-- [ ] Few-shot examples come only from the training split.
-- [ ] RAG retrieval is versioned and leakage-safe.
-- [ ] Task 1 total is computed by code.
-- [ ] Task 2 thresholds are recorded per label.
-- [ ] Task 3 Level 1/2 violations trigger a recorded checker result.
-- [ ] Each run has an experiment ID, prompt version, seed, and metrics.
-
-### Group B: Fine-tuning and Model Infrastructure
-
-This group changes model weights and the local training/inference system.
-
-#### Recommended order
-
-1. Benchmark two or three small open-weight candidates on the real hardware.
-2. Select a model that can run locally within the available VRAM and time.
-3. Convert normalized samples into instruction/response training records.
-4. Train a very small LoRA/QLoRA pilot before a long run.
-5. Verify that the adapter can be loaded for local inference.
-6. Train separate task adapters first because they are easier to debug.
-7. Compare the fine-tuned model against the best prompting result using the same split and metrics.
-
-#### What to record
-
-- Model name, license, revision, tokenizer, context length, and quantization.
-- GPU name, VRAM, RAM, operating system, training time, and inference latency.
-- Training examples and filtering rules.
-- Learning rate, batch size, gradient accumulation, epochs, LoRA rank, and target modules.
-- Checkpoint path outside Git.
-- Validation metrics and failure examples.
-
-#### Group B checklist
-
-- [ ] Hardware inventory is written down before model selection.
-- [ ] At least two candidates are compared using the same small smoke input.
-- [ ] Training data does not contain forbidden Task 1/2 feedback inputs.
-- [ ] The pilot run finishes before the full run is started.
-- [ ] The adapter loads locally after training.
-- [ ] Checkpoints are not committed to Git.
-- [ ] The same evaluation script is used for prompting and fine-tuning.
-- [ ] VRAM, cost, time, and quality are reported together.
-
-## 7. Integration gates between the two groups
-
-These are deliverable gates, not a forced calendar sequence.
-
-### Gate A: shared contract
-
-Both groups use the same normalized sample fields, train/validation IDs, output schema, metric implementation, seed policy, and config convention.
-
-### Gate B: comparable baselines
-
-Both groups can produce a valid prediction file for at least one task. The prediction files use the same sample IDs and can be evaluated by the same evaluator.
-
-### Gate C: parallel candidates
-
-Group A has a versioned prompting/RAG candidate. Group B has a locally running fine-tuned candidate. Both record experiment metadata.
-
-### Gate D: fair comparison
-
-Compare the best candidates with the same split, input signals, output constraints, and evaluation code. Report quality, latency, VRAM, cost, and reproducibility together.
-
-### Gate E: final selection
-
-Select the final system based on private-leaderboard performance when available, local metrics, ablations, error analysis, implementation risk, and reproducibility. Do not choose only by a single score.
+CPU tests exercise actual tiny-model adapter training/save/reload/resume and dense encoding without downloads. **Qwen3.5-4B QLoRA GPU acceptance is separate:** run `scripts/smoke.py --training` on the intended CUDA machine before a full run. Do not claim GPU readiness from CPU tests alone.
 
 ## 8. Example experiment record
 
@@ -321,13 +187,14 @@ An experiment is not complete just because a script ran. Record enough informati
 experiment_id: T1-001
 task: task1
 owner: M3
-method: structured_zero_shot
+method: zero_shot
+research_version: P0-v1
 model: <exact model name>
 model_revision: <revision or commit>
 seed: 42
 dataset_version: dataset-v1
 split_version: split-v1
-config_path: configs/task1/qwen_lora.yaml
+config_path: configs/task1/zero_shot.yaml
 prompt_version: v001
 primary_metric: qwk_total
 secondary_metrics:
@@ -337,44 +204,16 @@ git_commit: <commit>
 notes: First structured baseline; no retrieval.
 ```
 
-Use the naming pattern `T{task}-{number}`. Avoid names such as `final_v2_best_REAL_final_new`.
+Keep legacy `T{task}-{number}` IDs. New configs use task-prefixed method versions such as `task1-P0-v1`, `task1-P1-v1`, `task1-F0-v0-smoke`, and `task1-F0-v1`; use a new output directory for each hypothesis. Avoid names such as `final_v2_best_REAL_final_new`.
 
-## 9. First project session checklist
+## 9. Start experiments
 
-### Everyone
-
-- [ ] Read this README, `PROJECT_PLAN.md`, and `SOURCE_SETUP.md`.
-- [ ] Learn the input/output contract for all three tasks.
-- [ ] Agree that private data stays in local ignored directories.
-- [ ] Record available GPU, VRAM, RAM, operating system, and time budget.
-- [ ] Decide who owns shared contracts and who reviews each workstream.
-
-### Shared owners
-
-- [ ] Inspect the supplied data layout.
-- [ ] Resolve one `code_file` reference successfully.
-- [ ] Write the normalized sample schema.
-- [ ] Choose and document the split strategy.
-- [ ] Create the first dummy prediction schema.
-- [ ] Read the safe fixtures in `examples/` before writing loaders or validators.
-
-### Prompting/Retrieval group
-
-- [ ] Write one plain zero-shot prompt per task.
-- [ ] Define the exact JSON output shape.
-- [ ] Identify five training examples for later few-shot testing.
-- [ ] List the first RAG retrieval fields.
-
-### Fine-tuning group
-
-- [ ] Benchmark two or three candidate open-weight models.
-- [ ] Check license and local hardware requirements.
-- [ ] Prepare one small training record for each task.
-- [ ] Run a short LoRA/QLoRA pilot only after the schema is agreed.
-
-### Meeting output
-
-End the meeting with named owners, reviewers, the first experiment IDs, the shared split decision, the model candidates, and the next measurable deliverable for each group.
+1. Place private data under `data/raw/`; set explicit official train/dev/test paths if supplied.
+2. `uv sync --group dev --group ml` (Python 3.11; CUDA for QLoRA).
+3. Prepare splits, then run the P0 or F0 smoke command in [the run guide](docs/project/RUN_EXPERIMENTS.md).
+4. Freeze successful P0/F0 versions, analyze failures, then run P1 or one specific retraining change.
+5. Resume Trainer checkpoints when continuing the same experiment; warm-start adapters deliberately for new versions.
+6. Freeze candidates before lecturer test data; predict → validate → package without inspecting private targets.
 
 ## 10. Common beginner mistakes
 
@@ -412,7 +251,7 @@ tests/                      executable tests for shared contracts and metrics
 reports/                    EDA, ablation, error analysis, and figures
 ```
 
-The repository now includes a runnable deterministic baseline for data loading, Task 1/2/3 prediction, evaluation, and prediction validation. Real prompting and LoRA adapter execution remain explicit extension points; unsupported model methods fail instead of silently falling back to the heuristic.
+The heuristic remains a cheap smoke baseline. Model runners, dense retrieval, QLoRA training, adapter inference, resume, and essential tests are implemented; hardware-dependent execution still requires the intended CUDA environment and private data.
 
 ## 12. Runnable local baseline
 
@@ -450,7 +289,7 @@ Run the same prediction command with `configs/task2/heuristic.yaml` or `configs/
 
 ### Teacher-format sample data
 
-The supplied `sample_dataset/` contains 32 submissions: 15 for the multi-problem EX01 exam and 17 for the single-problem EX02 exam. It is a format-demonstration dataset, not the official train/dev/test data. Keep it unchanged and local; the whole directory is ignored by Git. Place the full dataset under `data/raw/` when it arrives, preserving the supplied layout:
+The supplied `sample_dataset/` contains 32 submissions: 15 for the multi-problem EX01 exam and 17 for the single-problem EX02 exam. It is a format-demonstration dataset, not the official train/dev/test data. Keep it unchanged and local; the directory is ignored by Git. It is not included in every checkout. Place the full dataset under `data/raw/` when it arrives, preserving the supplied layout:
 
 ```text
 <dataset-root>/
@@ -489,7 +328,7 @@ uv run python scripts/validate_predictions.py --task task1 --input outputs/T1-00
 
 Use `configs/task2/sample_heuristic.yaml` and `configs/task3/sample_heuristic.yaml` for the other tasks; their output directories are `outputs/T2-002/` and `outputs/T3-002/`. Each config evaluates all 32 samples as a smoke check, using `data.input_path` without claiming an official test or validation split. Predictions, metrics, and preparation reports stay in ignored `outputs/` directories. The heuristic checks plumbing; its scores are not Qwen prompting results. Saved predictions retain the shared `{sample_id, output}` contract: Task 1 uses flat components plus computed `total`, Task 2 uses `error_labels`, and Task 3 includes feedback and compliance diagnostics. The teacher's nested reference format is normalized on input, not adopted as a new internal prediction format.
 
-For future full-data experiments, configure fixed `train_path`, `validation_path`, and `test_path` records and record the split version. `--split val` and `--split validation` both use `validation_path`; a split path falls back to `input_path` only when none is configured. Do not silently regenerate or tune on the 32 demonstration samples as if they were an official validation benchmark.
+For future full-data experiments, configure fixed `train_path`, `validation_path`, and `test_path` records and record the split version. `--split val` and `--split validation` both use `validation_path`; only the heuristic may fall back to `input_path`. Learned methods require explicit split paths, or an explicit inference `--input` file. Do not silently regenerate or tune on the 32 demonstration samples as if they were an official validation benchmark.
 
 Known sample limitations are preserved rather than repaired:
 
@@ -497,50 +336,22 @@ Known sample limitations are preserved rather than repaired:
 - EX01 requires P1 before P2-P4. The loader carries that policy through, but the current heuristic does not enforce it. EX01 expects function-only submissions, so absence of `main` is not a grading failure by itself.
 - Compiler logs are auxiliary evidence, not labels. Four samples have nonempty diagnostics while the teacher assigns `compilable = 1`; all 32 reference rubric totals match their component sums.
 
-## 13. Configuration and fine-tuning handoff
+## 13. Configs, artifacts, and limitations
 
-Every experiment config uses the same readable sections:
+`configs/task*/zero_shot.yaml`, `rag.yaml`, `qwen_lora.yaml`, and `qwen_smoke.yaml` expose model/revision, seed, input paths, quantization, LoRA settings, token budget, optimizer, evaluation, and checkpoint settings. Set real data paths; these configs never pretend the synthetic sample is an official benchmark.
 
-```text
-experiment, task, method, model, data, training, logging,
-saving, evaluation, generation, task-specific settings
-```
+Each run saves resolved config and JSON manifests; learned predictions append raw responses, parsed outputs, errors, retries, usage/latency/cost where available, and retrieval audit information. Training saves losses, hardware, base revision, adapter identity, and optimizer-bearing Trainer checkpoints. Keep these artifacts private. No tracking database is used.
 
-The deterministic configs use `method: heuristic`. The fine-tuning configs use `method: lora` and record the agreed model target:
+Local QLoRA requires CUDA and bitsandbytes; this Mac has no CUDA. Context overflow fails explicitly rather than silently truncating evidence. API execution needs an environment key, provider model/base URL, and permitted data transmission. Teacher annotations remain untouched; EX01 weights, annotation conflicts, and Task 3 supervision noise are unresolved data questions. The external final submission format must be confirmed with the lecturer; packaging currently preserves the repository contract.
 
-```yaml
-model:
-  name_or_path: "Qwen/Qwen3.5-4B"
-method: "lora"
-```
+## 14. Acceptance
 
-Those configs are ready for the fine-tuning team to extend, but the current baseline intentionally raises an explicit `Model adapter not configured` error until the Qwen3.5-4B training/inference adapter is implemented. This prevents an experiment from being mislabeled as fine-tuning.
-
-The current baseline implements:
-
-- Task 1 score ranges, deterministic totals, QWK, MAE, and component exact match.
-- Task 2 centralized taxonomy validation, empty-label handling, macro/micro-F1, and per-label metrics.
-- Task 3 feedback generation, basic Level 1/2 compliance checks, and compliance-rate diagnostics.
-- Feedback-free Task 1/2 input whitelists.
-- Five CLI entry points with actionable errors and JSON output.
-
-## 14. Definition of done
-
-The project is ready for final submission only when:
-
-- all three tasks run end-to-end;
-- both prompting and locally fine-tuned open-weight approaches exist;
-- prediction files pass validation;
-- Task 1 totals and multi-problem rules are deterministic;
-- Task 2 rare-label behavior and thresholds are analyzed;
-- Task 3 level compliance is checked automatically;
-- ablations and error slices are documented;
-- the best system can be reproduced from a clean environment;
-- model, data, split, prompt, seed, hardware, and Git revision are recorded;
-- no private data or secrets are committed;
-- the report, model card, slides, and contribution table are complete.
+Run essential tests with `uv run pytest`. Smoke the actual GPU path before full training. A completed experiment needs validated predictions, shared metrics and failure analysis, saved configs/revisions/split IDs, and a reloadable adapter/checkpoint where applicable. Final course deliverables include the report, model card, slides, contribution table, and lecturer-format predictions. F1 and elaborate infrastructure are not acceptance requirements.
 
 ## References
+
+- [RUN_EXPERIMENTS.md](docs/project/RUN_EXPERIMENTS.md): CLI and notebook execution.
+- [DATA_FINDINGS.md](docs/project/DATA_FINDINGS.md): preliminary sample findings.
 
 - [PROJECT_PLAN.md](docs/project/PROJECT_PLAN.md): ownership, workstreams, integration gates, experiments, and completion criteria.
 - [SOURCE_SETUP.md](docs/project/SOURCE_SETUP.md): repository contracts and contributor workflow.

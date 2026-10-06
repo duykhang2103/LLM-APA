@@ -15,7 +15,7 @@ complexity 0–1
 code_quality 0–1
 ```
 
-The total must be derived from the components. Multi-problem submissions must preserve prerequisite and dependency rules from the problem. The future model input must not contain `feedback`.
+The total must be derived from the components. Multi-problem inputs preserve prerequisite policies. EX01 weight metadata conflicts and has no authoritative per-question-to-rubric mapping; do not invent one. The input whitelist excludes `feedback`, labels, and reference scores.
 
 ## Evaluation target
 
@@ -25,7 +25,7 @@ Primary: QWK on total score. Secondary: MAE and exact match per component.
 
 - `dataset.py`: task-specific input/target view.
 - `pipeline.py`: task interface and orchestration boundary.
-- `postprocess.py`: future structured-output and score-range handling.
+- `postprocess.py`: bounded rubric validation and deterministic totals.
 - `prompts/`: immutable prompt versions.
 
-Start with `examples/normalized_sample.json` and `examples/predictions/task1.json` before implementing these files.
+P0/P1/F0 use the shared model pipeline, this task’s `prompts/v001.txt`, and task-specific training targets. Start with the synthetic fixtures, then follow [RUN_EXPERIMENTS.md](../../docs/project/RUN_EXPERIMENTS.md).

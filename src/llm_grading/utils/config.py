@@ -1,7 +1,8 @@
 """Load the standalone experiment YAML files used by every CLI."""
 
-from pathlib import Path
+import json
 import re
+from pathlib import Path
 from typing import Any
 
 try:
@@ -101,7 +102,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if not config_path.exists():
         raise FileNotFoundError(f"Config file does not exist: {config_path}")
     text = config_path.read_text(encoding="utf-8")
-    config = yaml.safe_load(text) if yaml is not None else _minimal_yaml_load(text)
+    config = json.loads(text) if config_path.suffix == ".json" else (yaml.safe_load(text) if yaml is not None else _minimal_yaml_load(text))
     if not isinstance(config, dict):
         raise ValueError(f"Config must contain a mapping: {config_path}")
     missing = REQUIRED_SECTIONS.difference(config)
@@ -113,6 +114,15 @@ def load_config(path: str | Path) -> dict[str, Any]:
         task = match.group(0) if match else None
     if not task:
         raise ValueError("Config must define a top-level 'task' such as 'task1'")
+    if task not in {"task1", "task2", "task3"}:
+        raise ValueError(f"Unknown task: {task}")
+    if config["method"] not in {"heuristic", "zero_shot", "rag", "lora", "qlora"}:
+        raise ValueError("Unknown experiment method")
+    if any(k in config["model"] for k in ("api_key", "token")):
+        raise ValueError("API credentials belong in environment variables")
+    if config["method"] in {"lora", "qlora"}:
+        if not config.get("lora") or config["training"].get("max_sequence_length", 0) < 1:
+            raise ValueError("LoRA settings and positive training.max_sequence_length are required")
     config["task"] = task
     config["_config_path"] = str(config_path)
     return config

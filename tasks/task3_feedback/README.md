@@ -15,9 +15,9 @@ Evaluate diagnosis correctness and level compliance separately. Record violation
 ## Files
 
 - `dataset.py`: task-specific input/target view.
-- `pipeline.py`: generation, checking, and regeneration boundary.
+- `pipeline.py`: deterministic baseline; shared model execution adds generated feedback and compliance diagnostics.
 - `compliance.py`: centralized checker interface.
 - `prompts/level_policy.md`: one policy for all experiments.
 - `prompts/`: immutable prompt versions.
 
-Start with `examples/normalized_sample.json` and `examples/predictions/task3.json` before implementing these files.
+The v002 prompt follows the supplied level definitions. Training and RAG exclude heuristic feedback-level violations by default, with auditable private review overrides. Validation references are preserved. Model generation allows one bounded compliance retry, then fails rather than returning a detected violation. Heuristic compliance cannot establish semantic correctness; independent judgments are required to report diagnosis accuracy. Follow [RUN_EXPERIMENTS.md](../../docs/project/RUN_EXPERIMENTS.md).

@@ -1,14 +1,37 @@
-"""Build and persist a retrieval index over permitted training examples.
+"""Small in-memory dense index; encoder loaded once."""
 
-The index must be built from an approved split. Store its dataset version,
-split version, embedding model, and index configuration so another teammate
-can rebuild it. Task 1/2 retrieval records must not expose reference feedback.
-"""
-
-from typing import Any, Iterable, Mapping
+import numpy as np
 
 
-def build_index(records: Iterable[Mapping[str, Any]]) -> object:
-    """Create an index from leakage-safe records selected by the caller."""
-    # TODO: Define embeddings, storage, versioning, and leakage-safe records.
-    raise NotImplementedError("Retrieval indexing is not implemented in the scaffold.")
+class DenseIndex:
+    def __init__(self, texts, settings, encoder=None):
+        if encoder is None:
+            from sentence_transformers import SentenceTransformer
+
+            encoder = SentenceTransformer(
+                settings.get(
+                    "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
+                ),
+                revision=settings.get("embedding_revision"),
+                device=settings.get("device", "cpu"),
+            )
+        self.encoder = encoder
+        self.vectors = np.asarray(encoder.encode(texts, normalize_embeddings=True))
+        self.settings = settings
+        model_config = (
+            getattr(getattr(encoder[0], "auto_model", None), "config", None)
+            if hasattr(encoder, "__getitem__")
+            else None
+        )
+        self.metadata = {
+            "model": settings.get(
+                "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
+            ),
+            "revision": getattr(model_config, "_commit_hash", None)
+            or settings.get("embedding_revision"),
+            "max_sequence_length": getattr(encoder, "max_seq_length", None),
+        }
+
+    def scores(self, text):
+        vector = np.asarray(self.encoder.encode([text], normalize_embeddings=True))[0]
+        return self.vectors @ vector

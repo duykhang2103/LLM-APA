@@ -1,14 +1,33 @@
-"""LoRA/QLoRA adapter configuration boundary.
-
-Record rank, alpha, dropout, target modules, quantization, and trainable
-parameter count. Begin with separate task adapters because they are easier for
-new contributors to debug than an immediate multi-task adapter.
-"""
-
-from typing import Any, Mapping
+"""Conventional PEFT adapters; frozen base weights, configurable LoRA."""
 
 
-def build_lora_config(config: Mapping[str, Any]) -> object:
-    """Create the adapter settings used by the shared trainer."""
-    # TODO: Choose target modules, rank, alpha, dropout, and quantization settings.
-    raise NotImplementedError("LoRA configuration is not implemented in the scaffold.")
+def configure_lora(model, config):
+    from peft import (
+        LoraConfig,
+        PeftModel,
+        get_peft_model,
+        prepare_model_for_kbit_training,
+    )
+
+    training = config["training"]
+    checkpointing = training.get("gradient_checkpointing", True)
+    if config.get("quantization", {}).get("load_in_4bit", False):
+        model = prepare_model_for_kbit_training(
+            model,
+            use_gradient_checkpointing=checkpointing,
+            gradient_checkpointing_kwargs={"use_reentrant": False},
+        )
+    if training.get("warm_start_adapter"):
+        return PeftModel.from_pretrained(
+            model, training["warm_start_adapter"], is_trainable=True
+        )
+    settings = config["lora"]
+    adapter = LoraConfig(
+        r=settings["rank"],
+        lora_alpha=settings["alpha"],
+        lora_dropout=settings["dropout"],
+        target_modules=settings["target_modules"],
+        bias="none",
+        task_type="CAUSAL_LM",
+    )
+    return get_peft_model(model, adapter)

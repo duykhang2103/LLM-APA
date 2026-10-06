@@ -1,14 +1,13 @@
 """Normalize teacher task files or existing flat records without rewriting data."""
 
-from collections import Counter
-from pathlib import Path
 import json
 import re
+from collections import Counter
+from pathlib import Path
 from typing import Any
 
-from .schema import NormalizedSample, RUBRIC_RANGES, validate_rubric
+from .schema import RUBRIC_RANGES, NormalizedSample, validate_rubric
 from .taxonomy import ERROR_LABELS
-
 
 TASK_FILENAMES = {
     "task1": "task1_grading.json",
@@ -130,6 +129,7 @@ def _normalize_raw(
         raise ValueError(f"Invalid or conflicting exam_type for {sample_id}")
     sample: NormalizedSample = {
         "sample_id": sample_id,
+        "_has_reference": target_field in output,
         "problem_id": exam_id,
         "problem_type": problem_type,
         "problem_statement": exam["statement"],
