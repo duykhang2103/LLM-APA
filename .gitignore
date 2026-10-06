@@ -24,7 +24,7 @@ data/cache/*
 
 # Models and checkpoints
 checkpoints/
-models/
+/models/
 *.pt
 *.pth
 *.ckpt
@@ -43,3 +43,11 @@ wandb/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Private teaching samples and research notebook runtime files
+sample_dataset/
+.ipynb_checkpoints/
+
+# Dedicated Python 3.11 execution environment for notebook kernels
+.notebook-venv/
+.ruff_cache/

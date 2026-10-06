@@ -1,60 +1,78 @@
-# Fine-tuning configuration. The runnable heuristic configs are the smoke
-# baseline; this config records the planned Qwen3.5-4B adapter target.
 experiment:
-  id: "T3-101"
-  name: "task3_qwen35_4b_lora"
-  description: "LoRA fine-tuning configuration for Qwen3.5-4B"
-  tags: [task3, finetuning, lora, qwen3.5-4b]
-
-task: "task3"
-method: "lora"
-
+  id: task3-F0-v2
+  name: task3_F0-v2
+  notes: Change one hypothesis per version
+task: task3
+method: lora
+seed: 42
 model:
-  name_or_path: "Qwen/Qwen3.5-4B"
-  revision: null
-
+  provider: local
+  name_or_path: Qwen/Qwen3.5-4B
+  revision: main
+  dtype: bfloat16
+  attn_implementation: eager
+  adapter_path: null
+prompt:
+  version: v002
 data:
-  input_path: "examples/normalized_sample.json"
+  input_path: data/raw
   train_path: null
   validation_path: null
   test_path: null
-  dataset_version: "synthetic-v1"
-  split_version: "synthetic-v1"
+  prepared_dir: data/processed/task3-v2
+  dataset_version: lecturer-v1
+  split_version: grouped-v1
+  validation_fraction: 0.2
+  test_fraction: 0
   max_samples: null
-  max_source_length: 1024
-  max_target_length: 512
-
+  quality:
+    exclude_flags: [feedback_level_violation]
+    require_coverage: true
+    review_file: null
+quantization:
+  load_in_4bit: true
+  quant_type: nf4
+  double_quant: true
+lora:
+  rank: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules: all-linear
 training:
+  balance_by: feedback_level
+  max_repeat: 3
+  max_sequence_length: 4096
+  learning_rate: 0.0001
   num_train_epochs: 3
   per_device_train_batch_size: 1
   per_device_eval_batch_size: 1
   gradient_accumulation_steps: 4
-  learning_rate: 5.0e-5
-  lr_scheduler_type: "linear"
   warmup_ratio: 0.06
-
+  lr_scheduler_type: linear
+  gradient_checkpointing: true
+  max_steps: -1
+  resume_from_checkpoint: null
+  warm_start_adapter: null
+  optim: adamw_torch
 logging:
   logging_steps: 10
-  report_to: ["tensorboard"]
-
+  report_to: []
 saving:
-  output_dir: "outputs/T3-101"
-  save_strategy: "epoch"
+  output_dir: outputs/task3/F0-v2
+  save_strategy: epoch
+  save_steps: 50
   save_total_limit: 2
-
 evaluation:
-  evaluation_strategy: "epoch"
-  metric_for_best_model: "compliance_pass_rate"
-  greater_is_better: true
-  load_best_model_at_end: true
-
+  generated_metrics: true
+  strategy: epoch
+  eval_steps: 50
 generation:
-  temperature: 0.0
-  max_length: 512
+  do_sample: false
+  temperature: 0
+  max_input_tokens: 4096
   max_new_tokens: 512
   num_beams: 1
-
 task3:
-  level_policy_version: "v001"
-  use_compliance_checker: true
-  regenerate_on_violation: true
+  max_compliance_retries: 1
+  use_compile_log: true
+  use_test_report: true

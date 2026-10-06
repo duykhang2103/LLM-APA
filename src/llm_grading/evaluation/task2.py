@@ -14,7 +14,7 @@ def _labels(record: Mapping[str, Any], key: str = "output") -> set[str]:
     value: Any = record.get(key, record) if key == "output" else record.get(key, [])
     if isinstance(value, Mapping):
         value = value.get("error_labels", [])
-    if not isinstance(value, list):
+    if not isinstance(value, list) or any(not isinstance(x, str) for x in value):
         raise ValueError("Task 2 error_labels must be a list")
     labels = set(value)
     unknown = labels.difference(ERROR_LABELS)
@@ -39,15 +39,15 @@ def evaluate_task2(predictions: Iterable[Mapping[str, Any]], references: Iterabl
         fp = sum(label in p and label not in r for p, r in zip(predicted, expected))
         fn = sum(label not in p and label in r for p, r in zip(predicted, expected))
         support = sum(label in r for r in expected)
-        precision = tp / (tp + fp) if tp + fp else (1.0 if support == 0 and not any(label in p for p in predicted) else 0.0)
-        recall = tp / (tp + fn) if tp + fn else 1.0
+        precision = tp / (tp + fp) if tp + fp else 0.0
+        recall = tp / (tp + fn) if tp + fn else 0.0
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
         per_label[label] = {"precision": precision, "recall": recall, "f1": f1, "support": support}
         f1_values.append(f1)
         true_positive += tp
         false_positive += fp
         false_negative += fn
-    micro_precision = true_positive / (true_positive + false_positive) if true_positive + false_positive else 1.0
-    micro_recall = true_positive / (true_positive + false_negative) if true_positive + false_negative else 1.0
+    micro_precision = true_positive / (true_positive + false_positive) if true_positive + false_positive else 0.0
+    micro_recall = true_positive / (true_positive + false_negative) if true_positive + false_negative else 0.0
     micro_f1 = 2 * micro_precision * micro_recall / (micro_precision + micro_recall) if micro_precision + micro_recall else 0.0
     return {"count": len(predicted), "macro_f1": sum(f1_values) / len(f1_values), "micro_f1": micro_f1, "per_label": per_label}

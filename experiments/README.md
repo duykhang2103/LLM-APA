@@ -1,15 +1,7 @@
 # Experiment registry
 
-Use the naming convention `T{task}-{number}`, for example `T1-001`, `T2-003`, or `T3-005`.
+Keep existing `T{task}-{number}` IDs. New runs may use task-prefixed method versions: `task1-P0-v1`, `task1-P1-v1`, `task1-F0-v0-smoke`, `task1-F0-v1`, `task1-F0-v2`. Each version answers one hypothesis and uses its own output directory.
 
-Every official run should eventually record:
+Scripts write resolved config, Git revision (or unavailable), dataset/split versions, model/prompt revision, seed, losses/metrics, checkpoint paths, runtime/hardware and notes under `saving.output_dir`. Learned responses and retrieval audits stay private there. Trainer checkpoints support optimizer-state resume; final adapters support inference or deliberate warm starts. Never put keys in config.
 
-- owner and date;
-- task, method, model, and exact model revision;
-- seed, dataset version, and split version;
-- config path and prompt version;
-- hardware and inference/training parameters;
-- primary and secondary metrics;
-- checkpoint location, Git commit, and notes.
-
-Store per-run details under `experiments/runs/<experiment-id>/` and add one summary row to `results.csv`. Large checkpoints stay outside Git and are referenced by path.
+Use the existing `results.csv` for aggregate comparison rows; owners can append reviewed results after failure analysis. Do not commit raw student code, response logs, predictions, or checkpoints. See [RUN_EXPERIMENTS.md](../docs/project/RUN_EXPERIMENTS.md) for exact CLI/notebook steps and GPU acceptance limits. SemIf/F1 is optional later.

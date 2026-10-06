@@ -5,12 +5,12 @@ fixtures. Validation should check JSON shape, sample IDs, task output fields,
 score ranges, taxonomy membership, and required feedback-level diagnostics.
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
 from typing import Any
 
 from llm_grading.data.taxonomy import ERROR_LABELS
-from tasks.task1_grading.postprocess import RUBRIC_RANGES, postprocess_rubric
+from tasks.task1_grading.postprocess import postprocess_rubric
 
 
 def validate_predictions(path: str | Path, task: str) -> list[str]:
@@ -27,6 +27,8 @@ def validate_predictions(path: str | Path, task: str) -> list[str]:
 
 def validate_prediction_records(records: Any, task: str) -> list[str]:
     """Validate already-loaded prediction records and return all messages."""
+    if task not in {"task1", "task2", "task3"}:
+        return [f"Unknown task: {task}"]
     messages: list[str] = []
     if not isinstance(records, list):
         return ["Prediction root must be a JSON list"]
@@ -54,9 +56,11 @@ def validate_prediction_records(records: Any, task: str) -> list[str]:
                 messages.append(f"{prefix}: {error}")
         elif task == "task2":
             labels = output.get("error_labels")
-            if not isinstance(labels, list):
+            if not isinstance(labels, list) or any(not isinstance(x, str) for x in labels):
                 messages.append(f"{prefix}: error_labels must be a list")
             else:
+                if len(labels) != len(set(labels)):
+                    messages.append(f"{prefix}: duplicate Task 2 labels")
                 unknown = sorted(set(labels).difference(ERROR_LABELS))
                 if unknown:
                     messages.append(f"{prefix}: unknown Task 2 labels {unknown}")
@@ -65,7 +69,7 @@ def validate_prediction_records(records: Any, task: str) -> list[str]:
             if not isinstance(feedback, str) or not feedback.strip():
                 messages.append(f"{prefix}: missing Task 3 feedback")
             level = output.get("feedback_level")
-            if not isinstance(level, int) or level not in {1, 2, 3, 4}:
+            if isinstance(level, bool) or not isinstance(level, int) or level not in {1, 2, 3, 4}:
                 messages.append(f"{prefix}: feedback_level must be 1, 2, 3, or 4")
             compliance = output.get("compliance")
             if not isinstance(compliance, dict) or not isinstance(compliance.get("pass"), bool) or not isinstance(compliance.get("violations"), list):

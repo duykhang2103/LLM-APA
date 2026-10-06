@@ -59,5 +59,6 @@ def evaluate_task1(predictions: Iterable[Mapping[str, Any]], references: Iterabl
         "mae_total": (sum(abs(a - b) for a, b in zip(expected_totals, predicted_totals)) / len(predicted)) if predicted else 0.0,
     }
     for name in RUBRIC_RANGES:
+        result[f"mae_{name}"] = sum(abs(a[name] - b[name]) for a, b in zip(expected, predicted)) / len(predicted) if predicted else 0.0
         result[f"exact_match_{name}"] = sum(a[name] == b[name] for a, b in zip(expected, predicted)) / len(predicted) if predicted else 0.0
     return result

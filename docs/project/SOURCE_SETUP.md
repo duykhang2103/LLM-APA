@@ -1,5 +1,7 @@
 # SOURCE_SETUP.md
 
+> **Current scope (2026-10-04):** four-week course project, about two weeks for experiments. Follow the runnable CLI/notebook guide in `docs/project/RUN_EXPERIMENTS.md` and current `PROJECT_PLAN.md`. This document retains historical setup/design/brainstorming; its old placeholder status, hardware/test observations, broad method ladders, and schedules do not establish current execution. P0/P1/F0 are implemented; actual Qwen GPU smoke is still required. SemIf/F1, diagnostic stages, self-consistency and threshold/calibration experiments are not prerequisites. Do not invent EX01 per-question-to-rubric scoring.
+
 # Shared Source / Repository Setup
 
 Tài liệu này định nghĩa cách chuẩn bị source code để toàn bộ nhóm có thể làm chung mà không phá pipeline của nhau.

@@ -24,6 +24,8 @@ def validate_rubric(raw_output: object) -> dict[str, int]:
     """Validate bounded integer scores and derive the shared internal total."""
     if not isinstance(raw_output, Mapping):
         raise ValueError("Task 1 output must be an object")
+    if set(raw_output) - set(RUBRIC_RANGES) - {"total"}:
+        raise ValueError("Unknown Task 1 output fields")
     missing = [name for name in RUBRIC_RANGES if name not in raw_output]
     if missing:
         raise ValueError(f"Missing Task 1 components: {missing}")
@@ -36,7 +38,7 @@ def validate_rubric(raw_output: object) -> dict[str, int]:
             raise ValueError(f"Task 1 component {name} must be between {minimum} and {maximum}")
         result[name] = value
     expected_total = sum(result.values())
-    if "total" in raw_output and raw_output["total"] != expected_total:
+    if "total" in raw_output and (isinstance(raw_output["total"], bool) or not isinstance(raw_output["total"], int) or raw_output["total"] != expected_total):
         raise ValueError(f"Task 1 total must equal the component sum ({expected_total})")
     result["total"] = expected_total
     return result

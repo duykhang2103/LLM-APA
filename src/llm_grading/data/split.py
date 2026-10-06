@@ -1,35 +1,70 @@
-"""Create and persist reproducible train/validation/test split identifiers.
+"""Seeded code-group splits; original annotations are never rewritten."""
 
-New contributors must decide what is grouped before running experiments:
-submission, student, problem, exam, or another unit. A random split can leak
-near-duplicate code or problem templates, so the strategy belongs in the
-dataset manifest and experiment metadata.
-"""
-
-from typing import Any
+import hashlib
 import random
+from collections import defaultdict
 
-from .schema import NormalizedSample
+
+def normalized_code(code: str) -> str:
+    return " ".join(code.replace("\r\n", "\n").replace("\r", "\n").split())
 
 
-def create_splits(samples: list[NormalizedSample], seed: int) -> dict[str, list[str]]:
-    """Return split-name to sample-ID mappings using one documented strategy.
+def code_hash(code: str) -> str:
+    return hashlib.sha256(normalized_code(code).encode("utf-8")).hexdigest()
 
-    Example return shape::
 
-        {"train": ["synthetic-001"], "val": [], "test": []}
-    """
-    ids = [str(sample["sample_id"]) for sample in samples]
+def check_split_overlap(train, validation):
+    ids = {s["sample_id"] for s in train}
+    hashes = {code_hash(s.get("code", "")) for s in train}
+    conflicts = [
+        s["sample_id"]
+        for s in validation
+        if s["sample_id"] in ids or code_hash(s.get("code", "")) in hashes
+    ]
+    if conflicts:
+        raise ValueError(
+            f"Train/validation overlap (ID or normalized code): {conflicts}"
+        )
+
+
+def create_splits(samples, seed, validation_fraction=0.2, test_fraction=0.0):
+    if (
+        not 0 <= validation_fraction < 1
+        or not 0 <= test_fraction < 1
+        or validation_fraction + test_fraction >= 1
+    ):
+        raise ValueError("Split fractions must be nonnegative and sum to less than one")
+    ids = [s["sample_id"] for s in samples]
     if len(ids) != len(set(ids)):
         raise ValueError("Sample IDs must be unique before splitting")
-    shuffled = list(ids)
-    random.Random(seed).shuffle(shuffled)
-    if len(shuffled) < 3:
-        return {"train": shuffled, "val": [], "test": []}
-    val_count = max(1, round(len(shuffled) * 0.1))
-    test_count = max(1, round(len(shuffled) * 0.1))
-    return {
-        "train": shuffled[: len(shuffled) - val_count - test_count],
-        "val": shuffled[len(shuffled) - val_count - test_count : len(shuffled) - test_count],
-        "test": shuffled[len(shuffled) - test_count :],
-    }
+    groups = defaultdict(list)
+    for s in samples:
+        if not s.get("code", "").strip():
+            raise ValueError(f"Missing code for {s['sample_id']}")
+        groups[code_hash(s["code"])].append(s)
+    # Group before stratifying so copies across exams cannot leak.
+    strata = defaultdict(list)
+    for digest in sorted(groups):
+        group = groups[digest]
+        key = tuple(sorted({s.get("problem_type", "unknown") for s in group}))
+        strata[key].append(group)
+    rng = random.Random(seed)
+    result = {"train": [], "val": [], "test": []}
+    for key in sorted(strata):
+        bucket = strata[key]
+        rng.shuffle(bucket)
+        n = len(bucket)
+        val_n = (
+            min(n - 1, max(1, round(n * validation_fraction)))
+            if validation_fraction and n > 1
+            else 0
+        )
+        test_n = (
+            min(n - val_n - 1, max(1, round(n * test_fraction)))
+            if test_fraction and n - val_n > 1
+            else 0
+        )
+        for i, group in enumerate(bucket):
+            split = "val" if i < val_n else ("test" if i < val_n + test_n else "train")
+            result[split].extend(s["sample_id"] for s in group)
+    return result

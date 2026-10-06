@@ -1,7 +1,7 @@
 """Small runtime helpers shared by the five beginner-friendly CLIs."""
 
-from pathlib import Path
 import json
+from pathlib import Path
 from typing import Any, Mapping
 
 from .data.loader import load_samples
@@ -15,6 +15,8 @@ def load_samples_for_config(config: Mapping[str, Any], split: str = "test") -> l
     source = data.get(f"{split_key}_path")
     if split_key == "validation":
         source = source or data.get("val_path")
+    if not source and config.get("method") != "heuristic":
+        raise ValueError(f"Set explicit data.{split_key}_path; learned methods never fall back to all input data")
     source = source or data.get("input_path")
     if not source:
         raise ValueError(f"No input path configured for split '{split}'")
@@ -25,7 +27,9 @@ def write_json(path: str | Path, payload: Any) -> Path:
     """Write UTF-8 JSON, creating only the requested parent directory."""
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary = output_path.with_name(output_path.name + ".tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    temporary.replace(output_path)
     return output_path
 
 

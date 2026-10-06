@@ -10,7 +10,8 @@ out-of-range values and totals that disagree with components. The raw dataset
 loader also enforces exactly six reference rubric dimensions.
 """
 
-from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
+from llm_grading.data.schema import RUBRIC_RANGES as RUBRIC_RANGES
+from llm_grading.data.schema import validate_rubric
 
 
 def postprocess_rubric(raw_output: object) -> dict[str, int]:

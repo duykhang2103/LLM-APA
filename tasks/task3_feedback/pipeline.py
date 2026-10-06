@@ -4,6 +4,7 @@ from typing import Any
 
 from llm_grading.data.preprocess import build_task3_input
 from llm_grading.evaluation.task3 import evaluate_task3
+
 from .compliance import check_compliance
 
 
@@ -20,13 +21,16 @@ class TaskPipeline:
         view = self.build_input(sample)
         labels = list(view.get("error_labels", []))
         level = int(view.get("feedback_level", 1))
-        feedback = "Em hay kiem tra lai dieu kien va phep toan trong chuong trinh."
-        if labels:
-            feedback = "Em hay kiem tra lai phan xu ly duoc danh dau boi " + ", ".join(labels) + "."
+        feedback = "Em hãy kiểm tra lại bài làm."
+        if labels and level > 1:
+            feedback = (
+                "Em hay kiem tra lai phan xu ly duoc danh dau boi "
+                + ", ".join(labels)
+                + "."
+            )
         return {
             "feedback": feedback,
             "feedback_level": level,
-            "diagnosed_labels": labels,
             "compliance": check_compliance(feedback, level),
         }
 
@@ -41,5 +45,7 @@ class TaskPipeline:
         result["compliance"] = check_compliance(feedback, level)
         return result
 
-    def evaluate(self, predictions: list[dict[str, object]], references: list[dict[str, object]]) -> dict[str, Any]:
+    def evaluate(
+        self, predictions: list[dict[str, object]], references: list[dict[str, object]]
+    ) -> dict[str, Any]:
         return evaluate_task3(predictions, references)
