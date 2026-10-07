@@ -107,8 +107,13 @@ def test_runtime_subprocesses_use_one_gpu(tmp_path, monkeypatch):
         "sys": sys,
         "subprocess": subprocess,
         "json": json,
+        "Path": Path,
     }
-    exec(notebook_cell(6), namespace)
+    source = notebook_cell(6).replace(
+        'str(REPO).startswith("/kaggle/working/")',
+        'Path(REPO).as_posix().startswith("/kaggle/working/")',
+    )
+    exec(source, namespace)
     namespace["run"]("train.py", "--config", "prepared.json")
     assert calls[-1]["env"]["CUDA_VISIBLE_DEVICES"] == "0"
     assert namespace["RUN_ENV"]["CUDA_VISIBLE_DEVICES"] == "0"
