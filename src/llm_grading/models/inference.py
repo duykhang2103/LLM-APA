@@ -49,12 +49,17 @@ class ModelRunner:
                 headers={
                     "Authorization": f"Bearer {key}",
                     "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0 (compatible; llm-apa/1.0)",
                 },
             )
-            with urllib.request.urlopen(
-                request, timeout=settings.get("timeout_seconds", 120)
-            ) as response:
-                result = json.load(response)
+            try:
+                with urllib.request.urlopen(
+                    request, timeout=settings.get("timeout_seconds", 120)
+                ) as response:
+                    result = json.load(response)
+            except urllib.error.HTTPError as e:
+                err_body = e.read().decode("utf-8", errors="replace")
+                raise RuntimeError(f"API request failed with {e.code} {e.reason}: {err_body}") from e
             text = result["choices"][0]["message"]["content"]
             usage = result.get("usage", {})
             revision = result.get("system_fingerprint") or settings.get("revision")
