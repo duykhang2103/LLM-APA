@@ -52,14 +52,20 @@ class ModelRunner:
                     "User-Agent": "Mozilla/5.0 (compatible; llm-apa/1.0)",
                 },
             )
-            try:
-                with urllib.request.urlopen(
-                    request, timeout=settings.get("timeout_seconds", 120)
-                ) as response:
-                    result = json.load(response)
-            except urllib.error.HTTPError as e:
-                err_body = e.read().decode("utf-8", errors="replace")
-                raise RuntimeError(f"API request failed with {e.code} {e.reason}: {err_body}") from e
+            max_api_retries = 5
+            for attempt in range(max_api_retries):
+                try:
+                    with urllib.request.urlopen(
+                        request, timeout=settings.get("timeout_seconds", 120)
+                    ) as response:
+                        result = json.load(response)
+                    break
+                except urllib.error.HTTPError as e:
+                    err_body = e.read().decode("utf-8", errors="replace")
+                    if e.code == 429 and attempt < max_api_retries - 1:
+                        time.sleep(15 * (attempt + 1))
+                        continue
+                    raise RuntimeError(f"API request failed with {e.code} {e.reason}: {err_body}") from e
             text = result["choices"][0]["message"]["content"]
             usage = result.get("usage", {})
             revision = result.get("system_fingerprint") or settings.get("revision")
