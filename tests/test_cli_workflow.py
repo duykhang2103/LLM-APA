@@ -102,6 +102,6 @@ def test_config_validation_and_notebooks(tmp_path):
     with pytest.raises(ValueError):
         load_config(file)
     for path in (ROOT / "notebooks").glob("*.ipynb"):
-        for cell in json.loads(path.read_text())["cells"]:
+        for cell in json.loads(path.read_text(encoding="utf-8"))["cells"]:
             if cell["cell_type"] == "code":
                 compile("".join(cell["source"]), str(path), "exec")
