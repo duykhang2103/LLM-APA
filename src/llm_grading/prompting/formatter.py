@@ -73,6 +73,26 @@ def _unique_object(pairs):
     return obj
 
 
+def _clean_json_text(text: str) -> str:
+    cleaned = text.strip()
+    if "```" in cleaned:
+        start = cleaned.find("```")
+        end = cleaned.rfind("```")
+        if start != -1 and end != -1 and end > start:
+            inner = cleaned[start:end]
+            if inner.startswith("```json"):
+                inner = inner[7:]
+            elif inner.startswith("```"):
+                inner = inner[3:]
+            cleaned = inner.strip()
+    if not cleaned.startswith("{") and "{" in cleaned and "}" in cleaned:
+        s = cleaned.find("{")
+        e = cleaned.rfind("}")
+        if s != -1 and e != -1 and e > s:
+            cleaned = cleaned[s : e + 1]
+    return cleaned
+
+
 def parse_response(text, task, sample):
     if task == "task3":
         if not isinstance(text, str) or not text.strip():
@@ -83,8 +103,9 @@ def parse_response(text, task, sample):
             "feedback_level": level,
             "compliance": check_compliance(text, level),
         }
+    cleaned_text = _clean_json_text(str(text))
     try:
-        obj = json.loads(text, object_pairs_hook=_unique_object)
+        obj = json.loads(cleaned_text, object_pairs_hook=_unique_object)
     except (json.JSONDecodeError, TypeError) as e:
         raise ValueError(f"Invalid JSON: {e}") from e
     if not isinstance(obj, dict):
