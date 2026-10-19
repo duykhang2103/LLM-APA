@@ -104,6 +104,49 @@ def test_api_request_and_usage_without_network(tmp_path, monkeypatch):
         assert b"prompt" in request.call_args.args[0].data
 
 
+def test_api_cache_avoids_paying_twice_and_cost_cap_stops(tmp_path, monkeypatch):
+    from io import BytesIO
+
+    from llm_grading.models.inference import ModelRunner
+
+    cfg = config(tmp_path)
+    cfg.update(
+        model={
+            "provider": "api",
+            "allow_private_data": True,
+            "name_or_path": "fake",
+            "base_url": "https://example.invalid/v1",
+            "cache_path": str(tmp_path / "cache.jsonl"),
+            "cost_per_million_tokens": {"prompt": 1e6, "completion": 0},
+            "max_cost_usd": 5,
+        },
+        generation={"temperature": 0, "max_new_tokens": 20},
+    )
+    monkeypatch.setenv("LLM_API_KEY", "test-only")
+
+    def reply(*args, **kwargs):
+        return BytesIO(
+            json.dumps(
+                {
+                    "choices": [{"message": {"content": "ok"}}],
+                    "usage": {"prompt_tokens": 4, "completion_tokens": 1},
+                }
+            ).encode()
+        )
+
+    with patch("urllib.request.urlopen", side_effect=reply) as request:
+        assert ModelRunner(cfg).generate("p1") == "ok"
+        rerun = ModelRunner(cfg)  # a fresh run after a failure
+        assert rerun.generate("p1") == "ok" and rerun.metadata["cached"] is True
+        assert request.call_count == 1
+        rerun.generate("p2")  # new prompt: paid call, cost 4 < cap 5
+        assert request.call_count == 2 and rerun.total_cost == 4
+        rerun.generate("p3")  # cost 8 now exceeds the cap
+        with pytest.raises(RuntimeError, match="max_cost_usd"):
+            rerun.generate("p4")
+        assert rerun.generate("p2") == "ok"  # cached answers still free
+
+
 def test_real_dense_encoder_without_download(tmp_path):
     from sentence_transformers import SentenceTransformer
     from sentence_transformers.sentence_transformer.modules import Pooling, Transformer
