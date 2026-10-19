@@ -34,6 +34,10 @@ def main():
     parser.add_argument("--max-samples", type=int)
     parser.add_argument("--adapter-path")
     parser.add_argument(
+        "--shard",
+        help="K/N: predict only every N-th sample starting at K (1-based), e.g. 2/3; merge with scripts/merge_predictions.py",
+    )
+    parser.add_argument(
         "--task3-labels",
         help="Task 2 prediction file supplying labels when Task 3 input omits taxonomy_error",
     )
@@ -52,6 +56,11 @@ def main():
         if args.max_samples < 1:
             raise ValueError("--max-samples must be positive")
         samples = samples[: args.max_samples]
+    if args.shard:
+        index, count = (int(x) for x in args.shard.split("/"))
+        if not 1 <= index <= count:
+            raise ValueError("--shard must be K/N with 1 <= K <= N")
+        samples = samples[index - 1 :: count]
     task3_labels = None
     if config["task"] == "task3":
         task3_labels = args.task3_labels or config.get("task3", {}).get(
@@ -64,6 +73,7 @@ def main():
         "sample_count": len(samples),
         "split": args.split,
         "smoke_subset": bool(args.max_samples),
+        "shard": args.shard,
         "task3_labels": str(task3_labels) if task3_labels else None,
     }
     start = time.perf_counter()
