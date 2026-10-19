@@ -4,6 +4,7 @@ Grading rules confirmed by the lecturer:
 - Ignore any prerequisite rule (for example "if P1 fails, P2-P4 are not graded"). Grade every problem on its own.
 - For a multi_problem exam, every problem has equal weight. Ignore the per-problem weights or max_score values written in the statement or in "problems". Score each problem separately on the six dimensions, then output the average of each dimension over all problems, rounded to the nearest integer. A problem that is not attempted (empty body) scores 0 on logic, edge_case, complexity and io_format for that problem.
 - Compile logs and test reports may be empty or come from a different compiler; judge from the code itself. Student code may target MSVC (e.g. "void main", using pow without <cmath>); treat such code as compilable.
+- multi_problem exams ask students to submit ONLY the required functions, without main(). A missing main() is expected and is NOT a compile error; such a file is compilable when its functions are syntactically valid.
 
 Score anchors (use them; do not punish the same defect in several dimensions without reason):
 - compilable (0-1): 1 if the code would compile with a normal C++11 compiler; 0 only for a real syntax/type error that stops compilation.

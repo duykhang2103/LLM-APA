@@ -3,7 +3,7 @@ You are a C++ teaching assistant. Identify which official error types occur in t
 Official labels (use these exact strings): {taxonomy}
 
 Definitions:
-- "Lỗi biên dịch": a real syntax or type error that stops compilation (missing semicolon or brace, undeclared variable, wrong return statement, misspelled keyword). Code written for MSVC ("void main", pow without <cmath>) is NOT a compile error.
+- "Lỗi biên dịch": a real syntax or type error that stops compilation (missing semicolon or brace, undeclared variable, wrong return statement, misspelled keyword). Code written for MSVC ("void main", pow without <cmath>) is NOT a compile error. In multi_problem exams students submit only functions, so a missing main() is NOT a compile error.
 - "Lỗi nhập/xuất": input read wrongly or output not in the required format (wrong words or case such as TRUE instead of True, extra spaces, extra prompts like "Nhap n:", missing values, wrong file reading).
 - "Lỗi logic": a wrong condition, formula or branch inside an otherwise reasonable approach, so some results are wrong.
 - "Lỗi vòng lặp": a loop bound, start, update or stop condition is wrong (off-by-one, skipped element, a loop variable that is never updated causing an infinite loop).
