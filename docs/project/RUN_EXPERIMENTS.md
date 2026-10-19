@@ -36,7 +36,15 @@ Task 1/2 parse JSON, validate, and allow one format-repair retry. Still-invalid 
 
 Prepare `configs/task1/rag.yaml` with the same data/split version. It loads the explicit training corpus and a dense encoder in memory. Set `retrieval.k` to 1/3/5, then use the same smoke/predict/evaluate commands with `config-task1-P1-v1.json` and `outputs/task1/P1-v1/`.
 
-Task 1 examples expose rubric targets; Task 2 exposes taxonomy; neither exposes feedback. Task 3 first filters to requested level and may expose feedback targets. Query IDs are always excluded. `exclude_duplicates` and optional similarity cutoff support normal vs restricted RAG; log matches/exclusions/shortfalls. The first embedding/model download needs network access; no vector database or BM25 prerequisite exists.
+Task 1 examples expose rubric targets; Task 2 exposes taxonomy; neither exposes feedback. Task 3 first filters to requested level and may expose feedback targets. Query IDs are always excluded. `exclude_duplicates` and optional similarity cutoff support normal vs restricted RAG; log matches/exclusions/shortfalls. The first embedding/model download needs network access; no vector database is needed.
+
+Optional retrieval settings: `retrieval.key: code` keys on comment-stripped code instead of the whole input JSON; `retrieval.index` is `dense` (default), `bm25` (no download), or `hybrid` (reciprocal-rank fusion); `retrieval.same_exam_first: true` ranks same-exam examples first. Compare retrieval variants without an LLM first:
+
+```bash
+python scripts/eval_retrieval.py --config configs/retrieval/knn_eval.yaml --data data/raw/sample_dataset
+```
+
+It runs leave-one-out and leave-one-exam-out kNN over the 32 training samples and writes private metrics/audits under `outputs/retrieval/`.
 
 ## F0: smoke, train, reload, resume
 
@@ -106,6 +114,12 @@ uv run python scripts/validate_predictions.py --task task1 --input outputs/final
 uv run python scripts/package_predictions.py --task task1 --input outputs/final/predictions.json --output outputs/final/submission.zip
 ```
 
-No retraining or target inspection is involved. Packaging defaults to the lecturer sample contract: Task 1 nested `rubric` and `total_score`, Task 2 `taxonomy_error`, Task 3 `feedback` only. Use `--format internal` solely for internal artifacts. Export to `.json` or `.zip`; validate exported JSON with `scripts/validate_predictions.py --format challenge`. Confirm this contract against the official validator when supplied. Keep code/data/checkpoints/response logs private. SemIf/F1 remains a later optional extension, not a training dependency.
+The public/private test Task 3 input has no `taxonomy_error`. Predict Task 2 first, then pass that file to Task 3; the loader refuses to treat missing labels as an empty set:
+
+```bash
+uv run python scripts/predict.py --config path/to/task3-config --input data/raw/lecturer-test --task3-labels outputs/final/task2_predictions.json --output outputs/final/task3_predictions.json
+```
+
+`task3.error_labels_path` in the config is equivalent. No retraining or target inspection is involved. Packaging defaults to the lecturer sample-submission contract: Task 1 nested `rubric` and `total_score`, Task 2 `taxonomy_error`, Task 3 `taxonomy_error` plus `feedback`. Use `--format internal` solely for internal artifacts. Export to `.json` or `.zip`; validate exported JSON with `scripts/validate_predictions.py --format challenge`. Confirm this contract against the official validator when supplied. Keep code/data/checkpoints/response logs private. SemIf/F1 remains a later optional extension, not a training dependency.
 
 Implementation follows [Qwen text-only loading](https://huggingface.co/docs/transformers/model_doc/qwen3_5), [PEFT quantized training](https://huggingface.co/docs/peft/developer_guides/quantization), and [Trainer resume](https://huggingface.co/docs/transformers/main_classes/trainer#transformers.Trainer.train). GPU memory/quality must be measured on the team's platform.

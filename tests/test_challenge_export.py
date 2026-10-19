@@ -17,11 +17,12 @@ from llm_grading.validation.challenge import (
         (
             "task3",
             {
+                "error_labels": ["Lỗi logic"],
                 "feedback": "Tốt.",
                 "feedback_level": 1,
                 "compliance": {"pass": True, "violations": []},
             },
-            {"feedback": "Tốt."},
+            {"taxonomy_error": ["Lỗi logic"], "feedback": "Tốt."},
         ),
     ],
 )
@@ -41,3 +42,19 @@ def test_export_rejects_bad_totals_duplicates_and_extra_fields():
     assert validate_challenge_predictions([row, row], "task2")
     row["output"]["feedback"] = "extra"
     assert validate_challenge_predictions([row], "task2")
+
+
+def test_task3_matches_lecturer_sample_submission():
+    """The lecturer's Task 3 sample submission carries labels and feedback."""
+    official = [
+        {
+            "sample_id": "Class03-Final-1-S01",
+            "output": {
+                "taxonomy_error": ["Lỗi logic"],
+                "feedback": "Hãy đọc lại đề và kiểm tra lại logic của chương trình.",
+            },
+        }
+    ]
+    assert validate_challenge_predictions(official, "task3") == []
+    del official[0]["output"]["taxonomy_error"]
+    assert validate_challenge_predictions(official, "task3")

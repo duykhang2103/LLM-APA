@@ -9,7 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from llm_grading.data.loader import load_samples
 from llm_grading.pipeline import build_task_pipeline
-from llm_grading.runtime import load_samples_for_config, write_json
+from llm_grading.runtime import (
+    attach_task3_error_labels,
+    load_samples_for_config,
+    write_json,
+)
 from llm_grading.utils.config import load_config
 from llm_grading.utils.logging import run_metadata, save_run_config
 from llm_grading.utils.seed import set_seed
@@ -29,6 +33,10 @@ def main():
     parser.add_argument("--output")
     parser.add_argument("--max-samples", type=int)
     parser.add_argument("--adapter-path")
+    parser.add_argument(
+        "--task3-labels",
+        help="Task 2 prediction file supplying labels when Task 3 input omits taxonomy_error",
+    )
     args = parser.parse_args()
     config = load_config(args.config)
     if args.adapter_path:
@@ -44,12 +52,19 @@ def main():
         if args.max_samples < 1:
             raise ValueError("--max-samples must be positive")
         samples = samples[: args.max_samples]
+    task3_labels = None
+    if config["task"] == "task3":
+        task3_labels = args.task3_labels or config.get("task3", {}).get(
+            "error_labels_path"
+        )
+        attach_task3_error_labels(samples, task3_labels)
     metadata = {
         **run_metadata(config),
         "status": "running",
         "sample_count": len(samples),
         "split": args.split,
         "smoke_subset": bool(args.max_samples),
+        "task3_labels": str(task3_labels) if task3_labels else None,
     }
     start = time.perf_counter()
     write_json(directory / "prediction_manifest.json", metadata)

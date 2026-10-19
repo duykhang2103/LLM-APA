@@ -65,6 +65,11 @@ def validate_prediction_records(records: Any, task: str) -> list[str]:
                 if unknown:
                     messages.append(f"{prefix}: unknown Task 2 labels {unknown}")
         elif task == "task3":
+            labels = output.get("error_labels")
+            if not isinstance(labels, list) or any(not isinstance(x, str) for x in labels):
+                messages.append(f"{prefix}: Task 3 error_labels must be a list")
+            elif len(labels) != len(set(labels)) or set(labels).difference(ERROR_LABELS):
+                messages.append(f"{prefix}: Task 3 error_labels must be unique official labels")
             feedback = output.get("feedback")
             if not isinstance(feedback, str) or not feedback.strip():
                 messages.append(f"{prefix}: missing Task 3 feedback")

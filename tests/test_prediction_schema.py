@@ -66,6 +66,30 @@ class PredictionSchemaTests(unittest.TestCase):
             )
         )
 
+    def test_task3_requires_official_error_labels(self):
+        output = {
+            "feedback": "Hãy kiểm tra trường hợp biên.",
+            "feedback_level": 2,
+            "compliance": {"pass": True, "violations": []},
+        }
+        for labels in (None, ["not official"], [ERROR_LABELS[0]] * 2):
+            with self.subTest(labels=labels):
+                row = dict(output)
+                if labels is not None:
+                    row["error_labels"] = labels
+                self.assertTrue(
+                    validate_prediction_records(
+                        [{"sample_id": "S1", "output": row}], "task3"
+                    )
+                )
+        self.assertEqual(
+            validate_prediction_records(
+                [{"sample_id": "S1", "output": {**output, "error_labels": []}}],
+                "task3",
+            ),
+            [],
+        )
+
     def test_non_object_records_and_output_rejected(self):
         for payload in ({}, [None], [{"sample_id": "S1", "output": []}]):
             with self.subTest(payload=payload):

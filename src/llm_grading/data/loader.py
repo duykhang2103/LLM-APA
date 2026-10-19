@@ -112,11 +112,8 @@ def _normalize_raw(
     output = record.get("output", {})
     if not isinstance(inputs, dict) or not isinstance(output, dict):
         raise ValueError(f"input and output must be objects for {sample_id}")
-    if task == "task3":
-        if "target_feedback_level" not in inputs:
-            raise ValueError(f"Missing target_feedback_level for {sample_id}")
-        if "taxonomy_error" not in inputs:
-            raise ValueError(f"Missing input taxonomy_error for {sample_id}")
+    if task == "task3" and "target_feedback_level" not in inputs:
+        raise ValueError(f"Missing target_feedback_level for {sample_id}")
     target_field = {"task1": "rubric", "task2": "taxonomy_error", "task3": "feedback"}[task]
     if output and target_field not in output:
         raise ValueError(f"Missing {task} output {target_field} for {sample_id}")
@@ -161,7 +158,11 @@ def _normalize_raw(
         sample["error_labels"] = _error_labels(output["taxonomy_error"], sample_id)
     if "target_feedback_level" in inputs:
         sample["feedback_level"] = _feedback_level(inputs["target_feedback_level"], sample_id)
-        sample["error_labels"] = _error_labels(inputs.get("taxonomy_error", []), sample_id)
+        if "taxonomy_error" in inputs:
+            sample["error_labels"] = _error_labels(inputs["taxonomy_error"], sample_id)
+        else:
+            # The public test omits Task 3 input labels; never read that as "no errors".
+            sample["error_labels_missing"] = True
     if "feedback" in output:
         if not isinstance(output["feedback"], str):
             raise ValueError(f"feedback must be a string for {sample_id}")
