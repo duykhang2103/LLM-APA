@@ -108,7 +108,13 @@ class Retriever:
             target = (
                 self.targets[i] if self.task == "task3" else json.loads(self.targets[i])
             )
-            examples.append({"input": BUILDERS[self.task](sample), "target": target})
+            view = BUILDERS[self.task](sample)
+            if self.settings.get("compact_examples", False):
+                # The query already carries its statement; repeating the
+                # example's statement can double the prompt size.
+                for field in ("problem_statement", "problems", "grading_policy"):
+                    view.pop(field, None)
+            examples.append({"input": view, "target": target})
             audit["retrieved"].append(
                 {
                     "sample_id": sample["sample_id"],

@@ -51,6 +51,27 @@ def test_bm25_retriever_and_same_exam_preference(tmp_path):
     }
 
 
+def test_compact_examples_drop_statement_only():
+    cfg = {"retrieval": {"k": 1, "key": "code", "index": "bm25"}}
+    examples, _ = Retriever(rows(), "task1", cfg).retrieve(sample("q", "int f(){}"))
+    assert "problem_statement" in examples[0]["input"]
+    cfg["retrieval"]["compact_examples"] = True
+    examples, _ = Retriever(rows(), "task1", cfg).retrieve(sample("q", "int f(){}"))
+    assert "problem_statement" not in examples[0]["input"]
+    assert "code" in examples[0]["input"] and "SECRET" not in str(examples)
+
+
+def test_v003_prompts_render_with_literal_json_braces():
+    from llm_grading.prompting.formatter import render_task_prompt
+
+    for task in ("task1", "task2", "task3"):
+        prompt = render_task_prompt(sample(), task, {"prompt": {"version": "v003"}})
+        assert "{examples}" not in prompt and "{input_json}" not in prompt
+    assert '{"compilable": 0-1' in render_task_prompt(
+        sample(), "task1", {"prompt": {"version": "v003"}}
+    )
+
+
 def test_fast_near_duplicate_matches_full_ratio():
     from difflib import SequenceMatcher
 
