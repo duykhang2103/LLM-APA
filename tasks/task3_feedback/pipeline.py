@@ -29,6 +29,7 @@ class TaskPipeline:
                 + "."
             )
         return {
+            "error_labels": labels,
             "feedback": feedback,
             "feedback_level": level,
             "compliance": check_compliance(feedback, level),

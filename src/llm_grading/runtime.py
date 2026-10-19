@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-from .data.loader import load_samples
+from .data.loader import _error_labels, load_samples
 from .utils.paths import resolve_path
 
 
@@ -21,6 +21,38 @@ def load_samples_for_config(config: Mapping[str, Any], split: str = "test") -> l
     if not source:
         raise ValueError(f"No input path configured for split '{split}'")
     return load_samples(resolve_path(source), data.get("max_samples"), task=config.get("task"))
+
+
+def attach_task3_error_labels(samples: list[dict[str, Any]], path: str | Path | None) -> list[dict[str, Any]]:
+    """Fill Task 3 labels missing from the input with Task 2 predictions.
+
+    The public test omits ``input.taxonomy_error`` while the challenge output
+    still requires ``taxonomy_error``, so Task 3 reuses the Task 2 prediction.
+    Accepts internal (``error_labels``) or challenge (``taxonomy_error``) files.
+    """
+    missing = [s for s in samples if s.get("error_labels_missing")]
+    if not missing:
+        return samples
+    if not path:
+        raise ValueError(
+            f"{len(missing)} Task 3 samples lack input taxonomy_error; "
+            "pass --task3-labels with a Task 2 prediction file"
+        )
+    predicted = {}
+    for row in read_json(path):
+        output = row.get("output", {}) if isinstance(row, dict) else {}
+        predicted[row.get("sample_id")] = output.get("error_labels", output.get("taxonomy_error"))
+    for sample in missing:
+        sample_id = sample["sample_id"]
+        if sample_id not in predicted:
+            raise ValueError(f"Task 2 predictions in {path} have no labels for {sample_id}")
+        labels = _error_labels(predicted[sample_id], sample_id)
+        if len(labels) != len(set(labels)):
+            raise ValueError(f"Duplicate Task 2 labels for {sample_id} in {path}")
+        sample["error_labels"] = labels
+        sample["error_labels_source"] = str(path)
+        del sample["error_labels_missing"]
+    return samples
 
 
 def write_json(path: str | Path, payload: Any) -> Path:

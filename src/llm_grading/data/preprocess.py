@@ -64,6 +64,11 @@ def build_task3_input(sample: NormalizedSample) -> dict[str, Any]:
     The reference ``feedback`` remains a training target or evaluation
     reference and is not copied into the inference prompt.
     """
+    if sample.get("error_labels_missing"):
+        raise ValueError(
+            f"Task 3 sample {sample.get('sample_id')} has no input taxonomy_error; "
+            "attach Task 2 predictions first"
+        )
     result = {
         "problem_statement": sample.get("problem_statement", ""),
         "code": sample.get("code", ""),

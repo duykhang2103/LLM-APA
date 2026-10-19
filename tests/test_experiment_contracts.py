@@ -43,14 +43,32 @@ class Contracts(unittest.TestCase):
             "SECRET TEACHER TARGET",
         )
 
+    def test_optional_input_fields_can_be_dropped(self):
+        row = {**sample(), "grading_policy": "P1 PREREQUISITE", "compile_log": "LOG"}
+        self.assertIn("P1 PREREQUISITE", render_task_prompt(row, "task1", {}))
+        prompt = render_task_prompt(
+            row,
+            "task1",
+            {"task1": {"use_grading_policy": False, "use_compile_log": False}},
+        )
+        self.assertNotIn("P1 PREREQUISITE", prompt)
+        self.assertNotIn("LOG", prompt)
+
     def test_strict_json(self):
         self.assertEqual(
             parse_response(json.dumps(RUBRIC), "task1", sample())["total"], 10
         )
+        # fb7acb2 deliberately extracts one JSON object from fences or prose.
+        for text in [
+            "```json\n" + json.dumps(RUBRIC) + "\n```",
+            "text " + json.dumps(RUBRIC),
+        ]:
+            self.assertEqual(parse_response(text, "task1", sample())["total"], 10)
         for text in [
             json.dumps({**RUBRIC, "total": 10}),
             json.dumps({**RUBRIC, "logic": True}),
-            "text " + json.dumps(RUBRIC),
+            "text without json",
+            json.dumps(RUBRIC) + " " + json.dumps(RUBRIC),
         ]:
             with self.assertRaises(ValueError):
                 parse_response(text, "task1", sample())

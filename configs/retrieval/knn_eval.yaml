@@ -1,0 +1,36 @@
+# Retrieval-only kNN evaluation on the lecturer training samples (no LLM).
+# Run: python scripts/eval_retrieval.py --config configs/retrieval/knn_eval.yaml --data <sample_dataset dir>
+experiment:
+  id: RAG-R0-v1
+  notes: Which retrieval key/index finds neighbours whose labels transfer? LOO and leave-one-exam-out.
+seed: 42
+data:
+  train_path: data/raw/sample_dataset
+saving:
+  output_dir: outputs/retrieval/R0-v1
+retrieval_defaults:
+  k: 3
+  exclude_duplicates: true
+  near_duplicate_threshold: 0.95
+  device: cpu
+variants:
+  - name: dense_json_minilm   # current P1 default
+    key: input_json
+    index: dense
+    embedding_model: sentence-transformers/all-MiniLM-L6-v2
+    embedding_revision: main
+  - name: bm25_code
+    key: code
+    index: bm25
+  - name: dense_code_gte
+    key: code
+    index: dense
+    embedding_model: Alibaba-NLP/gte-modernbert-base
+    embedding_revision: main
+    max_seq_length: 4096
+  - name: hybrid_code_gte
+    key: code
+    index: hybrid
+    embedding_model: Alibaba-NLP/gte-modernbert-base
+    embedding_revision: main
+    max_seq_length: 4096

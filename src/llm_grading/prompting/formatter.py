@@ -50,7 +50,9 @@ def render_task_prompt(sample, task, config, examples=None):
     template = task_template(task, config)
     view = BUILDERS[task](sample)
     settings = config.get(task, {})
-    for field in ("compile_log", "test_report"):
+    # The lecturer later said to ignore the P1 prerequisite rule stated in
+    # grading_policy; new configs can drop it with use_grading_policy: false.
+    for field in ("compile_log", "test_report", "grading_policy"):
         if settings.get(f"use_{field}", True) is False:
             view.pop(field, None)
     # Only serialized whitelisted records are substituted; braces in C++ stay literal.
@@ -99,6 +101,7 @@ def parse_response(text, task, sample):
             raise ValueError("Empty feedback")
         level = sample["feedback_level"]
         return {
+            "error_labels": list(sample.get("error_labels", [])),
             "feedback": text.strip(),
             "feedback_level": level,
             "compliance": check_compliance(text, level),
