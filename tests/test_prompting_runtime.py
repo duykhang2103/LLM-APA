@@ -197,6 +197,35 @@ def test_feedback_violation_is_retried_and_persistent_failure_stops(tmp_path):
         pipeline.predict(row)
 
 
+def test_task3_fallback_keeps_run_alive_but_not_on_api_errors(tmp_path):
+    from llm_grading.data.taxonomy import ERROR_LABELS
+    from llm_grading.prompting.pipeline import level_safe_feedback
+    from tasks.task3_feedback.compliance import check_compliance
+
+    for level in (1, 2, 3, 4):
+        for labels in ([], ["Lỗi logic"], list(ERROR_LABELS)):
+            assert check_compliance(level_safe_feedback(labels, level), level)["pass"]
+    cfg = config(tmp_path, "task3")
+    cfg["task3"] = {"fallback_on_failure": True}
+    row = sample()
+    row["error_labels"] = ["Lỗi vòng lặp"]
+    out = ModelPipeline(cfg, Runner(["Chỉ cần thêm cur = cur->next;"] * 2)).predict(row)
+    assert out["fallback"] and out["compliance"]["pass"] and out["error_labels"] == ["Lỗi vòng lặp"]
+
+    class Broken:
+        metadata = {}
+
+        def __init__(self, exc):
+            self.exc = exc
+
+        def generate(self, prompt):
+            raise self.exc
+
+    assert ModelPipeline(cfg, Broken(ValueError("Prompt has 9000 tokens"))).predict(row)["fallback"]
+    with pytest.raises(RuntimeError):
+        ModelPipeline(cfg, Broken(RuntimeError("API request failed with 429"))).predict(row)
+
+
 def test_feedback_does_not_claim_input_labels_as_a_diagnosis(tmp_path):
     row = sample()
     row["error_labels"] = ["Lỗi logic"]
