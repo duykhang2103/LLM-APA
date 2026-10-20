@@ -7,6 +7,7 @@ from llm_grading.models.inference import ModelRunner
 from llm_grading.prompting.formatter import parse_response, render_task_prompt
 from llm_grading.retrieval.retriever import Retriever
 from llm_grading.utils.logging import append_jsonl, sample_metadata
+from tasks.task3_feedback.compliance import check_compliance
 
 
 class ModelPipeline:
@@ -82,6 +83,10 @@ class ModelPipeline:
                         "retrieval": audit,
                     },
                 )
+                # Oversized prompts raise ValueError; network/API failures do not
+                # fall back, so a quota outage cannot silently fill a whole run.
+                if isinstance(exc, ValueError) and self._fallback_enabled():
+                    return self._fallback(sample, f"generation_error: {exc}")
                 raise RuntimeError(
                     f"Generation failed for {sample['sample_id']}; see {self.log_path}"
                 ) from exc
@@ -110,10 +115,42 @@ class ModelPipeline:
             )
             if parsed is not None:
                 return parsed
+        if self._fallback_enabled():
+            return self._fallback(sample, error)
         retry_description = "one retry" if attempts == 2 else f"{attempts - 1} retries"
         raise ValueError(
             f"Invalid response for {sample['sample_id']} after {retry_description}: {error}; see {self.log_path}"
         )
 
+    def _fallback_enabled(self):
+        return self.task == "task3" and bool(
+            self.config.get("task3", {}).get("fallback_on_failure", False)
+        )
+
+    def _fallback(self, sample, reason):
+        """Level-safe generic feedback so one bad sample cannot stop a full run."""
+        feedback = level_safe_feedback(sample.get("error_labels", []), sample["feedback_level"])
+        result = {
+            "error_labels": list(sample.get("error_labels", [])),
+            "feedback": feedback,
+            "feedback_level": sample["feedback_level"],
+            "compliance": check_compliance(feedback, sample["feedback_level"]),
+            "fallback": True,
+        }
+        append_jsonl(
+            self.log_path,
+            {**sample_metadata(sample), "fallback": True, "fallback_reason": reason, "parsed_output": result},
+        )
+        return result
+
     def postprocess(self, output):
         return output
+
+
+def level_safe_feedback(labels, level):
+    if not labels:
+        return "Bài làm của em đã đáp ứng yêu cầu của đề, em tiếp tục phát huy nhé."
+    if level == 1:
+        return "Bài làm của em vẫn chưa đáp ứng hết yêu cầu của đề, em hãy đọc lại đề và tự kiểm tra với vài bộ dữ liệu nhé."
+    kinds = ", ".join(label[0].lower() + label[1:] for label in labels)
+    return f"Bài làm của em còn {kinds}; em hãy xem lại phần xử lý liên quan trong bài và đối chiếu với yêu cầu của đề."

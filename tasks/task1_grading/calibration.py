@@ -52,6 +52,15 @@ class RubricSnapper:
                 result[template] = count
         return result
 
+    def most_frequent(self, sample, compilable, exclude_id=None):
+        """Most common training rubric of this exam type with the given compilable."""
+        candidates = {
+            t: n for t, n in self.templates(self.group(sample), exclude_id).items() if t[0] == compilable
+        }
+        if not candidates:
+            return None
+        return dict(zip(FIELDS, max(candidates, key=lambda t: (candidates[t], sum(t)))))
+
     def snap(self, rubric, sample, exclude_id=None):
         """Return (six-field rubric, chosen template or None if unchanged)."""
         predicted = validate_rubric(rubric)

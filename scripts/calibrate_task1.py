@@ -4,6 +4,9 @@ Templates come only from --train labels. When a prediction's sample is itself
 in --train (evaluating on training data), its own label is excluded (LOO).
 If --input carries reference rubrics, before/after metrics are printed,
 plus "oracle_snap": the cost of snapping when the model were perfect.
+With --evidence (scripts/compile_evidence.py output), a prediction whose
+`compilable` contradicts the pipeline's own compile result is replaced by the
+most frequent training template of that exam type with the evidence value.
 """
 
 import argparse
@@ -36,12 +39,14 @@ def main():
     parser.add_argument("--no-group", action="store_true", help="Share templates across exam types")
     parser.add_argument("--no-snap", action="store_true")
     parser.add_argument("--no-empty-rule", action="store_true")
+    parser.add_argument("--evidence", help="Compile evidence JSON; overrides contradicted compilable")
     args = parser.parse_args()
 
     samples = {s["sample_id"]: s for s in load_samples(args.input, task="task1")}
     train = load_samples(args.train, task="task1")
     train_ids = {s["sample_id"] for s in train}
     snapper = RubricSnapper(train, args.min_count, None if args.no_group else "problem_type")
+    evidence = read_json(args.evidence)["evidence"] if args.evidence else {}
     predictions = read_json(args.predictions)
     if {r["sample_id"] for r in predictions} != set(samples):
         raise ValueError("Prediction IDs must match the --input dataset exactly")
@@ -53,6 +58,12 @@ def main():
         after, reason = before, "unchanged"
         if not args.no_empty_rule and is_empty_submission(sample["code"]):
             after, reason = dict.fromkeys(FIELDS, 0), "empty_submission"
+        elif sid in evidence and int(evidence[sid]["relaxed"]) != before["compilable"]:
+            exclude = sid if sid in train_ids else None
+            after = snapper.most_frequent(sample, int(evidence[sid]["relaxed"]), exclude) or {
+                **before, "compilable": int(evidence[sid]["relaxed"])
+            }
+            reason = "evidence_flip"
         elif not args.no_snap:
             exclude = sid if sid in train_ids else None
             after, template = snapper.snap(before, sample, exclude)
