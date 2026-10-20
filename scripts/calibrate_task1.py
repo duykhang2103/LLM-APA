@@ -4,9 +4,11 @@ Templates come only from --train labels. When a prediction's sample is itself
 in --train (evaluating on training data), its own label is excluded (LOO).
 If --input carries reference rubrics, before/after metrics are printed,
 plus "oracle_snap": the cost of snapping when the model were perfect.
-With --evidence (scripts/compile_evidence.py output), a prediction whose
-`compilable` contradicts the pipeline's own compile result is replaced by the
-most frequent training template of that exam type with the evidence value.
+With --evidence (scripts/compile_evidence.py output), a single-problem
+prediction whose `compilable` contradicts the pipeline's own compile result is
+replaced by the most frequent training template with the evidence value; a
+multi-problem submission (columns = per-problem scores) that does not compile
+gets all zeros.
 """
 
 import argparse
@@ -58,7 +60,14 @@ def main():
         after, reason = before, "unchanged"
         if not args.no_empty_rule and is_empty_submission(sample["code"]):
             after, reason = dict.fromkeys(FIELDS, 0), "empty_submission"
-        elif sid in evidence and int(evidence[sid]["relaxed"]) != before["compilable"]:
+        elif sample["problem_type"] == "multi_problem" and sid in evidence and not evidence[sid]["relaxed"]:
+            # multi_problem columns are per-problem scores; the teacher zeroes all on compile failure
+            after, reason = dict.fromkeys(FIELDS, 0), "evidence_compile_fail"
+        elif (
+            sample["problem_type"] != "multi_problem"
+            and sid in evidence
+            and int(evidence[sid]["relaxed"]) != before["compilable"]
+        ):
             exclude = sid if sid in train_ids else None
             after = snapper.most_frequent(sample, int(evidence[sid]["relaxed"]), exclude) or {
                 **before, "compilable": int(evidence[sid]["relaxed"])
