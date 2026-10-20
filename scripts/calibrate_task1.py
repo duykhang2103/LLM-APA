@@ -41,6 +41,10 @@ def main():
     parser.add_argument("--no-group", action="store_true", help="Share templates across exam types")
     parser.add_argument("--no-snap", action="store_true")
     parser.add_argument("--no-empty-rule", action="store_true")
+    parser.add_argument(
+        "--snap-multi", action="store_true",
+        help="Also snap multi_problem (train has 12 distinct rubrics in 15 samples, so off by default)",
+    )
     parser.add_argument("--evidence", help="Compile evidence JSON; overrides contradicted compilable")
     args = parser.parse_args()
 
@@ -73,7 +77,7 @@ def main():
                 **before, "compilable": int(evidence[sid]["relaxed"])
             }
             reason = "evidence_flip"
-        elif not args.no_snap:
+        elif not args.no_snap and (args.snap_multi or sample["problem_type"] != "multi_problem"):
             exclude = sid if sid in train_ids else None
             after, template = snapper.snap(before, sample, exclude)
             reason = "snapped" if after != before else "already_template"
