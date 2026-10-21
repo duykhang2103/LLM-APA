@@ -56,6 +56,20 @@ def check_models(models, base_url="https://api.groq.com/openai/v1", key_env="GRO
     print("Models OK:", models)
 
 
+def stale_tests(dataset, tests_path, suites):
+    """True when a suite was added or rewritten after tests_path was made."""
+    if not tests_path.exists():
+        return True
+    used = set(json.loads(tests_path.read_text(encoding="utf-8"))["suites"])
+    exams = {e["exam_id"] for e in json.loads((dataset / "exams.json").read_text(encoding="utf-8"))["exams"]}
+    for exam in exams:
+        suite = suites / f"{exam}.json"
+        if suite.exists() and (exam not in used or suite.stat().st_mtime > tests_path.stat().st_mtime):
+            print(f"Test results are older than the {exam} suite; rerunning the tests")
+            return True
+    return False
+
+
 class Runner:
     def __init__(self, dry_run):
         self.dry_run = dry_run
@@ -132,7 +146,7 @@ def main():
         run("generate_tests.py", "--dataset", path, "--config", args.testgen_config,
             "--output-dir", suites, "--skip-existing",
             *(["--model", args.testgen_model] if args.testgen_model else []))
-        if args.force or not tests_path.exists():
+        if args.force or not tests_path.exists() or stale_tests(path, tests_path, suites):
             run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs)
 
     data_compile, data_tests = dataset_files(data)
