@@ -140,3 +140,32 @@ def test_stack_struct_arrays_are_rejected_then_dropped():
         generate_tests.screen_function_tests(exam, [bad, good], ["d.csv"])
     kept, dropped = generate_tests.screen_function_tests(exam, [bad, good], ["d.csv"], strict=False)
     assert [t["name"] for t in kept] == ["p2b"] and dropped == [{"name": "p2", "reason": "struct array on the stack"}]
+
+
+def test_request_config_fits_the_token_limit():
+    config = {"generation": {"max_new_tokens": 16000, "request_token_limit": 8000}}
+    capped = generate_tests.request_config(config, "x" * 3000)
+    assert capped["generation"]["max_new_tokens"] == 8000 - 1000 - 200
+    assert config["generation"]["max_new_tokens"] == 16000  # original untouched
+    assert generate_tests.request_config({"generation": {"max_new_tokens": 5}}, "x")["generation"]["max_new_tokens"] == 5
+    with pytest.raises(RuntimeError, match="too long"):
+        generate_tests.request_config(config, "x" * 20000)
+
+
+def test_large_stdio_inputs_come_from_a_generator_program(monkeypatch, tmp_path):
+    def fake_run(binary, stdin, cwd, timeout):
+        if "generator" in str(binary):
+            return "ok", "3\n1 2 3\n"
+        return "ok", {"1\n": "1\n"}.get(stdin, "big\n")
+
+    monkeypatch.setattr(generate_tests, "build", lambda *a, **k: (True, []))
+    monkeypatch.setattr(generate_tests, "run_binary", fake_run)
+    exam = {"exam_id": "E", "exam_type": "single_problem"}
+    response = {
+        "reference_solution": "int main(){}",
+        "examples": [{"input": "1\n", "output": "1"}],
+        "tests": [{"name": "big", "category": "large", "generator": "int main(){}"}],
+    }
+    suite, _ = generate_tests.validate(exam, response, [], tmp_path, ["cc"], min_tests=2)
+    assert suite["tests"][0] == {"name": "big", "category": "large", "problem": None,
+                                 "input": "3\n1 2 3\n", "expected": "big\n"}

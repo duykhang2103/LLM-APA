@@ -1,7 +1,7 @@
 # Test-suite generation (scripts/generate_tests.py). A large model is fine
 # here: it only writes tests and a reference solution from the statement and
 # never sees student code or labels. Grading still uses the small model.
-prompt_version: v002
+prompt_version: v003
 model:
   provider: api
   name_or_path: openai/gpt-oss-120b
@@ -17,3 +17,7 @@ generation:
   temperature: 0.0
   # A reasoning model spends part of the budget thinking before the JSON.
   max_new_tokens: 16000
+  # Groq counts prompt + max_tokens against tokens per minute (free tier:
+  # 8000 for gpt-oss-120b). max_tokens is lowered per request to fit; raise
+  # this on a paid tier.
+  request_token_limit: 8000

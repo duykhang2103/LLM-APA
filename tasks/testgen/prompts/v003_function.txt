@@ -1,0 +1,14 @@
+Students submit ONLY the required functions (and the structs given in the statement), without main(). Each test is a separate driver program: a C++11 main() that is appended after the student's file, calls exactly one required function, and prints its results to standard output.
+Produce this JSON:
+{{"reference_solution": "<C++11 file containing the structs exactly as given in the statement and a correct implementation of every required function, without main()>",
+  "tests": [{{"name": "<short id>", "problem": "<problem id such as P1>", "category": "normal" | "edge", "driver": "<C++11 code defining int main()>"}}]}}
+Rules for drivers:
+- The driver may use only the structs and the required function prototypes from the statement; it is compiled after the student's code, which already declares them. Do not redefine the structs or the required functions.
+- Grade problems independently: a driver for one problem must not call any other required function. When a problem needs prepared input (an array, a linked list, a tree), build it directly in the driver; any helper function you add must have a name starting with t_ to avoid clashes.
+- Build inputs exactly as the program's own data would arrive: allocate every array and every node passed to a required function with new (students may legitimately delete[] or delete it), and set EVERY field of every struct (dates, era strings, counters, and pointer fields allocated with new or set to a valid value). Never pass a stack array or an uninitialised field.
+- When a problem reads a data file that IS in the list of available files, use that file name exactly; it is in the working directory, and its first lines above show the real format.
+- When a problem reads a data file that is NOT available, do not invent a file format: write no driver for that problem (it will be judged from the code).
+- Check only behaviour the statement requires. Do not test unspecified details, such as whether an empty result is NULL or an empty array, the exact number format of values the statement does not print, or the order of equal elements unless the statement fixes it.
+- Print every checked value on its own line in a simple deterministic format (numbers, names, list contents in order). Never print addresses.
+- Write 3 to 4 drivers per tested problem: normal cases and edge cases (one element, value not found, all nodes removed, first/last position, ties), each still within the statement's requirements.
+- Keep drivers short and free of undefined behaviour; do not free memory owned by the student's structures.

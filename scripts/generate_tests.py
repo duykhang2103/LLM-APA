@@ -127,7 +127,20 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests, strict=T
                     )
             if not response.get("examples"):
                 raise ValueError("no statement examples were copied into 'examples'")
-            cases = [{**t, "input": t["input"]} for t in response["tests"]]
+            cases = []
+            for index, test in enumerate(response["tests"]):
+                if isinstance(test.get("input"), str):
+                    cases.append(test)
+                    continue
+                # Large inputs come from a small C++ program that prints them.
+                program = test.get("generator")
+                built = Path(directory, f"generator{index}.exe")
+                ok, errors = build(program, built, compiler, 180, link=True) if isinstance(program, str) else (False, [])
+                state, text = run_binary(built, "", directory, 10) if ok else ("build", "")
+                if state != "ok" or not text.strip():
+                    dropped.append({"name": test.get("name"), "reason": f"generator: {state} {errors[:1]}"})
+                    continue
+                cases.append({**test, "input": text})
             cases += [
                 {"name": f"example{i + 1}", "category": "example", "input": e["input"]}
                 for i, e in enumerate(response["examples"])
@@ -171,6 +184,19 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests, strict=T
     return suite, {"kept": len(kept), "dropped": dropped}
 
 
+def request_config(config, prompt):
+    """Cap max_tokens so prompt + completion fit the provider's per-request
+    token limit (Groq counts max_tokens against tokens-per-minute)."""
+    limit = config["generation"].get("request_token_limit")
+    if not limit:
+        return config
+    estimate = len(prompt) // 3 + 200  # conservative tokens for code + Vietnamese text
+    budget = min(config["generation"]["max_new_tokens"], limit - estimate)
+    if budget < 2000:
+        raise RuntimeError(f"prompt too long for request_token_limit={limit} (about {estimate} tokens)")
+    return {**config, "generation": {**config["generation"], "max_new_tokens": budget}}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", required=True, help="Dataset folder with exams.json (and data_files/)")
@@ -208,10 +234,18 @@ def main():
                     break
                 raw = Path(args.response_dir, f"{exam['exam_id']}.txt").read_text(encoding="utf-8")
             else:
+                # The attempt number keeps identical retries from hitting the response cache.
                 retry = "" if error is None else (
-                    f"\n\nYour previous answer was rejected: {error}\nFix it and return the full JSON again."
+                    f"\n\nAttempt {attempt + 1}. Your previous answer was rejected: {error}\n"
+                    "Fix it and return the full JSON again."
                 )
-                raw = runner.generate(prompt + retry)
+                try:
+                    raw = runner.generate(prompt + retry, request_config(config, prompt + retry))
+                except RuntimeError as exc:  # API/quota error: skip this exam, keep the others
+                    error = str(exc)
+                    log.append({"attempt": attempt + 1, "error": error[:500]})
+                    print(f"{exam['exam_id']}: API error, exam skipped: {error[:300]}")
+                    break
             (output / "raw" / f"{exam['exam_id']}.attempt{attempt + 1}.txt").write_text(raw, encoding="utf-8")
             try:
                 last = args.response_dir or attempt == args.attempts - 1
