@@ -55,14 +55,23 @@ def render_prompt(exam, previews, version):
 
 
 def parse(raw):
-    text = raw.strip()
-    start, end = text.find("{"), text.rfind("}")
-    if start < 0 or end < start:
-        raise ValueError("response has no JSON object")
-    value = json.loads(text[start : end + 1])
-    if not isinstance(value.get("reference_solution"), str) or not isinstance(value.get("tests"), list):
-        raise ValueError("JSON must contain reference_solution and tests")
-    return value
+    """The last JSON object with reference_solution and tests. Reasoning
+    models may put text (and C++ braces) before it, so scan every '{'."""
+    decoder, found = json.JSONDecoder(), None
+    for index, char in enumerate(raw):
+        if char != "{":
+            continue
+        try:
+            value, _ = decoder.raw_decode(raw, index)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict) and "reference_solution" in value:
+            found = value
+    if found is None:
+        raise ValueError("response has no JSON object with reference_solution")
+    if not isinstance(found.get("reference_solution"), str) or not isinstance(found.get("tests"), list):
+        raise ValueError("JSON must contain reference_solution (string) and tests (list)")
+    return found
 
 
 def validate(exam, response, data_names, data_dir, compiler, min_tests):

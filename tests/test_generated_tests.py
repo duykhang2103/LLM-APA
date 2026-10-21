@@ -94,6 +94,8 @@ def test_parse_accepts_fenced_json_and_rejects_missing_fields():
     assert generate_tests.parse('```json\n{"reference_solution": "x", "tests": []}\n```')["tests"] == []
     with pytest.raises(ValueError):
         generate_tests.parse(json.dumps({"tests": []}))
+    noisy = 'Thinking: int f() { return 1; } then {"a": 1}\n' + json.dumps({"reference_solution": "int main(){}", "tests": [1]})
+    assert generate_tests.parse(noisy)["tests"] == [1]
 
 
 def test_rule_baseline():
