@@ -174,11 +174,21 @@ def main():
                            provider=args.provider, dtype=args.dtype,
                            base_url=args.base_url, key_env=args.api_key_env)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
+    task2_labels = out / "pred_task2.json"
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
-        extra = ["--task3-labels", out / "pred_task2.json"] if task == "task3" else []
+        extra = ["--task3-labels", task2_labels] if task == "task3" else []
         run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
             "--evidence", data_compile, *tests_flag, *extra, *limit)
+        if task == "task2":
+            # Evidence rules (scripts/calibrate_task2.py): +0.04 macro-F1 on train.
+            raw, pred = pred, out / "pred_task2_calib.json"
+            run("calibrate_task2.py", "--predictions", raw, "--evidence", data_compile, *tests_flag,
+                "--output", pred, *(["--input", data] if args.eval else []))
+            task2_labels = pred
+            if not args.eval:
+                run("package_predictions.py", "--task", task, "--input", raw,
+                    "--output", out / "submission_task2_raw.json")
         log = out / task / "responses.jsonl"
         if log.exists():
             rows = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
