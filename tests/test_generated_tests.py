@@ -130,3 +130,13 @@ def test_file_problem_without_data_file_may_be_untested(monkeypatch, tmp_path):
         generate_tests.validate(exam, response, ["data.csv"], tmp_path, ["cc"], min_tests=1)
     report = {**summarize([row("pass", problem="P2")], {}), "untested_problems": ["P1"]}
     assert "No tests for P1" in report_text(report)
+
+
+def test_stack_struct_arrays_are_rejected_then_dropped():
+    exam = {"problems": [{"pid": "P2", "prototype": "Node* prob2(General* g, int n);"}]}
+    bad = {"name": "p2", "problem": "P2", "driver": "int main(){ General g[3]; prob2(g, 3); }"}
+    good = {"name": "p2b", "problem": "P2", "driver": "int main(){ General* g = new General[3]; int a[2]; }"}
+    with pytest.raises(ValueError, match="General g\[3\]"):
+        generate_tests.screen_function_tests(exam, [bad, good], ["d.csv"])
+    kept, dropped = generate_tests.screen_function_tests(exam, [bad, good], ["d.csv"], strict=False)
+    assert [t["name"] for t in kept] == ["p2b"] and dropped == [{"name": "p2", "reason": "struct array on the stack"}]

@@ -13,6 +13,7 @@ the API, so a suite can be rebuilt or audited offline.
 
 import argparse
 import json
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -74,7 +75,37 @@ def parse(raw):
     return found
 
 
-def validate(exam, response, data_names, data_dir, compiler, min_tests):
+# Models ignore prompt rules, so the main checks are enforced here.
+STRUCT_ARRAY = re.compile(r"\b([A-Z]\w*)\s+(\w+)\s*\[[^\]]*\]\s*[;={]")
+NULL_LINE = re.compile(r"^\s*(null|nullptr)\s*$", re.I | re.M)
+
+
+def file_problems(exam, data_names):
+    """Problems that read a data file which is not supplied: untestable."""
+    if data_names:
+        return set()
+    return {p["pid"] for p in exam.get("problems", []) if "file" in p.get("prototype", "").lower()}
+
+
+def screen_function_tests(exam, tests, data_names, strict=True):
+    """Drop tests of untestable problems. Drivers that declare struct arrays
+    on the stack (students may delete[] what the real program allocated with
+    new) raise when strict, so the model rewrites them; otherwise (last
+    attempt) only those tests are dropped."""
+    skip = file_problems(exam, data_names)
+    kept = [t for t in tests if t.get("problem") not in skip]
+    dropped = [{"name": t.get("name"), "reason": "needs an unavailable data file"} for t in tests if t not in kept]
+    stack = {t.get("name"): m.group(0).strip() for t in kept for m in STRUCT_ARRAY.finditer(t.get("driver", ""))}
+    if stack and strict:
+        raise ValueError(
+            "drivers declare struct arrays on the stack; allocate every array and node passed to a required "
+            "function with new and set every field: " + "; ".join(f"{k}: {v}" for k, v in list(stack.items())[:6])
+        )
+    dropped += [{"name": name, "reason": "struct array on the stack"} for name in stack]
+    return [t for t in kept if t.get("name") not in stack], dropped
+
+
+def validate(exam, response, data_names, data_dir, compiler, min_tests, strict=True):
     """Run the reference; return (suite, report) or raise ValueError with the reason."""
     mode = mode_of(exam)
     reference = response["reference_solution"]
@@ -102,7 +133,8 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests):
                 for i, e in enumerate(response["examples"])
             ]
         else:
-            cases = response["tests"]
+            cases, dropped = screen_function_tests(exam, response["tests"], data_names, strict)
+        null_allowed = bool(re.search(r"\bnull\b|nullptr", exam.get("statement", ""), re.I))
         for index, test in enumerate(cases):
             if mode == "function":
                 binary = Path(directory, f"driver{index}.exe")
@@ -113,6 +145,9 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests):
             state, actual = run_binary(binary, test.get("input", ""), directory, 5)
             if state != "ok" or not actual.strip():
                 dropped.append({"name": test.get("name"), "reason": state if state != "ok" else "empty output"})
+                continue
+            if mode == "function" and not null_allowed and NULL_LINE.search(actual):
+                dropped.append({"name": test.get("name"), "reason": "checks a NULL result the statement does not specify"})
                 continue
             kept.append({
                 "name": str(test.get("name") or f"t{index + 1}"),
@@ -126,7 +161,7 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests):
     if mode == "function":
         problems = exam.get("problems", [])
         # A file-reading problem cannot be tested when the data file is not supplied.
-        untestable = {p["pid"] for p in problems if not data_names and "file" in p.get("prototype", "").lower()}
+        untestable = file_problems(exam, data_names)
         missing = {p["pid"] for p in problems} - {t["problem"] for t in kept}
         if missing - untestable:
             raise ValueError(f"no usable driver for problems {sorted(missing - untestable)}; dropped: {dropped[:5]}")
@@ -179,7 +214,9 @@ def main():
                 raw = runner.generate(prompt + retry)
             (output / "raw" / f"{exam['exam_id']}.attempt{attempt + 1}.txt").write_text(raw, encoding="utf-8")
             try:
-                suite, report = validate(exam, parse(raw), names, dataset / "data_files", compiler, args.min_tests)
+                last = args.response_dir or attempt == args.attempts - 1
+                suite, report = validate(exam, parse(raw), names, dataset / "data_files", compiler, args.min_tests,
+                                         strict=not last)
             except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
                 error = str(exc)
                 log.append({"attempt": attempt + 1, "error": error[:500]})
