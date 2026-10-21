@@ -1,7 +1,7 @@
 """Task 1 predictions without an LLM: compile evidence + generated-test pass rate.
 
 Samples without a test report keep the rubric from --fallback (e.g. an LLM
-prediction file); without --fallback they are an error. On labeled data the
+prediction file), else get the default 1,1,2,1,1,1 (counted in the output). On labeled data the
 metrics are printed.
 """
 
@@ -18,6 +18,8 @@ from llm_grading.evaluation.task1 import evaluate_task1
 from llm_grading.runtime import read_json, write_json
 from llm_grading.validation.predictions import validate_prediction_records
 from tasks.task1_grading.evidence_rules import FIELDS, rubric_from_evidence
+
+DEFAULT = (1, 1, 2, 1, 1, 1)
 
 
 def main():
@@ -36,10 +38,12 @@ def main():
     for sample in samples:
         sid = sample["sample_id"]
         rubric = rubric_from_evidence(sample, evidence.get(sid), reports.get(sid))
-        if rubric is None:
-            if sid not in fallback:
-                raise ValueError(f"No test report and no --fallback prediction for {sid}")
+        if rubric is None and sid in fallback:
             rubric, source = {f: fallback[sid][f] for f in FIELDS}, "fallback"
+        elif rubric is None:
+            # No suite for this exam and no LLM prediction: the most common
+            # teacher pattern for compiling code (compiles, logic bug).
+            rubric, source = dict(zip(FIELDS, DEFAULT)), "default_no_tests"
         else:
             source = "rule"
         sources[source] += 1

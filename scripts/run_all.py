@@ -49,7 +49,10 @@ def main():
     parser.add_argument("--data", required=True, help="Dataset folder to predict (exams.json, submissions/)")
     parser.add_argument("--train", default=str(DEFAULT_TRAIN), help="Labeled training dataset (RAG examples)")
     parser.add_argument("--prompt", default="v004")
-    parser.add_argument("--model", default="llama-3.1-8b-instant", help="Grading model (<=10B)")
+    parser.add_argument("--provider", choices=["api", "local"], default="api",
+                        help="api = OpenAI-compatible endpoint (Groq); local = Hugging Face model on this GPU")
+    parser.add_argument("--model", help="Grading model (<=10B); default llama-3.1-8b-instant (api) or Qwen/Qwen3.5-4B (local)")
+    parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--suites", default=str(ROOT / "outputs" / "testsuites"), help="Shared test-suite folder")
     parser.add_argument("--tasks", nargs="+", default=["task1", "task2", "task3"], choices=["task1", "task2", "task3"])
@@ -111,8 +114,10 @@ def main():
         print(f"\nDone (no LLM). Files in {out}")
         return 0
 
-    configs = make_configs(out, train, args.model, args.prompt, train_compile,
-                           None if args.no_tests else train_tests, eval_mode=args.eval)
+    model = args.model or ("Qwen/Qwen3.5-4B" if args.provider == "local" else "llama-3.1-8b-instant")
+    configs = make_configs(out, train, model, args.prompt, train_compile,
+                           None if args.no_tests else train_tests, eval_mode=args.eval,
+                           provider=args.provider, dtype=args.dtype)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
