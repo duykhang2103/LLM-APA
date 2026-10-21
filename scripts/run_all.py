@@ -19,7 +19,11 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
@@ -31,6 +35,25 @@ SCRIPTS = ROOT / "scripts"
 
 def tag_of(path):
     return re.sub(r"[^A-Za-z0-9_-]+", "-", Path(path).resolve().name).strip("-") or "data"
+
+
+def check_models(models, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY"):
+    """Fail before any work when the key is missing or a model is unavailable."""
+    key = os.environ.get(key_env)
+    if not key:
+        raise SystemExit(f"Set {key_env} first (needed for {models} at {base_url})")
+    request = urllib.request.Request(base_url + "/models", headers={
+        "Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0 (compatible; llm-apa/1.0)"})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            available = sorted(m["id"] for m in json.load(response)["data"])
+    except urllib.error.HTTPError as error:
+        raise SystemExit(f"API key check failed: {error.code} {error.read().decode(errors='replace')[:300]}")
+    missing = [m for m in models if m not in available]
+    if missing:
+        raise SystemExit(f"Model(s) not available for this key: {missing}\nAvailable: {available}\n"
+                         "Choose with --testgen-model (test suites) and --model (grading).")
+    print("Models OK:", models)
 
 
 class Runner:
@@ -49,8 +72,16 @@ def main():
     parser.add_argument("--data", required=True, help="Dataset folder to predict (exams.json, submissions/)")
     parser.add_argument("--train", default=str(DEFAULT_TRAIN), help="Labeled training dataset (RAG examples)")
     parser.add_argument("--prompt", default="v004")
-    parser.add_argument("--model", default="llama-3.1-8b-instant", help="Grading model (<=10B)")
+    parser.add_argument("--provider", choices=["api", "local"], default="api",
+                        help="api = OpenAI-compatible endpoint; local = Hugging Face model on this GPU")
+    parser.add_argument("--model", help="Grading model (<=10B open weights); default Qwen/Qwen3.5-4B for local, "
+                        "required for api")
+    parser.add_argument("--base-url", default="https://api.groq.com/openai/v1",
+                        help="Grading API (OpenAI-compatible), e.g. https://openrouter.ai/api/v1")
+    parser.add_argument("--api-key-env", default="GROQ_API_KEY", help="Env variable holding the grading API key")
+    parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
+    parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
     parser.add_argument("--suites", default=str(ROOT / "outputs" / "testsuites"), help="Shared test-suite folder")
     parser.add_argument("--tasks", nargs="+", default=["task1", "task2", "task3"], choices=["task1", "task2", "task3"])
     parser.add_argument("--name", help="Run folder name under outputs/runs/ (default <data>-<prompt>)")
@@ -70,6 +101,18 @@ def main():
     if not (data / "exams.json").exists() or not (train / "exams.json").exists():
         raise SystemExit("--data and --train must be dataset folders containing exams.json")
     suites = Path(args.suites).resolve()
+    model = args.model or ("Qwen/Qwen3.5-4B" if args.provider == "local" else None)
+    if args.provider == "api" and not args.no_llm and not model:
+        raise SystemExit("--provider api needs --model (a <=10B open-weight model the API offers)")
+    if not args.dry_run:
+        # Check keys and model names before any long step.
+        exams = {e["exam_id"] for path in {data, train}
+                 for e in json.loads((path / "exams.json").read_text(encoding="utf-8"))["exams"]}
+        if not args.no_tests and any(not (suites / f"{exam}.json").exists() for exam in exams):
+            testgen = yaml.safe_load(Path(args.testgen_config).read_text(encoding="utf-8"))["model"]
+            check_models([args.testgen_model or testgen["name_or_path"]], testgen["base_url"], testgen["api_key_env"])
+        if args.provider == "api" and not args.no_llm:
+            check_models([model], args.base_url, args.api_key_env)
     name = args.name or f"{tag_of(data)}-{args.prompt}{'-eval' if args.eval else ''}"
     out = ROOT / "outputs" / "runs" / name
     out.mkdir(parents=True, exist_ok=True)
@@ -87,7 +130,8 @@ def main():
         if args.no_tests:
             continue
         run("generate_tests.py", "--dataset", path, "--config", args.testgen_config,
-            "--output-dir", suites, "--skip-existing")
+            "--output-dir", suites, "--skip-existing",
+            *(["--model", args.testgen_model] if args.testgen_model else []))
         if args.force or not tests_path.exists():
             run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs)
 
@@ -111,14 +155,23 @@ def main():
         print(f"\nDone (no LLM). Files in {out}")
         return 0
 
-    configs = make_configs(out, train, args.model, args.prompt, train_compile,
-                           None if args.no_tests else train_tests, eval_mode=args.eval)
+    configs = make_configs(out, train, model, args.prompt, train_compile,
+                           None if args.no_tests else train_tests, eval_mode=args.eval,
+                           provider=args.provider, dtype=args.dtype,
+                           base_url=args.base_url, key_env=args.api_key_env)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
         extra = ["--task3-labels", out / "pred_task2.json"] if task == "task3" else []
         run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
             "--evidence", data_compile, *tests_flag, *extra, *limit)
+        log = out / task / "responses.jsonl"
+        if log.exists():
+            rows = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
+            fallbacks = {r["sample_id"] for r in rows if r.get("fallback")}
+            salvaged = {r["sample_id"] for r in rows if (r.get("parsed_output") or {}).get("salvaged")}
+            print(f"{task}: {len(fallbacks)} samples used the fallback, {len(salvaged)} had labels salvaged "
+                  f"(see {log})")
         if args.eval:
             run("evaluate.py", "--config", configs[task], "--predictions", pred, "--input", data,
                 "--output", out / f"metrics_{task}.json")

@@ -13,6 +13,7 @@ the API, so a suite can be rebuilt or audited offline.
 
 import argparse
 import json
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -55,17 +56,61 @@ def render_prompt(exam, previews, version):
 
 
 def parse(raw):
-    text = raw.strip()
-    start, end = text.find("{"), text.rfind("}")
-    if start < 0 or end < start:
-        raise ValueError("response has no JSON object")
-    value = json.loads(text[start : end + 1])
-    if not isinstance(value.get("reference_solution"), str) or not isinstance(value.get("tests"), list):
-        raise ValueError("JSON must contain reference_solution and tests")
-    return value
+    """The last JSON object with reference_solution and tests. Reasoning
+    models may put text (and C++ braces) before it, so scan every '{'."""
+    decoder, found = json.JSONDecoder(), None
+    for index, char in enumerate(raw):
+        if char != "{":
+            continue
+        try:
+            value, _ = decoder.raw_decode(raw, index)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict) and "reference_solution" in value:
+            found = value
+    if found is None:
+        if '"reference_solution"' in raw:
+            raise ValueError(
+                "the answer was cut off at the length limit before the JSON ended; write fewer and shorter "
+                "tests (at most 2 drivers per problem, compact code, no comments)"
+            )
+        raise ValueError("response has no JSON object with reference_solution")
+    if not isinstance(found.get("reference_solution"), str) or not isinstance(found.get("tests"), list):
+        raise ValueError("JSON must contain reference_solution (string) and tests (list)")
+    return found
 
 
-def validate(exam, response, data_names, data_dir, compiler, min_tests):
+# Models ignore prompt rules, so the main checks are enforced here.
+STRUCT_ARRAY = re.compile(r"\b([A-Z]\w*)\s+(\w+)\s*\[[^\]]*\]\s*[;={]")
+NULL_LINE = re.compile(r"^\s*(null|nullptr)\s*$", re.I | re.M)
+
+
+def file_problems(exam, data_names):
+    """Problems that read a data file which is not supplied: untestable."""
+    if data_names:
+        return set()
+    return {p["pid"] for p in exam.get("problems", []) if "file" in p.get("prototype", "").lower()}
+
+
+def screen_function_tests(exam, tests, data_names, strict=True):
+    """Drop tests of untestable problems. Drivers that declare struct arrays
+    on the stack (students may delete[] what the real program allocated with
+    new) raise when strict, so the model rewrites them; otherwise (last
+    attempt) only those tests are dropped."""
+    skip = file_problems(exam, data_names)
+    kept = [t for t in tests if t.get("problem") not in skip]
+    dropped = [{"name": t.get("name"), "reason": "needs an unavailable data file"} for t in tests if t not in kept]
+    stack = {t.get("name"): m.group(0).strip() for t in kept for m in STRUCT_ARRAY.finditer(t.get("driver", ""))}
+    if stack and strict:
+        raise ValueError(
+            "drivers declare struct arrays on the stack; allocate every array and node passed to a required "
+            "function with new and set every field: " + "; ".join(f"{k}: {v}" for k, v in list(stack.items())[:6])
+        )
+    dropped += [{"name": name, "reason": "struct array on the stack"} for name in stack]
+    return [t for t in kept if t.get("name") not in stack], dropped
+
+
+def validate(exam, response, data_names, data_dir, compiler, min_tests, strict=True):
     """Run the reference; return (suite, report) or raise ValueError with the reason."""
     mode = mode_of(exam)
     reference = response["reference_solution"]
@@ -87,13 +132,27 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests):
                     )
             if not response.get("examples"):
                 raise ValueError("no statement examples were copied into 'examples'")
-            cases = [{**t, "input": t["input"]} for t in response["tests"]]
+            cases = []
+            for index, test in enumerate(response["tests"]):
+                if isinstance(test.get("input"), str):
+                    cases.append(test)
+                    continue
+                # Large inputs come from a small C++ program that prints them.
+                program = test.get("generator")
+                built = Path(directory, f"generator{index}.exe")
+                ok, errors = build(program, built, compiler, 180, link=True) if isinstance(program, str) else (False, [])
+                state, text = run_binary(built, "", directory, 10) if ok else ("build", "")
+                if state != "ok" or not text.strip():
+                    dropped.append({"name": test.get("name"), "reason": f"generator: {state} {errors[:1]}"})
+                    continue
+                cases.append({**test, "input": text})
             cases += [
                 {"name": f"example{i + 1}", "category": "example", "input": e["input"]}
                 for i, e in enumerate(response["examples"])
             ]
         else:
-            cases = response["tests"]
+            cases, dropped = screen_function_tests(exam, response["tests"], data_names, strict)
+        null_allowed = bool(re.search(r"\bnull\b|nullptr", exam.get("statement", ""), re.I))
         for index, test in enumerate(cases):
             if mode == "function":
                 binary = Path(directory, f"driver{index}.exe")
@@ -105,6 +164,9 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests):
             if state != "ok" or not actual.strip():
                 dropped.append({"name": test.get("name"), "reason": state if state != "ok" else "empty output"})
                 continue
+            if mode == "function" and not null_allowed and NULL_LINE.search(actual):
+                dropped.append({"name": test.get("name"), "reason": "checks a NULL result the statement does not specify"})
+                continue
             kept.append({
                 "name": str(test.get("name") or f"t{index + 1}"),
                 "category": test.get("category", "normal"),
@@ -115,17 +177,36 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests):
     if len(kept) < min_tests:
         raise ValueError(f"only {len(kept)} usable tests (need {min_tests}); dropped: {dropped[:5]}")
     if mode == "function":
-        missing = {p["pid"] for p in exam.get("problems", [])} - {t["problem"] for t in kept}
-        if missing:
-            raise ValueError(f"no usable driver for problems {sorted(missing)}; dropped: {dropped[:5]}")
+        problems = exam.get("problems", [])
+        # A file-reading problem cannot be tested when the data file is not supplied.
+        untestable = file_problems(exam, data_names)
+        missing = {p["pid"] for p in problems} - {t["problem"] for t in kept}
+        if missing - untestable:
+            raise ValueError(f"no usable driver for problems {sorted(missing - untestable)}; dropped: {dropped[:5]}")
     suite = {"exam_id": exam["exam_id"], "mode": mode, "data_files": data_names, "tests": kept}
+    if mode == "function" and missing:
+        suite["untested_problems"] = sorted(missing)
     return suite, {"kept": len(kept), "dropped": dropped}
+
+
+def request_config(config, prompt):
+    """Cap max_tokens so prompt + completion fit the provider's per-request
+    token limit (Groq counts max_tokens against tokens-per-minute)."""
+    limit = config["generation"].get("request_token_limit")
+    if not limit:
+        return config
+    estimate = len(prompt) // 3 + 200  # conservative tokens for code + Vietnamese text
+    budget = min(config["generation"]["max_new_tokens"], limit - estimate)
+    if budget < 2000:
+        raise RuntimeError(f"prompt too long for request_token_limit={limit} (about {estimate} tokens)")
+    return {**config, "generation": {**config["generation"], "max_new_tokens": budget}}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", required=True, help="Dataset folder with exams.json (and data_files/)")
     parser.add_argument("--config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
+    parser.add_argument("--model", help="Override the config's model name")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--exam", action="append", help="Only these exam_ids (repeatable)")
     parser.add_argument("--response-dir", help="Use saved raw responses instead of the API")
@@ -138,6 +219,8 @@ def main():
     exams = json.loads((dataset / "exams.json").read_text(encoding="utf-8"))["exams"]
     exams = [e for e in exams if not args.exam or e["exam_id"] in args.exam]
     config = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
+    if args.model and args.model != config["model"]["name_or_path"]:
+        config["model"].update(name_or_path=args.model, cost_per_million_tokens={})
     runner = None if args.response_dir else ModelRunner(config)
     compiler = default_compiler(native=True)
     output = Path(args.output_dir)
@@ -156,13 +239,23 @@ def main():
                     break
                 raw = Path(args.response_dir, f"{exam['exam_id']}.txt").read_text(encoding="utf-8")
             else:
+                # The attempt number keeps identical retries from hitting the response cache.
                 retry = "" if error is None else (
-                    f"\n\nYour previous answer was rejected: {error}\nFix it and return the full JSON again."
+                    f"\n\nAttempt {attempt + 1}. Your previous answer was rejected: {error}\n"
+                    "Fix it and return the full JSON again."
                 )
-                raw = runner.generate(prompt + retry)
+                try:
+                    raw = runner.generate(prompt + retry, request_config(config, prompt + retry))
+                except RuntimeError as exc:  # API/quota error: skip this exam, keep the others
+                    error = str(exc)
+                    log.append({"attempt": attempt + 1, "error": error[:500]})
+                    print(f"{exam['exam_id']}: API error, exam skipped: {error[:300]}")
+                    break
             (output / "raw" / f"{exam['exam_id']}.attempt{attempt + 1}.txt").write_text(raw, encoding="utf-8")
             try:
-                suite, report = validate(exam, parse(raw), names, dataset / "data_files", compiler, args.min_tests)
+                last = args.response_dir or attempt == args.attempts - 1
+                suite, report = validate(exam, parse(raw), names, dataset / "data_files", compiler, args.min_tests,
+                                         strict=not last)
             except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
                 error = str(exc)
                 log.append({"attempt": attempt + 1, "error": error[:500]})

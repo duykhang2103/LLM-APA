@@ -1,4 +1,5 @@
-"""Write API (OpenAI-compatible, default Groq) RAG configs for task1/2/3.
+"""Write RAG configs for task1/2/3: an OpenAI-compatible API (default Groq)
+or, with --provider local, the team's local Hugging Face runner (Qwen on GPU).
 
 Configs start from configs/<task>/rag.yaml and only change the model, prompt,
 paths and retrieval settings, so the team's model code is used unchanged.
@@ -33,38 +34,49 @@ def prompt_for(task, wanted):
 
 def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_tests=None,
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
-                 max_cost=20.0, cache_path=None):
+                 max_cost=20.0, cache_path=None, provider="api", dtype=None):
     out_dir = Path(out_dir)
     paths = {}
     for task in TASK_DIRS:
         cfg = yaml.safe_load((ROOT / "configs" / task / "rag.yaml").read_text(encoding="utf-8"))
         version = prompt_for(task, prompt)
-        tag = f"api-{version}{'-loeo' if eval_mode else ''}"
+        tag = f"{provider}-{version}{'-loeo' if eval_mode else ''}"
         cfg["prompt"]["version"] = version
         cfg["experiment"].update(
             id=f"{task}-{tag}", name=f"{task}_{tag}",
             notes=f"{model}; prompt {version}; code-keyed BM25 k=1; compile+test evidence"
             + ("; leave-one-exam-out evaluation" if eval_mode else ""),
         )
-        cfg["model"] = {
-            "provider": "api",
-            "name_or_path": model,
-            "revision": None,
-            "base_url": base_url,
-            "api_key_env": key_env,
-            "allow_private_data": True,  # lecturer allowed sending student code to an API
-            "timeout_seconds": 120,
-            "cost_per_million_tokens": PRICES.get(model, {}),
-            "max_cost_usd": max_cost,
-            "cache_path": str(Path(cache_path or ROOT / "outputs" / "api_cache.jsonl").resolve()),
-        }
+        cache = str(Path(cache_path or ROOT / "outputs" / f"{provider}_cache.jsonl").resolve())
+        if provider == "local":
+            # Keep the team's local model block (quantization, revision, adapter).
+            cfg["model"].update(name_or_path=model, cache_path=cache)
+            if dtype:
+                cfg["model"]["dtype"] = dtype
+        else:
+            cfg["model"] = {
+                "provider": "api",
+                "name_or_path": model,
+                "revision": None,
+                "base_url": base_url,
+                "api_key_env": key_env,
+                "allow_private_data": True,  # lecturer allowed sending student code to an API
+                "timeout_seconds": 120,
+                "cost_per_million_tokens": PRICES.get(model, {}),
+                "max_cost_usd": max_cost,
+                "cache_path": cache,
+            }
         train = str(Path(train_dir).resolve())
         cfg["data"].update(input_path=train, train_path=train, validation_path=None, test_path=None,
                            prepared_dir=str((out_dir / task / "prepared").resolve()))
         cfg["saving"]["output_dir"] = str((out_dir / task).resolve())
         cfg.setdefault(task, {})["use_grading_policy"] = False
+        # One unparseable sample must not stop a 328-sample run; fallbacks are logged.
+        cfg[task]["fallback_on_failure"] = True
+        if task == "task2":
+            cfg["task2"].update(salvage_labels=True, max_labels=3)
         if task == "task3":
-            cfg["task3"].update(max_compliance_retries=2, fallback_on_failure=True)
+            cfg["task3"].update(max_compliance_retries=2)
         cfg["retrieval"].update(k=1, key="code", index="bm25", same_exam_first=not eval_mode,
                                 exclude_same_exam=eval_mode, compact_examples=True,
                                 exclude_duplicates=True, near_duplicate_threshold=0.95)
@@ -83,14 +95,20 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", required=True, help="Run folder: configs/ and per-task logs go here")
     parser.add_argument("--train", required=True, help="Labeled training dataset folder")
+    parser.add_argument("--provider", choices=["api", "local"], default="api")
     parser.add_argument("--model", default="llama-3.1-8b-instant")
+    parser.add_argument("--dtype", help="local only, e.g. float16 on a T4")
+    parser.add_argument("--base-url", default="https://api.groq.com/openai/v1")
+    parser.add_argument("--api-key-env", default="GROQ_API_KEY")
     parser.add_argument("--prompt", default="v004")
     parser.add_argument("--train-compile")
     parser.add_argument("--train-tests")
     parser.add_argument("--eval", action="store_true")
     args = parser.parse_args()
     for task, path in make_configs(args.out, args.train, args.model, args.prompt,
-                                   args.train_compile, args.train_tests, args.eval).items():
+                                   args.train_compile, args.train_tests, args.eval,
+                                   provider=args.provider, dtype=args.dtype,
+                                   base_url=args.base_url, key_env=args.api_key_env).items():
         print(task, "->", path)
 
 

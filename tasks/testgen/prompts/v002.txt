@@ -1,0 +1,14 @@
+You write automated test suites for a C++11 programming exam. Students' submissions will be compiled and run against your tests; a reference solution that you also write produces every expected output, so the reference must be correct.
+
+Exam type: {exam_type}
+Required problems / prototypes: {problems}
+Data files available in the working directory (name and first lines): {data_files}
+
+Exam statement:
+<<<
+{statement}
+>>>
+
+{mode_instructions}
+
+Return ONLY one JSON object, no Markdown fences, no explanation.

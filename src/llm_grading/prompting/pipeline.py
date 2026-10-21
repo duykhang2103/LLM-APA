@@ -4,10 +4,16 @@ from pathlib import Path
 
 from llm_grading.data.loader import load_samples
 from llm_grading.models.inference import ModelRunner
-from llm_grading.prompting.formatter import parse_response, render_task_prompt
+from llm_grading.prompting.formatter import (
+    parse_response,
+    render_task_prompt,
+    salvage_task2_labels,
+)
 from llm_grading.retrieval.retriever import Retriever
 from llm_grading.runtime import attach_saved_evidence
 from llm_grading.utils.logging import append_jsonl, sample_metadata
+from tasks.task1_grading.evidence_rules import FIELDS as RUBRIC_FIELDS
+from tasks.task1_grading.evidence_rules import rubric_from_evidence
 from tasks.task3_feedback.compliance import check_compliance
 
 
@@ -104,6 +110,13 @@ class ModelPipeline:
             except ValueError as exc:
                 parsed = None
                 error = str(exc)
+                settings = self.config.get("task2", {})
+                if self.task == "task2" and settings.get("salvage_labels", False):
+                    # A repeating label list cut off by max_new_tokens: a retry
+                    # under greedy decoding repeats it, so keep the labels.
+                    labels = salvage_task2_labels(raw, settings.get("max_labels", 3))
+                    if labels:
+                        parsed, error = {"error_labels": labels, "salvaged": True}, None
             append_jsonl(
                 self.log_path,
                 {
@@ -126,20 +139,30 @@ class ModelPipeline:
         )
 
     def _fallback_enabled(self):
-        return self.task == "task3" and bool(
-            self.config.get("task3", {}).get("fallback_on_failure", False)
+        return bool(
+            self.config.get(self.task, {}).get("fallback_on_failure", False)
         )
 
     def _fallback(self, sample, reason):
-        """Level-safe generic feedback so one bad sample cannot stop a full run."""
-        feedback = level_safe_feedback(sample.get("error_labels", []), sample["feedback_level"])
-        result = {
-            "error_labels": list(sample.get("error_labels", [])),
-            "feedback": feedback,
-            "feedback_level": sample["feedback_level"],
-            "compliance": check_compliance(feedback, sample["feedback_level"]),
-            "fallback": True,
-        }
+        """Evidence-based rubric (Task 1) or labels (Task 2), or level-safe
+        generic feedback (Task 3), so one bad sample cannot stop a full run.
+        The Task 1 schema allows no marker field; the log records it."""
+        if self.task == "task1":
+            rubric = rubric_from_evidence(
+                sample, sample.get("compile_evidence"), sample.get("test_results")
+            ) or dict(zip(RUBRIC_FIELDS, (1, 1, 2, 1, 1, 1)))
+            result = {**rubric, "total": sum(rubric.values())}
+        elif self.task == "task2":
+            result = {"error_labels": evidence_labels(sample), "fallback": True}
+        else:
+            feedback = level_safe_feedback(sample.get("error_labels", []), sample["feedback_level"])
+            result = {
+                "error_labels": list(sample.get("error_labels", [])),
+                "feedback": feedback,
+                "feedback_level": sample["feedback_level"],
+                "compliance": check_compliance(feedback, sample["feedback_level"]),
+                "fallback": True,
+            }
         append_jsonl(
             self.log_path,
             {**sample_metadata(sample), "fallback": True, "fallback_reason": reason, "parsed_output": result},
@@ -148,6 +171,17 @@ class ModelPipeline:
 
     def postprocess(self, output):
         return output
+
+
+def evidence_labels(sample):
+    """Task 2 labels from compile/test evidence alone (fallback only)."""
+    evidence = sample.get("compile_evidence")
+    if evidence is not None and not evidence["relaxed"]:
+        return ["Lỗi biên dịch"]
+    report = sample.get("test_results")
+    if report and report["total"] and report["pass_rate"] == 1:
+        return []
+    return ["Lỗi logic"]  # the most frequent label in the training data
 
 
 def level_safe_feedback(labels, level):

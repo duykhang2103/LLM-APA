@@ -20,6 +20,7 @@ def cache_key(cfg, prompt):
         "revision": model.get("revision"),
         "adapter": model.get("adapter_path"),
         "base_url": model.get("base_url"),
+        "extra_body": model.get("extra_body"),
         "generation": cfg.get("generation", {}),
         "prompt": prompt,
     }
@@ -107,6 +108,8 @@ class ModelRunner:
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": generation.get("temperature", 0.0),
                 "max_tokens": generation.get("max_new_tokens", 256),
+                # Provider-specific request fields, e.g. {"reasoning_effort": "low"}.
+                **(settings.get("extra_body") or {}),
             }
             request = urllib.request.Request(
                 settings["base_url"].rstrip("/") + "/chat/completions",

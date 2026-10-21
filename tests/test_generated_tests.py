@@ -94,6 +94,8 @@ def test_parse_accepts_fenced_json_and_rejects_missing_fields():
     assert generate_tests.parse('```json\n{"reference_solution": "x", "tests": []}\n```')["tests"] == []
     with pytest.raises(ValueError):
         generate_tests.parse(json.dumps({"tests": []}))
+    noisy = 'Thinking: int f() { return 1; } then {"a": 1}\n' + json.dumps({"reference_solution": "int main(){}", "tests": [1]})
+    assert generate_tests.parse(noisy)["tests"] == [1]
 
 
 def test_rule_baseline():
@@ -112,3 +114,63 @@ def test_run_suite_reports_build_error_without_compiler(monkeypatch, tmp_path):
     suite = {"mode": "stdio", "tests": [{"name": "a", "category": "normal", "input": "1", "expected": "1"}]}
     report = testing.run_suite("int main(){}", suite, ["cc"], tmp_path)
     assert report["status_counts"] == {"build_error": 1} and report["build_errors"] == {"program": ["error: x"]}
+
+
+def test_file_problem_without_data_file_may_be_untested(monkeypatch, tmp_path):
+    monkeypatch.setattr(generate_tests, "build", lambda *a, **k: (True, []))
+    monkeypatch.setattr(generate_tests, "run_binary", lambda *a: ("ok", "1\n"))
+    exam = {"exam_id": "M", "exam_type": "multi_problem", "problems": [
+        {"pid": "P1", "prototype": "General* prob1(string filename, int& n);"},
+        {"pid": "P2", "prototype": "Node* prob2(General* g, int n);"}]}
+    response = {"reference_solution": "", "tests": [{"name": "x", "problem": "P2", "driver": "int main(){}"}]}
+    suite, _ = generate_tests.validate(exam, response, [], tmp_path, ["cc"], min_tests=1)
+    assert suite["untested_problems"] == ["P1"]
+    (tmp_path / "data.csv").write_text("h\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="P1"):  # the data file exists, so P1 must be tested
+        generate_tests.validate(exam, response, ["data.csv"], tmp_path, ["cc"], min_tests=1)
+    report = {**summarize([row("pass", problem="P2")], {}), "untested_problems": ["P1"]}
+    assert "No tests for P1" in report_text(report)
+
+
+def test_stack_struct_arrays_are_rejected_then_dropped():
+    exam = {"problems": [{"pid": "P2", "prototype": "Node* prob2(General* g, int n);"}]}
+    bad = {"name": "p2", "problem": "P2", "driver": "int main(){ General g[3]; prob2(g, 3); }"}
+    good = {"name": "p2b", "problem": "P2", "driver": "int main(){ General* g = new General[3]; int a[2]; }"}
+    with pytest.raises(ValueError, match="General g\[3\]"):
+        generate_tests.screen_function_tests(exam, [bad, good], ["d.csv"])
+    kept, dropped = generate_tests.screen_function_tests(exam, [bad, good], ["d.csv"], strict=False)
+    assert [t["name"] for t in kept] == ["p2b"] and dropped == [{"name": "p2", "reason": "struct array on the stack"}]
+
+
+def test_request_config_fits_the_token_limit():
+    config = {"generation": {"max_new_tokens": 16000, "request_token_limit": 8000}}
+    capped = generate_tests.request_config(config, "x" * 3000)
+    assert capped["generation"]["max_new_tokens"] == 8000 - 1000 - 200
+    assert config["generation"]["max_new_tokens"] == 16000  # original untouched
+    assert generate_tests.request_config({"generation": {"max_new_tokens": 5}}, "x")["generation"]["max_new_tokens"] == 5
+    with pytest.raises(RuntimeError, match="too long"):
+        generate_tests.request_config(config, "x" * 20000)
+
+
+def test_large_stdio_inputs_come_from_a_generator_program(monkeypatch, tmp_path):
+    def fake_run(binary, stdin, cwd, timeout):
+        if "generator" in str(binary):
+            return "ok", "3\n1 2 3\n"
+        return "ok", {"1\n": "1\n"}.get(stdin, "big\n")
+
+    monkeypatch.setattr(generate_tests, "build", lambda *a, **k: (True, []))
+    monkeypatch.setattr(generate_tests, "run_binary", fake_run)
+    exam = {"exam_id": "E", "exam_type": "single_problem"}
+    response = {
+        "reference_solution": "int main(){}",
+        "examples": [{"input": "1\n", "output": "1"}],
+        "tests": [{"name": "big", "category": "large", "generator": "int main(){}"}],
+    }
+    suite, _ = generate_tests.validate(exam, response, [], tmp_path, ["cc"], min_tests=2)
+    assert suite["tests"][0] == {"name": "big", "category": "large", "problem": None,
+                                 "input": "3\n1 2 3\n", "expected": "big\n"}
+
+
+def test_cut_off_answer_asks_for_shorter_tests():
+    with pytest.raises(ValueError, match="cut off"):
+        generate_tests.parse('{"reference_solution": "int main(){}", "tests": [{"name": "a", "driver": "int')

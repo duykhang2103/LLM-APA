@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from llm_grading.data.preprocess import (
@@ -93,6 +94,17 @@ def _clean_json_text(text: str) -> str:
         if s != -1 and e != -1 and e > s:
             cleaned = cleaned[s : e + 1]
     return cleaned
+
+
+def salvage_task2_labels(text, max_labels=3):
+    """Official labels in order of appearance, without repeats, from a Task 2
+    response that is not valid JSON. Small models under greedy decoding can
+    repeat the label list until max_new_tokens cuts the JSON off."""
+    labels = []
+    for value in re.findall(r'"([^"\n]+)"', str(text)):
+        if value in ERROR_LABELS and value not in labels:
+            labels.append(value)
+    return labels[:max_labels]
 
 
 def parse_response(text, task, sample):
