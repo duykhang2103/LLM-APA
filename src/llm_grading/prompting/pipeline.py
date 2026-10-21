@@ -6,6 +6,7 @@ from llm_grading.data.loader import load_samples
 from llm_grading.models.inference import ModelRunner
 from llm_grading.prompting.formatter import parse_response, render_task_prompt
 from llm_grading.retrieval.retriever import Retriever
+from llm_grading.runtime import attach_saved_evidence
 from llm_grading.utils.logging import append_jsonl, sample_metadata
 from tasks.task3_feedback.compliance import check_compliance
 
@@ -37,9 +38,11 @@ class ModelPipeline:
                 for key in ["validation_path", "test_path"]
             ):
                 raise ValueError("RAG train_path cannot be a validation/test file")
-            self.retriever = Retriever(
-                load_samples(path, task=self.task), self.task, config
-            )
+            corpus = load_samples(path, task=self.task)
+            # Examples must carry the same evidence fields as the query.
+            evidence = config.get("evidence", {})
+            attach_saved_evidence(corpus, evidence.get("train_compile"), evidence.get("train_tests"))
+            self.retriever = Retriever(corpus, self.task, config)
         self.runner = runner or ModelRunner(config)
         self.log_path = Path(config["saving"]["output_dir"]) / "responses.jsonl"
 

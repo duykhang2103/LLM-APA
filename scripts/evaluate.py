@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
+from llm_grading.data.loader import load_samples
 from llm_grading.evaluation.task1 import evaluate_task1
 from llm_grading.evaluation.task2 import evaluate_task2
 from llm_grading.evaluation.task3 import evaluate_task3
@@ -26,6 +27,9 @@ def main():
     )
     parser.add_argument("--output")
     parser.add_argument(
+        "--input", help="Labeled dataset folder to evaluate on instead of the configured split"
+    )
+    parser.add_argument(
         "--judgments", help="Private Task 3 review JSON keyed by sample_id"
     )
     args = parser.parse_args()
@@ -35,7 +39,11 @@ def main():
     errors = validate_prediction_records(predictions, task)
     if errors:
         raise ValueError(str(errors))
-    samples = load_samples_for_config(config, args.split)
+    samples = (
+        load_samples(args.input, task=task)
+        if args.input
+        else load_samples_for_config(config, args.split)
+    )
     by_id = {s["sample_id"]: s for s in samples}
     if {p["sample_id"] for p in predictions} != set(by_id):
         raise ValueError("Prediction IDs must exactly match configured reference split")

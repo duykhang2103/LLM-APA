@@ -1,0 +1,10 @@
+The program reads standard input and writes standard output.
+Produce this JSON:
+{{"reference_solution": "<complete C++11 program with main(), only standard headers>",
+  "examples": [{{"input": "<input of an example in the statement>", "output": "<its exact output from the statement>"}}],
+  "tests": [{{"name": "<short id>", "category": "normal" | "edge" | "large", "input": "<stdin text>"}}]}}
+Rules:
+- "examples" copies EVERY input/output example given in the statement, exactly.
+- Write 12 to 16 tests: about 6 normal cases, 5 edge cases (smallest and largest allowed values, single element, all equal, negative numbers, zero, repeated values, whatever the constraints allow) and 1 to 3 "large" cases near the size limit that you can still write out literally (keep each input under 3000 characters).
+- Inputs must respect the stated constraints and the exact input format. Do not include expected outputs for tests; they are computed by running your reference.
+- The reference prints exactly the format the statement requires.

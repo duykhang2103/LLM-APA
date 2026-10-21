@@ -72,3 +72,20 @@ def read_json(path: str | Path) -> Any:
         return json.loads(input_path.read_text(encoding="utf-8"))
     except FileNotFoundError as error:
         raise FileNotFoundError(f"JSON file does not exist: {input_path}") from error
+
+
+def attach_saved_evidence(
+    samples: list[dict[str, Any]],
+    compile_path: str | Path | None = None,
+    tests_path: str | Path | None = None,
+) -> list[dict[str, Any]]:
+    """Fill compile_log/test_report from scripts/compile_evidence.py and
+    scripts/run_tests.py outputs. Both are computed from code only."""
+    from .data.evidence import attach_evidence
+    from .data.testing import attach_test_reports
+
+    if compile_path:
+        attach_evidence(samples, read_json(compile_path)["evidence"])
+    if tests_path:
+        attach_test_reports(samples, read_json(tests_path)["reports"])
+    return samples

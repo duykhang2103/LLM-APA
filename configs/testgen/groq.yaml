@@ -1,0 +1,17 @@
+# Test-suite generation (scripts/generate_tests.py). A large model is fine
+# here: it only writes tests and a reference solution from the statement and
+# never sees student code or labels. Grading still uses the small model.
+prompt_version: v001
+model:
+  provider: api
+  name_or_path: llama-3.3-70b-versatile
+  base_url: https://api.groq.com/openai/v1
+  api_key_env: GROQ_API_KEY
+  allow_private_data: true
+  timeout_seconds: 180
+  cost_per_million_tokens: {prompt: 0.59, completion: 0.79}
+  max_cost_usd: 2
+  cache_path: outputs/testgen/cache.jsonl
+generation:
+  temperature: 0.0
+  max_new_tokens: 8000

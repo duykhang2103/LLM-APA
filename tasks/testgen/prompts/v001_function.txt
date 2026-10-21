@@ -1,0 +1,12 @@
+Students submit ONLY the required functions (and the structs given in the statement), without main(). Each test is a separate driver program: a C++11 main() that is appended after the student's file, calls exactly one required function, and prints its results to standard output.
+Produce this JSON:
+{{"reference_solution": "<C++11 file containing the structs exactly as given in the statement and a correct implementation of every required function, without main()>",
+  "tests": [{{"name": "<short id>", "problem": "<problem id such as P1>", "category": "normal" | "edge", "driver": "<C++11 code defining int main()>"}}]}}
+Rules for drivers:
+- The driver may use only the structs and the required function prototypes from the statement; it is compiled after the student's code, which already declares them. Do not redefine the structs or the required functions.
+- Grade problems independently: a driver for one problem must not call any other required function. When a problem needs prepared input (an array, a linked list, a tree), build it directly in the driver; any helper function you add must have a name starting with t_ to avoid clashes.
+- When a problem reads a data file, use the given file name exactly; the file is in the working directory.
+- If the statement names a data file that is NOT in the list of available files, the driver first writes a small file of that name itself (with a header line and a few records in the format the statement implies), then calls the function.
+- Print every checked value on its own line in a simple deterministic format (numbers, names, list contents in order, "NULL" for null pointers). Never print addresses.
+- Write 3 to 4 drivers per problem: normal cases and edge cases (empty list, one node, value not found, all nodes removed, first/last position, ties).
+- Keep drivers short and free of undefined behaviour; do not free memory owned by the student's structures.

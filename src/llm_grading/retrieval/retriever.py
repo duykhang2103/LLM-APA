@@ -82,6 +82,11 @@ class Retriever:
                 and sample["feedback_level"] != query["feedback_level"]
             ):
                 continue
+            # Leave-one-exam-out evaluation: public/private exams are unseen.
+            if self.settings.get("exclude_same_exam", False) and sample.get(
+                "problem_id"
+            ) == query.get("problem_id"):
+                continue
             exact = self.hashes[i] == query_hash
             near = bool(
                 cutoff and is_near_duplicate(self.normalized[i], query_code, cutoff)
