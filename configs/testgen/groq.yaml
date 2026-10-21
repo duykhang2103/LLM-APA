@@ -1,7 +1,7 @@
 # Test-suite generation (scripts/generate_tests.py). A large model is fine
 # here: it only writes tests and a reference solution from the statement and
 # never sees student code or labels. Grading still uses the small model.
-prompt_version: v001
+prompt_version: v002
 model:
   provider: api
   name_or_path: openai/gpt-oss-120b

@@ -114,3 +114,19 @@ def test_run_suite_reports_build_error_without_compiler(monkeypatch, tmp_path):
     suite = {"mode": "stdio", "tests": [{"name": "a", "category": "normal", "input": "1", "expected": "1"}]}
     report = testing.run_suite("int main(){}", suite, ["cc"], tmp_path)
     assert report["status_counts"] == {"build_error": 1} and report["build_errors"] == {"program": ["error: x"]}
+
+
+def test_file_problem_without_data_file_may_be_untested(monkeypatch, tmp_path):
+    monkeypatch.setattr(generate_tests, "build", lambda *a, **k: (True, []))
+    monkeypatch.setattr(generate_tests, "run_binary", lambda *a: ("ok", "1\n"))
+    exam = {"exam_id": "M", "exam_type": "multi_problem", "problems": [
+        {"pid": "P1", "prototype": "General* prob1(string filename, int& n);"},
+        {"pid": "P2", "prototype": "Node* prob2(General* g, int n);"}]}
+    response = {"reference_solution": "", "tests": [{"name": "x", "problem": "P2", "driver": "int main(){}"}]}
+    suite, _ = generate_tests.validate(exam, response, [], tmp_path, ["cc"], min_tests=1)
+    assert suite["untested_problems"] == ["P1"]
+    (tmp_path / "data.csv").write_text("h\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="P1"):  # the data file exists, so P1 must be tested
+        generate_tests.validate(exam, response, ["data.csv"], tmp_path, ["cc"], min_tests=1)
+    report = {**summarize([row("pass", problem="P2")], {}), "untested_problems": ["P1"]}
+    assert "No tests for P1" in report_text(report)

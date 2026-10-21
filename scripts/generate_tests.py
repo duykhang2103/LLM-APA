@@ -124,10 +124,15 @@ def validate(exam, response, data_names, data_dir, compiler, min_tests):
     if len(kept) < min_tests:
         raise ValueError(f"only {len(kept)} usable tests (need {min_tests}); dropped: {dropped[:5]}")
     if mode == "function":
-        missing = {p["pid"] for p in exam.get("problems", [])} - {t["problem"] for t in kept}
-        if missing:
-            raise ValueError(f"no usable driver for problems {sorted(missing)}; dropped: {dropped[:5]}")
+        problems = exam.get("problems", [])
+        # A file-reading problem cannot be tested when the data file is not supplied.
+        untestable = {p["pid"] for p in problems if not data_names and "file" in p.get("prototype", "").lower()}
+        missing = {p["pid"] for p in problems} - {t["problem"] for t in kept}
+        if missing - untestable:
+            raise ValueError(f"no usable driver for problems {sorted(missing - untestable)}; dropped: {dropped[:5]}")
     suite = {"exam_id": exam["exam_id"], "mode": mode, "data_files": data_names, "tests": kept}
+    if mode == "function" and missing:
+        suite["untested_problems"] = sorted(missing)
     return suite, {"kept": len(kept), "dropped": dropped}
 
 

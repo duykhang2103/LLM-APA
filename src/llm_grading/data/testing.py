@@ -96,7 +96,7 @@ def run_suite(code, suite, compiler, data_dir=None, timeout=2.0, build_timeout=6
                 status = state if state != "ok" else compare(test["expected"], actual)
             results.append({**{k: test.get(k) for k in ("name", "category", "problem")}, "status": status,
                             "input": test.get("input", ""), "expected": test["expected"], "actual": actual})
-    return summarize(results, build_errors)
+    return {**summarize(results, build_errors), "untested_problems": suite.get("untested_problems", [])}
 
 
 def summarize(results, build_errors):
@@ -147,6 +147,11 @@ def test_report_text(report):
         parts.append("Failures: " + ", ".join(f"{k} {v}" for k, v in problems.items()) + ".")
     if report["build_errors"]:
         parts.append("Could not build with the test driver: " + ", ".join(report["build_errors"]) + ".")
+    if report.get("untested_problems"):
+        parts.append(
+            "No tests for " + ", ".join(report["untested_problems"])
+            + " (needs a data file that was not available); judge it from the code."
+        )
     for row in report["failures"][:2]:
         if row["status"] in {"wrong", "format_mismatch"}:
             shown = f"input {row['input']!r}; " if row["input"] else ""
