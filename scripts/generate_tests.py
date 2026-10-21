@@ -126,6 +126,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", required=True, help="Dataset folder with exams.json (and data_files/)")
     parser.add_argument("--config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
+    parser.add_argument("--model", help="Override the config's model name")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--exam", action="append", help="Only these exam_ids (repeatable)")
     parser.add_argument("--response-dir", help="Use saved raw responses instead of the API")
@@ -138,6 +139,8 @@ def main():
     exams = json.loads((dataset / "exams.json").read_text(encoding="utf-8"))["exams"]
     exams = [e for e in exams if not args.exam or e["exam_id"] in args.exam]
     config = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
+    if args.model and args.model != config["model"]["name_or_path"]:
+        config["model"].update(name_or_path=args.model, cost_per_million_tokens={})
     runner = None if args.response_dir else ModelRunner(config)
     compiler = default_compiler(native=True)
     output = Path(args.output_dir)

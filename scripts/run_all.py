@@ -19,7 +19,11 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
@@ -31,6 +35,25 @@ SCRIPTS = ROOT / "scripts"
 
 def tag_of(path):
     return re.sub(r"[^A-Za-z0-9_-]+", "-", Path(path).resolve().name).strip("-") or "data"
+
+
+def check_models(models, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY"):
+    """Fail before any work when the key is missing or a model is unavailable."""
+    key = os.environ.get(key_env)
+    if not key:
+        raise SystemExit(f"Set {key_env} first (or use --no-tests / --provider local)")
+    request = urllib.request.Request(base_url + "/models", headers={
+        "Authorization": f"Bearer {key}", "User-Agent": "Mozilla/5.0 (compatible; llm-apa/1.0)"})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            available = sorted(m["id"] for m in json.load(response)["data"])
+    except urllib.error.HTTPError as error:
+        raise SystemExit(f"API key check failed: {error.code} {error.read().decode(errors='replace')[:300]}")
+    missing = [m for m in models if m not in available]
+    if missing:
+        raise SystemExit(f"Model(s) not available for this key: {missing}\nAvailable: {available}\n"
+                         "Choose with --testgen-model (test suites) and --model (grading).")
+    print("Models OK:", models)
 
 
 class Runner:
@@ -54,6 +77,7 @@ def main():
     parser.add_argument("--model", help="Grading model (<=10B); default llama-3.1-8b-instant (api) or Qwen/Qwen3.5-4B (local)")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
+    parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
     parser.add_argument("--suites", default=str(ROOT / "outputs" / "testsuites"), help="Shared test-suite folder")
     parser.add_argument("--tasks", nargs="+", default=["task1", "task2", "task3"], choices=["task1", "task2", "task3"])
     parser.add_argument("--name", help="Run folder name under outputs/runs/ (default <data>-<prompt>)")
@@ -69,6 +93,13 @@ def main():
     os.environ.setdefault("ZIG_GLOBAL_CACHE_DIR", str(ROOT / "outputs" / "tmp" / "zigcache"))
     os.environ.setdefault("ZIG_LOCAL_CACHE_DIR", os.environ["ZIG_GLOBAL_CACHE_DIR"])
     run = Runner(args.dry_run)
+    model = args.model or ("Qwen/Qwen3.5-4B" if args.provider == "local" else "llama-3.1-8b-instant")
+    needed = [] if args.no_tests else [args.testgen_model or yaml.safe_load(
+        Path(args.testgen_config).read_text(encoding="utf-8"))["model"]["name_or_path"]]
+    if args.provider == "api" and not args.no_llm:
+        needed.append(model)
+    if needed and not args.dry_run:
+        check_models(needed)
     data, train = Path(args.data).resolve(), Path(args.train).resolve()
     if not (data / "exams.json").exists() or not (train / "exams.json").exists():
         raise SystemExit("--data and --train must be dataset folders containing exams.json")
@@ -90,7 +121,8 @@ def main():
         if args.no_tests:
             continue
         run("generate_tests.py", "--dataset", path, "--config", args.testgen_config,
-            "--output-dir", suites, "--skip-existing")
+            "--output-dir", suites, "--skip-existing",
+            *(["--model", args.testgen_model] if args.testgen_model else []))
         if args.force or not tests_path.exists():
             run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs)
 
@@ -114,7 +146,6 @@ def main():
         print(f"\nDone (no LLM). Files in {out}")
         return 0
 
-    model = args.model or ("Qwen/Qwen3.5-4B" if args.provider == "local" else "llama-3.1-8b-instant")
     configs = make_configs(out, train, model, args.prompt, train_compile,
                            None if args.no_tests else train_tests, eval_mode=args.eval,
                            provider=args.provider, dtype=args.dtype)
