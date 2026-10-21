@@ -99,3 +99,21 @@ def test_hybrid_and_invalid_settings():
         build_index(["a"], {"index": "faiss"})
     with pytest.raises(ValueError):
         Retriever(rows(), "task1", {"retrieval": {"key": "statement"}}, Encoder())
+
+
+def test_exclude_same_exam_for_leave_one_exam_out():
+    query = sample("q", "int k(int n){ for(int i=0;i<n;i++) s+=i; return s; }")
+    query["problem_id"] = "E1"
+    cfg = {"task": "task1", "retrieval": {"k": 3, "key": "code", "index": "bm25", "exclude_same_exam": True}}
+    _, audit = Retriever(rows(), "task1", cfg).retrieve(query)
+    assert [r["sample_id"] for r in audit["retrieved"]] == ["loop2"]
+
+
+def test_v004_prompts_render_and_keep_schema():
+    from llm_grading.prompting.formatter import render_task_prompt
+
+    for task in ("task1", "task2"):
+        prompt = render_task_prompt(sample(), task, {"prompt": {"version": "v004"}})
+        assert "{examples}" not in prompt and "Pipeline-generated tests" in prompt
+    assert '{"compilable": 0-1' in render_task_prompt(sample(), "task1", {"prompt": {"version": "v004"}})
+    assert '{"error_labels": [ ... ]}' in render_task_prompt(sample(), "task2", {"prompt": {"version": "v004"}})

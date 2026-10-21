@@ -336,6 +336,26 @@ Known sample limitations are preserved rather than repaired:
 - EX01 requires P1 before P2-P4. The loader carries that policy through, but the current heuristic does not enforce it. EX01 expects function-only submissions, so absence of `main` is not a grading failure by itself.
 - Compiler logs are auxiliary evidence, not labels. Four samples have nonempty diagnostics while the teacher assigns `compilable = 1`; all 32 reference rubric totals match their component sums.
 
+### Prompting/RAG with compile and test evidence (one command)
+
+`scripts/run_all.py` runs the whole prompting pipeline on one dataset folder. Each step is skipped when its output exists (`--force` recomputes):
+
+1. `compile_evidence.py`: compiles every submission (g++, or the pip `ziglang` clang when g++ is missing). The result fills `compile_log`.
+2. `generate_tests.py`: once per exam, an LLM writes a reference solution and test inputs (stdio exams) or driver programs (function-only exams) from the statement only. Expected outputs come from running the reference, which must reproduce the statement examples. Suites are stored in `outputs/testsuites/`.
+3. `run_tests.py`: runs the suites on every submission. The result fills `test_report`.
+4. `predict.py --evidence --tests` for Task 1, then Task 2, then Task 3 (labels from Task 2), using configs from `make_api_configs.py` and prompt `v004`.
+5. `package_predictions.py`: writes challenge-format `submission_task*.json`. It also writes `submission_task1_rules.json`, a rule-based Task 1 baseline from compile and test results only.
+
+```powershell
+$env:GROQ_API_KEY = "<key>"
+# Score a setup on the labeled data first (leave-one-exam-out retrieval):
+uv run python scripts/run_all.py --data <train folder> --eval --tasks task1 task2
+# Then predict a test set (outputs/runs/<data>-v004/):
+uv run python scripts/run_all.py --data <test folder>
+```
+
+Use `--no-llm` for evidence, tests and the rule baseline only. Use `--dry-run` to print the commands. Tests are LLM-generated, as the lecturer allows, and no testcase is written by hand. Student code is executed locally in a temporary folder with a time limit.
+
 ## 13. Configs, artifacts, and limitations
 
 `configs/task*/zero_shot.yaml`, `rag.yaml`, `qwen_lora.yaml`, and `qwen_smoke.yaml` expose model/revision, seed, input paths, quantization, LoRA settings, token budget, optimizer, evaluation, and checkpoint settings. Set real data paths; these configs never pretend the synthetic sample is an official benchmark.

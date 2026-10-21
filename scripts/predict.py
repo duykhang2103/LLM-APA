@@ -10,6 +10,7 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from llm_grading.data.loader import load_samples
 from llm_grading.pipeline import build_task_pipeline
 from llm_grading.runtime import (
+    attach_saved_evidence,
     attach_task3_error_labels,
     load_samples_for_config,
     write_json,
@@ -41,6 +42,12 @@ def main():
         "--task3-labels",
         help="Task 2 prediction file supplying labels when Task 3 input omits taxonomy_error",
     )
+    parser.add_argument(
+        "--evidence", help="scripts/compile_evidence.py output for these samples (fills compile_log)"
+    )
+    parser.add_argument(
+        "--tests", help="scripts/run_tests.py output for these samples (fills test_report)"
+    )
     args = parser.parse_args()
     config = load_config(args.config)
     if args.adapter_path:
@@ -61,6 +68,7 @@ def main():
         if not 1 <= index <= count:
             raise ValueError("--shard must be K/N with 1 <= K <= N")
         samples = samples[index - 1 :: count]
+    attach_saved_evidence(samples, args.evidence, args.tests)
     task3_labels = None
     if config["task"] == "task3":
         task3_labels = args.task3_labels or config.get("task3", {}).get(
@@ -75,6 +83,8 @@ def main():
         "smoke_subset": bool(args.max_samples),
         "shard": args.shard,
         "task3_labels": str(task3_labels) if task3_labels else None,
+        "evidence": args.evidence,
+        "tests": args.tests,
     }
     start = time.perf_counter()
     write_json(directory / "prediction_manifest.json", metadata)
