@@ -231,3 +231,33 @@ def test_feedback_does_not_claim_input_labels_as_a_diagnosis(tmp_path):
     row["error_labels"] = ["Lỗi logic"]
     output = ModelPipeline(config(tmp_path, "task3"), Runner(["Tốt."])).predict(row)
     assert "diagnosed_labels" not in output
+
+
+def test_task2_salvages_a_repeating_label_list_cut_by_max_tokens(tmp_path):
+    from llm_grading.prompting.formatter import salvage_task2_labels
+
+    looping = '{"error_labels": ["Lỗi logic", "Lỗi thuật toán", "Lỗi vòng lặp", "Lỗi mảng/chuỗi", "Lỗi logic", "Lỗi thuật toán", "Lỗi'
+    assert salvage_task2_labels(looping, 2) == ["Lỗi logic", "Lỗi thuật toán"]
+    assert salvage_task2_labels('{"error_labels": ["not official"', 3) == []
+    cfg = config(tmp_path, "task2")
+    cfg["task2"] = {"salvage_labels": True, "max_labels": 3}
+    out = ModelPipeline(cfg, Runner([looping])).predict(sample())
+    assert out == {"error_labels": ["Lỗi logic", "Lỗi thuật toán", "Lỗi vòng lặp"], "salvaged": True}
+    with pytest.raises(ValueError):  # off by default: strict parsing unchanged
+        ModelPipeline(config(tmp_path, "task2"), Runner([looping] * 2)).predict(sample())
+
+
+def test_task1_and_task2_fallbacks_use_evidence(tmp_path):
+    row = sample()
+    row["compile_evidence"] = {"strict": False, "relaxed": False, "errors": []}
+    cfg = config(tmp_path, "task2")
+    cfg["task2"] = {"fallback_on_failure": True}
+    out = ModelPipeline(cfg, Runner(["no json"] * 2)).predict(row)
+    assert out == {"error_labels": ["Lỗi biên dịch"], "fallback": True}
+    row["compile_evidence"]["relaxed"] = True
+    row["test_results"] = {"total": 4, "pass_rate": 1.0, "status_counts": {"pass": 4}}
+    assert ModelPipeline(cfg, Runner(["no json"] * 2)).predict(row)["error_labels"] == []
+    cfg = config(tmp_path, "task1")
+    cfg["task1"] = {"fallback_on_failure": True}
+    out = ModelPipeline(cfg, Runner(["no json"] * 2)).predict(row)
+    assert out["total"] == 10 and "fallback" not in out  # strict Task 1 schema; the log records it

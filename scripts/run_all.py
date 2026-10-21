@@ -165,6 +165,13 @@ def main():
         extra = ["--task3-labels", out / "pred_task2.json"] if task == "task3" else []
         run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
             "--evidence", data_compile, *tests_flag, *extra, *limit)
+        log = out / task / "responses.jsonl"
+        if log.exists():
+            rows = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
+            fallbacks = {r["sample_id"] for r in rows if r.get("fallback")}
+            salvaged = {r["sample_id"] for r in rows if (r.get("parsed_output") or {}).get("salvaged")}
+            print(f"{task}: {len(fallbacks)} samples used the fallback, {len(salvaged)} had labels salvaged "
+                  f"(see {log})")
         if args.eval:
             run("evaluate.py", "--config", configs[task], "--predictions", pred, "--input", data,
                 "--output", out / f"metrics_{task}.json")

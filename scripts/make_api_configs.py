@@ -71,8 +71,12 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                            prepared_dir=str((out_dir / task / "prepared").resolve()))
         cfg["saving"]["output_dir"] = str((out_dir / task).resolve())
         cfg.setdefault(task, {})["use_grading_policy"] = False
+        # One unparseable sample must not stop a 328-sample run; fallbacks are logged.
+        cfg[task]["fallback_on_failure"] = True
+        if task == "task2":
+            cfg["task2"].update(salvage_labels=True, max_labels=3)
         if task == "task3":
-            cfg["task3"].update(max_compliance_retries=2, fallback_on_failure=True)
+            cfg["task3"].update(max_compliance_retries=2)
         cfg["retrieval"].update(k=1, key="code", index="bm25", same_exam_first=not eval_mode,
                                 exclude_same_exam=eval_mode, compact_examples=True,
                                 exclude_duplicates=True, near_duplicate_threshold=0.95)
