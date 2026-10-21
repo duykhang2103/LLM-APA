@@ -94,6 +94,8 @@ def main():
     parser.add_argument("--provider", choices=["api", "local"], default="api")
     parser.add_argument("--model", default="llama-3.1-8b-instant")
     parser.add_argument("--dtype", help="local only, e.g. float16 on a T4")
+    parser.add_argument("--base-url", default="https://api.groq.com/openai/v1")
+    parser.add_argument("--api-key-env", default="GROQ_API_KEY")
     parser.add_argument("--prompt", default="v004")
     parser.add_argument("--train-compile")
     parser.add_argument("--train-tests")
@@ -101,7 +103,8 @@ def main():
     args = parser.parse_args()
     for task, path in make_configs(args.out, args.train, args.model, args.prompt,
                                    args.train_compile, args.train_tests, args.eval,
-                                   provider=args.provider, dtype=args.dtype).items():
+                                   provider=args.provider, dtype=args.dtype,
+                                   base_url=args.base_url, key_env=args.api_key_env).items():
         print(task, "->", path)
 
 
