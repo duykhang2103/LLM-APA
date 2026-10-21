@@ -12,6 +12,8 @@ model:
   # Approximate Groq list price; check console.groq.com for the current one.
   cost_per_million_tokens: {prompt: 0.15, completion: 0.60}
   max_cost_usd: 2
+  # Less hidden reasoning leaves room for the JSON under the free-tier token limit.
+  extra_body: {reasoning_effort: low}
   cache_path: outputs/testgen/cache.jsonl
 generation:
   temperature: 0.0

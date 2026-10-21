@@ -69,6 +69,11 @@ def parse(raw):
         if isinstance(value, dict) and "reference_solution" in value:
             found = value
     if found is None:
+        if '"reference_solution"' in raw:
+            raise ValueError(
+                "the answer was cut off at the length limit before the JSON ended; write fewer and shorter "
+                "tests (at most 2 drivers per problem, compact code, no comments)"
+            )
         raise ValueError("response has no JSON object with reference_solution")
     if not isinstance(found.get("reference_solution"), str) or not isinstance(found.get("tests"), list):
         raise ValueError("JSON must contain reference_solution (string) and tests (list)")

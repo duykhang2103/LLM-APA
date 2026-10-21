@@ -169,3 +169,8 @@ def test_large_stdio_inputs_come_from_a_generator_program(monkeypatch, tmp_path)
     suite, _ = generate_tests.validate(exam, response, [], tmp_path, ["cc"], min_tests=2)
     assert suite["tests"][0] == {"name": "big", "category": "large", "problem": None,
                                  "input": "3\n1 2 3\n", "expected": "big\n"}
+
+
+def test_cut_off_answer_asks_for_shorter_tests():
+    with pytest.raises(ValueError, match="cut off"):
+        generate_tests.parse('{"reference_solution": "int main(){}", "tests": [{"name": "a", "driver": "int')
