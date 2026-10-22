@@ -41,6 +41,9 @@ def test_most_frequent_template_for_evidence_flip():
 
 def test_task2_compile_label_follows_evidence():
     assert calibrate([COMPILE, "Lỗi logic"], True) == ["Lỗi logic"]
-    assert calibrate(["Lỗi logic", "Lỗi vòng lặp"], False) == [COMPILE, "Lỗi logic"]
+    assert calibrate(["Lỗi logic", "Lỗi vòng lặp"], False) == [COMPILE, "Lỗi logic", "Lỗi vòng lặp"]
     assert calibrate(["Lỗi logic"], False, compile_only=True) == [COMPILE]
     assert calibrate(["a", "b", "c", "d"], True, max_labels=3) == ["a", "b", "c"]
+    assert calibrate(["a", "b", "c", "d"], True) == ["a", "b", "c", "d"]  # no cap by default
+    passed = calibrate(["Lỗi logic", "Lỗi style", "Lỗi hard-code"], True, all_pass=True)
+    assert passed == ["Lỗi style", "Lỗi hard-code"]

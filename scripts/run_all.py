@@ -56,6 +56,20 @@ def check_models(models, base_url="https://api.groq.com/openai/v1", key_env="GRO
     print("Models OK:", models)
 
 
+def stale_tests(dataset, tests_path, suites):
+    """True when a suite was added or rewritten after tests_path was made."""
+    if not tests_path.exists():
+        return True
+    used = set(json.loads(tests_path.read_text(encoding="utf-8"))["suites"])
+    exams = {e["exam_id"] for e in json.loads((dataset / "exams.json").read_text(encoding="utf-8"))["exams"]}
+    for exam in exams:
+        suite = suites / f"{exam}.json"
+        if suite.exists() and (exam not in used or suite.stat().st_mtime > tests_path.stat().st_mtime):
+            print(f"Test results are older than the {exam} suite; rerunning the tests")
+            return True
+    return False
+
+
 class Runner:
     def __init__(self, dry_run):
         self.dry_run = dry_run
@@ -132,7 +146,7 @@ def main():
         run("generate_tests.py", "--dataset", path, "--config", args.testgen_config,
             "--output-dir", suites, "--skip-existing",
             *(["--model", args.testgen_model] if args.testgen_model else []))
-        if args.force or not tests_path.exists():
+        if args.force or not tests_path.exists() or stale_tests(path, tests_path, suites):
             run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs)
 
     data_compile, data_tests = dataset_files(data)
@@ -160,11 +174,21 @@ def main():
                            provider=args.provider, dtype=args.dtype,
                            base_url=args.base_url, key_env=args.api_key_env)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
+    task2_labels = out / "pred_task2.json"
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
-        extra = ["--task3-labels", out / "pred_task2.json"] if task == "task3" else []
+        extra = ["--task3-labels", task2_labels] if task == "task3" else []
         run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
             "--evidence", data_compile, *tests_flag, *extra, *limit)
+        if task == "task2":
+            # Evidence rules (scripts/calibrate_task2.py): +0.04 macro-F1 on train.
+            raw, pred = pred, out / "pred_task2_calib.json"
+            run("calibrate_task2.py", "--predictions", raw, "--evidence", data_compile, *tests_flag,
+                "--output", pred, *(["--input", data] if args.eval else []))
+            task2_labels = pred
+            if not args.eval:
+                run("package_predictions.py", "--task", task, "--input", raw,
+                    "--output", out / "submission_task2_raw.json")
         log = out / task / "responses.jsonl"
         if log.exists():
             rows = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines() if line.strip()]
