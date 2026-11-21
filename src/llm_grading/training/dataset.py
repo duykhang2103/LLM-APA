@@ -5,7 +5,8 @@ import json
 from llm_grading.data.quality import select_training_samples
 from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
-from llm_grading.prompting.formatter import render_task_prompt
+from llm_grading.prompting.formatter import render_task_prompt, task_template
+from llm_grading.task2_verifier import PROMPT_VERSION, verifier_records
 
 
 def build_training_dataset(samples, task, config=None, *, training=True):
@@ -24,6 +25,9 @@ def build_training_dataset(samples, task, config=None, *, training=True):
                 not isinstance(x, str) or x not in ERROR_LABELS for x in labels
             ):
                 raise ValueError(f"Missing/invalid labels for {s['sample_id']}")
+            if (config or {}).get("prompt", {}).get("version") == PROMPT_VERSION:
+                records.extend(verifier_records(s, task_template(task, config), labels))
+                continue
             target = json.dumps({"error_labels": labels}, ensure_ascii=False)
         elif task == "task3":
             target = s.get("feedback")
