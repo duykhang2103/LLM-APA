@@ -7,11 +7,13 @@
 
 The package starts from team GitHub main at `f60845d6d6f1f50bf3527bd44bf62cb42109d8ef`. The team pipeline uses its own Task 2 configuration. The scripts here are explicit entry points for the scored experiments. Task 3's November 20 public score was 0.3704. The archived 0.2171 v008 artifact is the only local Task 3 submission with verified provenance, so this package covers Tasks 1 and 2.
 
+The training settings and data splits are documented in the [models, training, and data report](task1_task2_models_training_and_data.md).
+
 Keep the release files, student sources, decision rows, build receipts, weights and predictions outside Git. Supply those files from authorized private storage. The C++ references and generated fixtures under `examples/` are authored.
 
 ## Task 1 compile-only replay
 
-Attempt 18 used the original 0.8180 QWK predictions as its baseline. The original Kaggle run used Qwen/Qwen3.5-4B revision `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a` and seed 42. The correction was limited to nine Remove Duplicates rows and five Earliest Login rows. Each had an independently reproduced full-program C++11 build or link failure under GCC 14.2.0 on Linux ARM64. The replay changes `compilable` from 1 to 0 and recomputes the total. The other 314 rows carry through unchanged. The QWK gain was 0.0032. Compilability exact match decreased from 0.7470 to 0.7348.
+Attempt 18 used the original 0.8180 QWK predictions as its baseline. The Kaggle public-test inference used Qwen/Qwen3.5-4B revision `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a`, the retained F0 adapter and seed 42. The historical adapter training records the base as `main`, with its exact revision unresolved. The correction was limited to nine Remove Duplicates rows and five Earliest Login rows. Each had an independently reproduced full-program C++11 build or link failure under GCC 14.2.0 on Linux ARM64. The replay changes `compilable` from 1 to 0 and recomputes the total. The other 314 rows carry through unchanged. The QWK gain was 0.0032. Compilability exact match decreased from 0.7470 to 0.7348.
 
 Keep the release JSON next to its original `exams.json` and source tree.
 
