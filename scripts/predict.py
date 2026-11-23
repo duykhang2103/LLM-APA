@@ -74,7 +74,8 @@ def main():
         task3_labels = args.task3_labels or config.get("task3", {}).get(
             "error_labels_path"
         )
-        attach_task3_error_labels(samples, task3_labels)
+        if not config.get("task3", {}).get("two_stage", False):
+            attach_task3_error_labels(samples, task3_labels)
     metadata = {
         **run_metadata(config),
         "status": "running",
@@ -90,13 +91,19 @@ def main():
     write_json(directory / "prediction_manifest.json", metadata)
     try:
         pipeline = build_task_pipeline(config)
-        predictions = [
-            {
+        predictions = []
+        for index, s in enumerate(samples, 1):
+            print(f"[{index}/{len(samples)}] Processing {s['sample_id']} ...", flush=True)
+            predictions.append({
                 "sample_id": s["sample_id"],
                 "output": pipeline.postprocess(pipeline.predict(s)),
-            }
-            for s in samples
-        ]
+            })
+            elapsed = time.perf_counter() - start
+            remaining = elapsed / index * (len(samples) - index)
+            print(
+                f"[{index}/{len(samples)}] Done | elapsed {elapsed / 60:.1f} min"
+                f" | ETA {remaining / 60:.1f} min", flush=True,
+            )
         errors = validate_prediction_records(predictions, config["task"])
         if errors:
             raise ValueError(str(errors))

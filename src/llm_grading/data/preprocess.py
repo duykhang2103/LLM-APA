@@ -74,8 +74,10 @@ def build_task3_input(sample: NormalizedSample) -> dict[str, Any]:
         "code": sample.get("code", ""),
         "error_labels": list(sample.get("error_labels", [])),
         "feedback_level": int(sample.get("feedback_level", 1)),
+        "compile_log": sample.get("compile_log", ""),
+        "test_report": sample.get("test_report", ""),
     }
-    for key in ("problem_type", "language", "problems", "grading_policy"):
+    for key in ("problem_type", "language", "problems", "grading_policy", "diagnosis"):
         if key in sample:
             result[key] = sample[key]
     return result

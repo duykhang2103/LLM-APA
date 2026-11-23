@@ -53,11 +53,14 @@ class ModelPipeline:
         self.log_path = Path(config["saving"]["output_dir"]) / "responses.jsonl"
 
     def predict(self, sample):
+        if self.task == "task3" and self.config.get("task3", {}).get("two_stage", False):
+            sample = self._diagnose(sample)
         examples, audit = (
             self.retriever.retrieve(sample) if self.retriever else ([], {})
         )
         prompt = render_task_prompt(sample, self.task, self.config, examples)
         error = None
+        raw = ""
         retries = self.config.get("task3", {}).get("max_compliance_retries", 1)
         if (
             isinstance(retries, bool)
@@ -80,6 +83,8 @@ class ModelPipeline:
                     + " Error: "
                     + str(error)
                 )
+                if self.task == "task3":
+                    retry_prompt += "\nRejected feedback to rewrite:\n" + raw
             try:
                 raw = self.runner.generate(retry_prompt)
             except Exception as exc:
@@ -171,6 +176,54 @@ class ModelPipeline:
 
     def postprocess(self, output):
         return output
+
+    def _diagnose(self, sample):
+        """Infer labels and a grounded diagnosis without using test targets."""
+        import json
+
+        from llm_grading.data.taxonomy import ERROR_LABELS
+
+        cfg = {**self.config, "prompt": {"version": "v005"}}
+        prompt = render_task_prompt(sample, "task2", cfg)
+        prompt += (
+            "\nOverride the output format: return ONLY JSON with error_labels and diagnosis. "
+            "diagnosis is a Vietnamese string identifying the function/problem, cause and "
+            "consequence of each confirmed defect, with evidence from code. For multi_problem, "
+            "inspect every required function separately. Do not invent test results. "
+            "Do not include corrected code. If no defect is confirmed, explain briefly. "
+            "The diagnosis is internal evidence, not student feedback."
+        )
+        error = None
+        for attempt in range(2):
+            raw = self.runner.generate(prompt + ("\nReturn valid JSON: " + str(error) if attempt else ""))
+            try:
+                from llm_grading.prompting.formatter import (
+                    _clean_json_text,
+                    _unique_object,
+                )
+                obj = json.loads(_clean_json_text(raw), object_pairs_hook=_unique_object)
+                if not isinstance(obj, dict) or set(obj) != {"error_labels", "diagnosis"}:
+                    raise ValueError("Expected error_labels and diagnosis")
+                labels = obj["error_labels"]
+                if (not isinstance(labels, list)
+                        or any(not isinstance(x, str) or x not in ERROR_LABELS for x in labels)
+                        or len(labels) != len(set(labels))):
+                    raise ValueError("Invalid taxonomy labels")
+                if not isinstance(obj["diagnosis"], str) or not obj["diagnosis"].strip():
+                    raise ValueError("Missing grounded diagnosis")
+                error = None
+            except (ValueError, TypeError) as exc:
+                error = str(exc)
+            append_jsonl(self.log_path, {
+                **sample_metadata(sample), "stage": "diagnosis", "retry_count": attempt,
+                "raw_response": raw, "parse_error": error, "inference": self.runner.metadata,
+            })
+            if error is None:
+                result = dict(sample)
+                result.pop("error_labels_missing", None)
+                result.update(error_labels=labels, diagnosis=obj["diagnosis"])
+                return result
+        raise ValueError(f"Invalid diagnosis for {sample['sample_id']}: {error}")
 
 
 def evidence_labels(sample):
