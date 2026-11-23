@@ -1,6 +1,8 @@
 """P0/P1/F0 or heuristic predictions; write only a complete validated file."""
 
 import argparse
+import hashlib
+import json
 import sys
 import time
 from pathlib import Path
@@ -32,6 +34,7 @@ def main():
         help="Explicit inference/lecturer file; no targets are read into prompts",
     )
     parser.add_argument("--output")
+    parser.add_argument("--resume", action="store_true", help="Save each completed sample and resume only matching config/data/prompts")
     parser.add_argument("--max-samples", type=int)
     parser.add_argument("--adapter-path")
     parser.add_argument(
@@ -88,26 +91,55 @@ def main():
         "tests": args.tests,
     }
     start = time.perf_counter()
+    output = Path(args.output) if args.output else directory / "predictions.json"
+    checkpoint = output.with_suffix(".partial.json")
+    signature = hashlib.sha256(json.dumps(
+        {"config": config, "samples": samples,
+         "prompts": [p.read_text(encoding="utf-8") for p in sorted((ROOT / "tasks").glob("*/prompts/v*.txt"))]},
+        sort_keys=True, ensure_ascii=False,
+    ).encode()).hexdigest()
+    saved = []
+    if args.resume and checkpoint.exists():
+        state = json.loads(checkpoint.read_text(encoding="utf-8"))
+        if state.get("signature") != signature:
+            raise ValueError("Resume config/data/prompts changed; use a new --output path or archive the old partial checkpoint")
+        saved = state["predictions"]
+        if ([r["sample_id"] for r in saved] != [s["sample_id"] for s in samples[:len(saved)]]
+                or validate_prediction_records(saved, config["task"])):
+            raise ValueError("Invalid resume checkpoint")
+        print(f"Resume: {len(saved)}/{len(samples)} completed samples", flush=True)
     write_json(directory / "prediction_manifest.json", metadata)
     try:
-        pipeline = build_task_pipeline(config)
-        predictions = []
+        pipeline = build_task_pipeline(config) if len(saved) < len(samples) else None
+        predictions = list(saved)
+        resumed_count = len(saved)
+        inference_start = time.perf_counter()
         for index, s in enumerate(samples, 1):
+            if index <= resumed_count:
+                continue
             print(f"[{index}/{len(samples)}] Processing {s['sample_id']} ...", flush=True)
             predictions.append({
                 "sample_id": s["sample_id"],
                 "output": pipeline.postprocess(pipeline.predict(s)),
             })
-            elapsed = time.perf_counter() - start
-            remaining = elapsed / index * (len(samples) - index)
+            errors = validate_prediction_records([predictions[-1]], config["task"])
+            if errors:
+                raise ValueError(str(errors))
+            if args.resume:
+                checkpoint.parent.mkdir(parents=True, exist_ok=True)
+                temporary = checkpoint.with_suffix(".tmp")
+                write_json(temporary, {"signature": signature, "predictions": predictions})
+                temporary.replace(checkpoint)
+            elapsed = time.perf_counter() - inference_start
+            remaining = elapsed / (index - resumed_count) * (len(samples) - index)
+            marker = " | FALLBACK (review diagnosis quality)" if predictions[-1]["output"].get("fallback") else ""
             print(
                 f"[{index}/{len(samples)}] Done | elapsed {elapsed / 60:.1f} min"
-                f" | ETA {remaining / 60:.1f} min", flush=True,
+                f" | ETA {remaining / 60:.1f} min{marker}", flush=True,
             )
         errors = validate_prediction_records(predictions, config["task"])
         if errors:
             raise ValueError(str(errors))
-        output = Path(args.output) if args.output else directory / "predictions.json"
         write_json(output, predictions)
         metadata.update(
             status="completed",

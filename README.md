@@ -343,7 +343,7 @@ Known sample limitations are preserved rather than repaired:
 1. `compile_evidence.py`: compiles every submission (g++, or the pip `ziglang` clang when g++ is missing). The result fills `compile_log`.
 2. `generate_tests.py`: once per exam, an LLM writes a reference solution and test inputs (stdio exams) or driver programs (function-only exams) from the statement only. Expected outputs come from running the reference, which must reproduce the statement examples. Suites are stored in `outputs/testsuites/`.
 3. `run_tests.py`: runs the suites on every submission. The result fills `test_report`.
-4. `predict.py --evidence --tests` for Task 1, then Task 2, then Task 3 (labels from Task 2), using configs from `make_api_configs.py` and prompt `v004`.
+4. `predict.py --evidence --tests` for Task 1 and Task 2 using configs from `make_api_configs.py`. API configs are generated only for Task 1/2. Run Task 3 locally with the T4 x2 notebook below.
 5. `package_predictions.py`: writes challenge-format `submission_task*.json`. It also writes `submission_task1_rules.json`, a rule-based Task 1 baseline from compile and test results only.
 
 ```powershell
@@ -355,6 +355,10 @@ uv run python scripts/run_all.py --data <test folder>
 ```
 
 Use `--no-llm` for evidence, tests and the rule baseline only. Use `--dry-run` to print the commands. Tests are LLM-generated, as the lecturer allows, and no testcase is written by hand. Student code is executed locally in a temporary folder with a time limit.
+
+### Task 3 on Kaggle T4 x2 (local model)
+
+Use [run_task3_kaggle_t4x2.ipynb](notebooks/run_task3_kaggle_t4x2.ipynb) and follow [the T4 x2 guide](docs/project/TASK3_T4X2.md). This runs Qwen3-8B in NF4/FP16, one worker per GPU, with prompt v005 and training-only RAG from 32 samples. Public test is inference only. It requires no API key and does not fine-tune the model. Per-sample checkpoints support resume with matching config/data/prompts; fallback usage is reported separately from diagnosis quality.
 
 ## 13. Configs, artifacts, and limitations
 

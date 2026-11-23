@@ -85,6 +85,14 @@ class ModelPipeline:
                 )
                 if self.task == "task3":
                     retry_prompt += "\nRejected feedback to rewrite:\n" + raw
+                    retry_prompt += (
+                        "\nFINAL INSTRUCTION: Rewrite in Vietnamese prose only. "
+                        "Do not quote function signatures, declarations, assignments, "
+                        "return statements, code fences or corrected expressions. "
+                        "For Level 1 remove all locations and causes. For Level 2 "
+                        "retain location, cause and consequence but remove all fixes. "
+                        "For Level 3 give a correction direction in prose, not a complete solution."
+                    )
             try:
                 raw = self.runner.generate(retry_prompt)
             except Exception as exc:

@@ -97,7 +97,7 @@ def main():
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
     parser.add_argument("--suites", default=str(ROOT / "outputs" / "testsuites"), help="Shared test-suite folder")
-    parser.add_argument("--tasks", nargs="+", default=["task1", "task2", "task3"], choices=["task1", "task2", "task3"])
+    parser.add_argument("--tasks", nargs="+", choices=["task1", "task2", "task3"])
     parser.add_argument("--name", help="Run folder name under outputs/runs/ (default <data>-<prompt>)")
     parser.add_argument("--eval", action="store_true", help="Leave-one-exam-out run + metrics (labeled data)")
     parser.add_argument("--no-llm", action="store_true", help="Only evidence, tests and rule-based Task 1")
@@ -107,6 +107,10 @@ def main():
     parser.add_argument("--max-samples", type=int, help="Smoke run on the first N samples")
     parser.add_argument("--dry-run", action="store_true", help="Print the commands only")
     args = parser.parse_args()
+    if args.tasks is None:
+        args.tasks = ["task1", "task2"] if args.provider == "api" else ["task1", "task2", "task3"]
+    if args.provider == "api" and "task3" in args.tasks:
+        parser.error("Task 3 uses local GPU inference; use run_task3_kaggle_t4x2.ipynb or --provider local")
 
     os.environ.setdefault("ZIG_GLOBAL_CACHE_DIR", str(ROOT / "outputs" / "tmp" / "zigcache"))
     os.environ.setdefault("ZIG_LOCAL_CACHE_DIR", os.environ["ZIG_GLOBAL_CACHE_DIR"])

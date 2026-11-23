@@ -1,4 +1,4 @@
-"""Write RAG configs for task1/2/3: an OpenAI-compatible API (default Groq)
+"""Write RAG configs: API for Task 1/2, local models for Task 1/2/3.
 or, with --provider local, the team's local Hugging Face runner (Qwen on GPU).
 
 Configs start from configs/<task>/rag.yaml and only change the model, prompt,
@@ -38,6 +38,8 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
     out_dir = Path(out_dir)
     paths = {}
     for task in TASK_DIRS:
+        if task == "task3" and provider == "api":
+            continue
         cfg = yaml.safe_load((ROOT / "configs" / task / "rag.yaml").read_text(encoding="utf-8"))
         version = prompt_for(task, prompt)
         tag = f"{provider}-{version}{'-loeo' if eval_mode else ''}"

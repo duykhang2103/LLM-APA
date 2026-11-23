@@ -27,6 +27,16 @@ def generate_text(bundle, prompt, settings):
         "num_beams": int(settings.get("num_beams", 1)),
         "pad_token_id": tokenizer.pad_token_id,
     }
+    if not sample:
+        # Model repositories may ship sampling defaults even for greedy runs.
+        from copy import deepcopy
+
+        generation_config = deepcopy(model.generation_config)
+        generation_config.do_sample = False
+        generation_config.temperature = 1.0
+        generation_config.top_p = 1.0
+        generation_config.top_k = 50
+        kwargs["generation_config"] = generation_config
     if sample:
         kwargs["temperature"] = float(settings.get("temperature", 0.7))
         kwargs["top_p"] = float(settings.get("top_p", 1.0))
