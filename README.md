@@ -10,6 +10,39 @@ Start with [RUN_EXPERIMENTS.md](docs/project/RUN_EXPERIMENTS.md), [the QLoRA not
 
 This README is written as a beginner guide. It explains what the project means, what each group should do, how the two technical approaches connect, and what evidence the team must save.
 
+## Quick start for the scored Task 1 and Task 2 runs
+
+From the repository root, use Python 3.10 or 3.11. Install the development dependencies with `uv sync`. This command checks both replay methods with the public synthetic fixtures.
+
+```sh
+uv run pytest -q tests/test_task1_build_patch.py tests/test_task2_defined_replay.py
+```
+
+Put the archived files in the gitignored `outputs/replay-inputs/` directory to reproduce the scored submissions.
+
+```text
+outputs/replay-inputs/
+  release/                         # Unpacked official release, including exams.json and C++ sources
+  task1-original-0.8180.json        # Saved Task 1 baseline predictions
+  remove-duplicates-recheck.json   # Archived build-recheck-private.json for Remove Duplicates
+  earliest-login-recheck.json      # Archived build-recheck-private.json for Earliest Login
+  decision-rows.json               # Saved defined-d3 decisions
+```
+
+**Task 1, 0.8212 QWK**
+
+```sh
+python scripts/replay_task1_build_patch.py --release outputs/replay-inputs/release/task1_grading.json --baseline outputs/replay-inputs/task1-original-0.8180.json --build-receipt outputs/replay-inputs/remove-duplicates-recheck.json --build-receipt outputs/replay-inputs/earliest-login-recheck.json --output outputs/scored-replay/task1.json
+```
+
+**Task 2, 0.2760 macro-F1**
+
+```sh
+python scripts/replay_task2_defined_decisions.py --release outputs/replay-inputs/release/task2_error_taxonomy.json --decisions outputs/replay-inputs/decision-rows.json --output outputs/scored-replay/task2.json
+```
+
+Each command writes 328 predictions and requires a fresh output path. Both replay commands run on CPU using the archived inference results. For output checksums, fresh Task 2 inference on Kaggle, or details of the original model training and data splits, see the [reproducibility guide](reports/task1_task2_reproducibility_2026-11-21.md) and [training report](reports/task1_task2_models_training_and_data.md).
+
 ## 1. The challenge in plain language
 
 For every student submission, the system may need to:
