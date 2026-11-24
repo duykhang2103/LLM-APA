@@ -7,6 +7,7 @@ from llm_grading.models.inference import ModelRunner
 from llm_grading.prompting.formatter import parse_response, render_task_prompt
 from llm_grading.retrieval.retriever import Retriever
 from llm_grading.utils.logging import append_jsonl, sample_metadata
+from llm_grading.validation.task3 import task3_feedback_policy
 
 
 class ModelPipeline:
@@ -56,11 +57,13 @@ class ModelPipeline:
         ):
             raise ValueError("task3.max_compliance_retries must be between 0 and 3")
         attempts = retries + 1 if self.task == "task3" else 2
+        policy = task3_feedback_policy(self.config) if self.task == "task3" else "strict"
         for retry in range(attempts):
+            policy_warning = []
             retry_prompt = prompt
             if retry:
                 instruction = (
-                    "Rewrite the feedback at the requested level; do not reveal a fix or diagnosis beyond that level."
+                    "Return the requested response format and rewrite the feedback at the requested level; do not reveal a fix or diagnosis beyond that level."
                     if self.task == "task3"
                     else "Return only the requested JSON schema."
                 )
@@ -86,12 +89,13 @@ class ModelPipeline:
                     f"Generation failed for {sample['sample_id']}; see {self.log_path}"
                 ) from exc
             try:
-                parsed = parse_response(raw, self.task, sample)
+                parsed = parse_response(raw, self.task, sample, self.config)
                 if self.task == "task3" and not parsed["compliance"]["pass"]:
-                    raise ValueError(
-                        "Feedback policy violation: "
-                        + ", ".join(parsed["compliance"]["violations"])
-                    )
+                    policy_warning = parsed["compliance"]["violations"]
+                    if policy == "strict":
+                        raise ValueError(
+                            "Feedback policy violation: " + ", ".join(policy_warning)
+                        )
                 error = None
             except ValueError as exc:
                 parsed = None
@@ -103,6 +107,7 @@ class ModelPipeline:
                     "raw_response": raw,
                     "parsed_output": parsed,
                     "parse_error": error,
+                    "policy_warning": policy_warning,
                     "retry_count": retry,
                     "retrieval": audit,
                     "inference": self.runner.metadata,

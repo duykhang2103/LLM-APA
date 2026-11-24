@@ -1,4 +1,4 @@
-"""P0/P1/F0 or heuristic predictions; write only a complete validated file."""
+"""Persist P0/P1/F0 predictions and report per-sample warnings and failures."""
 
 import argparse
 import sys
@@ -9,11 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from llm_grading.data.loader import load_samples
 from llm_grading.pipeline import build_task_pipeline
+from llm_grading.prediction import predict_samples, validate_prediction_output_path
 from llm_grading.runtime import load_samples_for_config, write_json
 from llm_grading.utils.config import load_config
 from llm_grading.utils.logging import run_metadata, save_run_config
 from llm_grading.utils.seed import set_seed
-from llm_grading.validation.predictions import validate_prediction_records
 
 
 def main():
@@ -33,6 +33,9 @@ def main():
     config = load_config(args.config)
     if args.adapter_path:
         config["model"]["adapter_path"] = args.adapter_path
+    directory = Path(config["saving"]["output_dir"])
+    output = Path(args.output) if args.output else directory / "predictions.json"
+    validate_prediction_output_path(config, output)
     directory = save_run_config(config)
     set_seed(config.get("seed", 42))
     samples = (
@@ -55,31 +58,20 @@ def main():
     write_json(directory / "prediction_manifest.json", metadata)
     try:
         pipeline = build_task_pipeline(config)
-        predictions = [
-            {
-                "sample_id": s["sample_id"],
-                "output": pipeline.postprocess(pipeline.predict(s)),
-            }
-            for s in samples
-        ]
-        errors = validate_prediction_records(predictions, config["task"])
-        if errors:
-            raise ValueError(str(errors))
-        output = Path(args.output) if args.output else directory / "predictions.json"
-        write_json(output, predictions)
-        metadata.update(
-            status="completed",
-            elapsed_seconds=time.perf_counter() - start,
-            predictions=str(output),
-        )
+        metadata.update(predict_samples(pipeline, samples, config, output))
         if hasattr(pipeline, "runner"):
             metadata["model"] = pipeline.runner.metadata
+    except KeyboardInterrupt:
+        metadata.update(status="interrupted")
+        raise
     except Exception as exc:
         metadata.update(status="failed", error=str(exc))
         raise
     finally:
+        metadata["elapsed_seconds"] = time.perf_counter() - start
         write_json(directory / "prediction_manifest.json", metadata)
-    print(f"Wrote {len(predictions)} predictions: {output}")
+    print(f"Saved {metadata['prediction_count']}/{len(samples)} predictions: {output}")
+    print(f"Warnings: {metadata['warning_count']} | Failed samples: {metadata['failure_count']}")
     return 0
 
 

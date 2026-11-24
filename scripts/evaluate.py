@@ -13,6 +13,7 @@ from llm_grading.runtime import load_samples_for_config, read_json, write_json
 from llm_grading.utils.config import load_config
 from llm_grading.utils.logging import sample_metadata
 from llm_grading.validation.predictions import validate_prediction_records
+from llm_grading.validation.task3 import uses_joint_task3_output
 
 EVALUATORS = {"task1": evaluate_task1, "task2": evaluate_task2, "task3": evaluate_task3}
 
@@ -32,7 +33,9 @@ def main():
     config = load_config(args.config)
     task = config["task"]
     predictions = read_json(args.predictions)
-    errors = validate_prediction_records(predictions, task)
+    errors = validate_prediction_records(
+        predictions, task, require_task3_taxonomy=uses_joint_task3_output(config)
+    )
     if errors:
         raise ValueError(str(errors))
     samples = load_samples_for_config(config, args.split)

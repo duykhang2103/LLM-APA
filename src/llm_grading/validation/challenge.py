@@ -5,10 +5,13 @@ from typing import Any
 from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
 from llm_grading.validation.predictions import validate_prediction_records
+from llm_grading.validation.task3 import validate_taxonomy_error
 from tasks.task3_feedback.compliance import check_compliance
 
 
-def validate_challenge_predictions(records: Any, task: str) -> list[str]:
+def validate_challenge_predictions(
+    records: Any, task: str, *, require_task3_taxonomy: bool = False
+) -> list[str]:
     if task not in {"task1", "task2", "task3"} or not isinstance(records, list):
         return ["Unknown task or predictions root is not a list"]
     errors, seen = [], set()
@@ -26,7 +29,12 @@ def validate_challenge_predictions(records: Any, task: str) -> list[str]:
                 raise ValueError("Missing or duplicate sample_id")
             seen.add(sid)
             output = row["output"]
-            if not isinstance(output, dict) or set(output) != expected_keys:
+            keys = expected_keys
+            if task == "task3" and (
+                require_task3_taxonomy or isinstance(output, dict) and "taxonomy_error" in output
+            ):
+                keys = {"taxonomy_error", "feedback"}
+            if not isinstance(output, dict) or set(output) != keys:
                 raise ValueError("Unexpected challenge output fields")
             if task == "task1":
                 if not isinstance(output["rubric"], dict) or set(
@@ -50,20 +58,21 @@ def validate_challenge_predictions(records: Any, task: str) -> list[str]:
                     raise ValueError(
                         "taxonomy_error must contain unique official labels"
                     )
-            elif (
-                not isinstance(output["feedback"], str)
-                or not output["feedback"].strip()
-            ):
-                raise ValueError("feedback must be nonempty text")
+            else:
+                if "taxonomy_error" in output:
+                    validate_taxonomy_error(output["taxonomy_error"])
+                if not isinstance(output["feedback"], str) or not output["feedback"].strip():
+                    raise ValueError("feedback must be nonempty text")
         except ValueError as error:
             errors.append(f"record {i}: {error}")
     return errors
 
 
 def export_challenge_predictions(
-    records: list[dict[str, Any]], task: str
+    records: list[dict[str, Any]], task: str, *, require_task3_taxonomy: bool = False,
+    allow_feedback_warnings: bool = False,
 ) -> list[dict[str, Any]]:
-    errors = validate_prediction_records(records, task)
+    errors = validate_prediction_records(records, task, require_task3_taxonomy=require_task3_taxonomy)
     if errors:
         raise ValueError(str(errors))
     exported = []
@@ -78,15 +87,17 @@ def export_challenge_predictions(
         elif task == "task2":
             target = {"taxonomy_error": list(output["error_labels"])}
         else:
-            if not check_compliance(output["feedback"], output["feedback_level"])[
+            if not allow_feedback_warnings and not check_compliance(output["feedback"], output["feedback_level"])[
                 "pass"
             ]:
                 raise ValueError(
                     f"Feedback policy violation for {row['sample_id']}; regenerate before export"
                 )
             target = {"feedback": output["feedback"]}
+            if "taxonomy_error" in output:
+                target["taxonomy_error"] = list(output["taxonomy_error"])
         exported.append({"sample_id": row["sample_id"], "output": target})
-    errors = validate_challenge_predictions(exported, task)
+    errors = validate_challenge_predictions(exported, task, require_task3_taxonomy=require_task3_taxonomy)
     if errors:
         raise ValueError(str(errors))
     return exported

@@ -115,8 +115,6 @@ def _normalize_raw(
     if task == "task3":
         if "target_feedback_level" not in inputs:
             raise ValueError(f"Missing target_feedback_level for {sample_id}")
-        if "taxonomy_error" not in inputs:
-            raise ValueError(f"Missing input taxonomy_error for {sample_id}")
     target_field = {"task1": "rubric", "task2": "taxonomy_error", "task3": "feedback"}[task]
     if output and target_field not in output:
         raise ValueError(f"Missing {task} output {target_field} for {sample_id}")
@@ -158,10 +156,21 @@ def _normalize_raw(
     elif "total_score" in output:
         raise ValueError(f"total_score requires a rubric for {sample_id}")
     if "taxonomy_error" in output:
-        sample["error_labels"] = _error_labels(output["taxonomy_error"], sample_id)
+        labels = _error_labels(output["taxonomy_error"], sample_id)
+        if task == "task3":
+            sample["reference_error_labels"] = labels
+        else:
+            sample["error_labels"] = labels
     if "target_feedback_level" in inputs:
         sample["feedback_level"] = _feedback_level(inputs["target_feedback_level"], sample_id)
-        sample["error_labels"] = _error_labels(inputs.get("taxonomy_error", []), sample_id)
+        if "taxonomy_error" in inputs:
+            sample["error_labels"] = _error_labels(inputs["taxonomy_error"], sample_id)
+        elif task == "task3":
+            # Unknown input labels are distinct from an explicit no-error list.
+            # Reference taxonomy in output must not become inference context.
+            sample["error_labels"] = None
+        else:
+            sample["error_labels"] = []
     if "feedback" in output:
         if not isinstance(output["feedback"], str):
             raise ValueError(f"feedback must be a string for {sample_id}")
@@ -208,7 +217,9 @@ def load_samples(
                 sample = _normalize_raw(record, exams, root, raw_task)
             else:
                 sample = dict(record)
-                if not sample.get("code") and sample.get("code_file"):
+                # An explicit empty string is a real empty submission. Prepared
+                # records retain code_file for provenance, not for reloading.
+                if sample.get("code") is None and sample.get("code_file"):
                     sample["code"] = _read_code(sample["code_file"], root, path.parent, sample["sample_id"])
                 sample.setdefault("code", "")
             records.append(sample)

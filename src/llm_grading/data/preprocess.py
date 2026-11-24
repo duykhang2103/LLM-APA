@@ -54,7 +54,7 @@ def build_task2_input(sample: NormalizedSample) -> dict[str, Any]:
 
 
 def build_task3_input(sample: NormalizedSample) -> dict[str, Any]:
-    """Create a Task 3 input with known error labels and requested level.
+    """Create a Task 3 input with evidence, requested level, and optional labels.
 
     Example shape::
 
@@ -63,14 +63,20 @@ def build_task3_input(sample: NormalizedSample) -> dict[str, Any]:
 
     The reference ``feedback`` remains a training target or evaluation
     reference and is not copied into the inference prompt.
+    Missing or ``None`` error labels are omitted; an explicit empty list
+    remains a supplied no-error diagnosis. Compile/test evidence is preserved.
     """
     result = {
         "problem_statement": sample.get("problem_statement", ""),
         "code": sample.get("code", ""),
-        "error_labels": list(sample.get("error_labels", [])),
         "feedback_level": int(sample.get("feedback_level", 1)),
     }
-    for key in ("problem_type", "language", "problems", "grading_policy"):
+    labels = sample.get("error_labels")
+    if labels is not None:
+        result["error_labels"] = list(labels)
+    for key in (
+        "compile_log", "test_report", "problem_type", "language", "problems", "grading_policy",
+    ):
         if key in sample:
             result[key] = sample[key]
     return result
