@@ -29,14 +29,28 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
+    import fcntl
+
+    args.output.mkdir(parents=True, exist_ok=True)
+    # Keep the lock file stable across reruns. The OS releases the lock when the process exits.
+    with (args.output / ".run.lock").open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise RuntimeError(
+                "Another release run is using this output directory"
+            ) from error
+        run_release(args.bundle, args.output)
+
+
+def run_release(bundle: Path, output: Path) -> None:
     import torch
     from transformers import AutoModel
 
-    args.output.mkdir(parents=True, exist_ok=True)
-    freeze = json.loads((args.bundle / "execution-freeze.json").read_text())
+    freeze = json.loads((bundle / "execution-freeze.json").read_text())
     if freeze["model_id"] != MODEL_ID or freeze["model_revision"] != MODEL_REVISION:
         raise ValueError("The frozen model must match the pinned release model")
-    data = args.bundle / "decision-inputs.json"
+    data = bundle / "decision-inputs.json"
     if hashlib.sha256(data.read_bytes()).hexdigest() != freeze["inputs_sha256"]:
         raise ValueError("D3 frozen input integrity failed")
     inputs = json.loads(data.read_text())
@@ -53,9 +67,9 @@ def main() -> None:
         or len([j for j in jobs if j["repeat"]]) != 4
     ):
         raise ValueError("Invalid frozen job coverage")
-    ledger = ReleaseLedger(args.output / "ledger", freeze, [j["job_id"] for j in jobs])
+    ledger = ReleaseLedger(output / "ledger", freeze, [j["job_id"] for j in jobs])
     rows = ledger.rows
-    budget_path = args.output / "model-budget.json"
+    budget_path = output / "model-budget.json"
     if not budget_path.exists():
         save(
             budget_path,
@@ -100,7 +114,7 @@ def main() -> None:
         if not torch.isfinite(y).all() or not torch.isfinite(attention).all():
             raise RuntimeError("BF16 CUDA probe produced nonfinite values")
         probe["fixed_bf16_linear_and_sdpa"] = "PASS"
-        save(args.output / "bf16-probe.json", probe)
+        save(output / "bf16-probe.json", probe)
         del x, weight, y, q, attention
         torch.cuda.empty_cache()
         model = AutoModel.from_pretrained(
@@ -141,7 +155,7 @@ def main() -> None:
         if not 0 <= smoke["answers"]["probe"]["noul"] <= 1:
             raise RuntimeError("Custom decision readout smoke failed")
         receipt["runtime_smoke"] = "PASS"
-        save(args.output / "runtime-smoke.json", receipt)
+        save(output / "runtime-smoke.json", receipt)
         observed_runtime = {
             k: v for k, v in runtime.runtime_info().items() if k != "loaded_seconds"
         }
@@ -154,7 +168,7 @@ def main() -> None:
         if fingerprint(request_questions) != freeze["question_hash"]:
             raise ValueError("Frozen question wording differs")
         if len(rows) >= 6:
-            gate_path = args.output / "stress-gate.json"
+            gate_path = output / "stress-gate.json"
             if not gate_path.exists():
                 raise ValueError(
                     "Completed stress calls lack gate receipt; stop before any new call"
@@ -170,7 +184,7 @@ def main() -> None:
         for index, job in enumerate(jobs, 1):
             if index <= len(rows):
                 continue
-            if index > 6 and not (args.output / "stress-gate.json").exists():
+            if index > 6 and not (output / "stress-gate.json").exists():
                 raise ValueError("Missing initial stress gate before next model call")
             sample = by_id[job["sample_id"]]
             if time.time() >= deadline_unix:
@@ -237,7 +251,7 @@ def main() -> None:
                 ):
                     raise ValueError("Stress input order differs")
                 save(
-                    args.output / "stress-gate.json",
+                    output / "stress-gate.json",
                     {
                         "status": "PASS",
                         "count": 6,
@@ -251,7 +265,7 @@ def main() -> None:
                         "runtime_and_provenance": "PASS",
                     },
                 )
-            if index > 6 and not (args.output / "stress-gate.json").exists():
+            if index > 6 and not (output / "stress-gate.json").exists():
                 raise ValueError("Missing initial stress gate")
             print(
                 json.dumps(
@@ -285,8 +299,8 @@ def main() -> None:
                         ),
                     }
                 )
-        save(args.output / "stability.json", stability)
-        save(args.output / "decision-rows.json", rows)
+        save(output / "stability.json", stability)
+        save(output / "decision-rows.json", rows)
         if len(canonical) != 328 or len(stability) != 4:
             raise ValueError("Incomplete final coverage")
         if not all(r["labels_identical"] for r in stability):
@@ -304,7 +318,7 @@ def main() -> None:
             gpu_peak_allocated_bytes=torch.cuda.max_memory_allocated(),
             gpu_peak_reserved_bytes=torch.cuda.max_memory_reserved(),
             rows_sha256=hashlib.sha256(
-                (args.output / "decision-rows.json").read_bytes()
+                (output / "decision-rows.json").read_bytes()
             ).hexdigest(),
         )
     except Exception as error:
@@ -317,7 +331,7 @@ def main() -> None:
         )
         # Preserve the failure; never cast, offload, change the runtime or rerun automatically.
     receipt["total_seconds"] = time.monotonic() - started
-    save(args.output / "receipt.json", receipt)
+    save(output / "receipt.json", receipt)
     print(
         json.dumps(
             {

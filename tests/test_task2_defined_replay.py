@@ -38,3 +38,17 @@ def test_replay_uses_release_order_and_strict_threshold():
         replay_decisions([first, second], [*rows[:2], decision(second, 2, repeat=True)])
     with pytest.raises(ValueError, match="source or prompt"):
         replay_decisions([{**first, "code": "changed"}, second], rows)
+
+
+@pytest.mark.parametrize("field", ["probabilities_true", "answers"])
+def test_replay_rejects_json_booleans_as_probabilities(field):
+    sample = {"sample_id": "a", "code": "int main() {}"}
+    row = decision(sample, 0)
+    row["probabilities_true"][0] = 1
+    row["answers"]["label_0"]["noul"] = 1
+    if field == "probabilities_true":
+        row[field][0] = True
+    else:
+        row[field]["label_0"]["noul"] = True
+    with pytest.raises(ValueError, match="finite true-option probability"):
+        replay_decisions([sample], [row])

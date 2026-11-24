@@ -1,24 +1,18 @@
 """CPU orchestration check: 328 synthetic inputs, six stress calls, four repeats."""
 
 import hashlib
-import importlib.util
 import json
 import sys
-from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
 
 from llm_grading.defined_decisions import defined_questions
 from llm_grading.release_ledger import atomic_json, fingerprint
+from scripts import run_defined_decisions_release as runner
 
 
 def test_release_orchestration_has_complete_coverage(tmp_path, monkeypatch):
-    spec = importlib.util.spec_from_file_location(
-        "release",
-        Path(__file__).parents[1] / "scripts/run_defined_decisions_release.py",
-    )
-    release = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(release)
-
     class Tensor:
         def __mul__(self, other):
             return self
@@ -106,8 +100,8 @@ def test_release_orchestration_has_complete_coverage(tmp_path, monkeypatch):
             (bundle / "decision-inputs.json").read_bytes()
         ).hexdigest(),
         "jobs": jobs,
-        "model_id": release.MODEL_ID,
-        "model_revision": release.MODEL_REVISION,
+        "model_id": runner.MODEL_ID,
+        "model_revision": runner.MODEL_REVISION,
         "wall_seconds": 23400,
         "expected_runtime": {},
         "expected_provenance": {},
@@ -125,10 +119,26 @@ def test_release_orchestration_has_complete_coverage(tmp_path, monkeypatch):
     monkeypatch.setattr(
         sys, "argv", ["release", "--bundle", str(bundle), "--output", str(output)]
     )
-    release.main()
+    runner.main()
     assert len(calls) == 333
     assert json.loads((output / "receipt.json").read_text())["canonical_count"] == 328
     assert (
         json.loads((output / "stress-gate.json").read_text())["finite_decisions"] == 60
     )
     assert len(json.loads((output / "stability.json").read_text())) == 4
+
+
+def test_second_process_cannot_use_same_release_directory(tmp_path, monkeypatch):
+    fcntl = pytest.importorskip("fcntl")
+    output = tmp_path / "output"
+    output.mkdir()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["release", "--bundle", str(tmp_path / "bundle"), "--output", str(output)],
+    )
+    with (output / ".run.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises(RuntimeError, match="Another release run"):
+            runner.main()
+    assert list(output.iterdir()) == [output / ".run.lock"]

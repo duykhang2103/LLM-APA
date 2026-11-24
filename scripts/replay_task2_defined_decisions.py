@@ -42,7 +42,12 @@ def replay_decisions(samples: list[dict], rows: list[dict]) -> list[dict]:
             row["answers"][f"label_{index}"]["noul"]
             for index in range(len(probabilities))
         ]
-        if probabilities != native or labels != row["labels"]:
+        native_labels = labels_from_probabilities(native)
+        if (
+            probabilities != native
+            or labels != native_labels
+            or labels != row["labels"]
+        ):
             raise ValueError(
                 "Decision labels or probabilities differ from the native answers"
             )

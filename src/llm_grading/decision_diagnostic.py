@@ -83,10 +83,8 @@ def questions(order: str = "noul") -> dict:
 
 
 def labels_from_probabilities(probabilities: list[float]) -> list[str]:
-    import math
-
     if len(probabilities) != len(ERROR_LABELS) or any(
-        not math.isfinite(p) or not 0 <= p <= 1 for p in probabilities
+        type(p) not in (int, float) or not 0 <= p <= 1 for p in probabilities
     ):
         raise ValueError("One finite true-option probability per category is required")
     return [
