@@ -12,6 +12,7 @@ from llm_grading.prompting.formatter import (
 from llm_grading.retrieval.retriever import Retriever
 from llm_grading.runtime import attach_saved_evidence
 from llm_grading.utils.logging import append_jsonl, sample_metadata
+from llm_grading.validation.task3 import task3_feedback_policy, uses_joint_task3_output
 from tasks.task1_grading.evidence_rules import FIELDS as RUBRIC_FIELDS
 from tasks.task1_grading.evidence_rules import rubric_from_evidence
 from tasks.task3_feedback.compliance import check_compliance
@@ -20,6 +21,12 @@ from tasks.task3_feedback.compliance import check_compliance
 class ModelPipeline:
     def __init__(self, config, runner=None, retriever=None):
         self.config, self.task = config, config["task"]
+        if (
+            self.task == "task3"
+            and uses_joint_task3_output(config)
+            and config.get("task3", {}).get("fallback_on_failure", False)
+        ):
+            raise ValueError("Task 3 joint output does not support fallback_on_failure")
         if config["method"] in {"lora", "qlora"} and not config["model"].get(
             "adapter_path"
         ):
@@ -69,11 +76,13 @@ class ModelPipeline:
         ):
             raise ValueError("task3.max_compliance_retries must be between 0 and 3")
         attempts = retries + 1 if self.task == "task3" else 2
+        policy = task3_feedback_policy(self.config) if self.task == "task3" else "strict"
         for retry in range(attempts):
+            policy_warning = []
             retry_prompt = prompt
             if retry:
                 instruction = (
-                    "Rewrite the feedback at the requested level; do not reveal a fix or diagnosis beyond that level."
+                    "Return the requested response format and rewrite the feedback at the requested level; do not reveal a fix or diagnosis beyond that level."
                     if self.task == "task3"
                     else "Return only the requested JSON schema."
                 )
@@ -85,14 +94,21 @@ class ModelPipeline:
                 )
                 if self.task == "task3":
                     retry_prompt += "\nRejected feedback to rewrite:\n" + raw
-                    retry_prompt += (
-                        "\nFINAL INSTRUCTION: Rewrite in Vietnamese prose only. "
-                        "Do not quote function signatures, declarations, assignments, "
-                        "return statements, code fences or corrected expressions. "
-                        "For Level 1 remove all locations and causes. For Level 2 "
-                        "retain location, cause and consequence but remove all fixes. "
-                        "For Level 3 give a correction direction in prose, not a complete solution."
-                    )
+                    if uses_joint_task3_output(self.config):
+                        retry_prompt += (
+                            "\nFINAL INSTRUCTION: Return only valid JSON with exactly "
+                            "taxonomy_error (a list of official labels) and feedback "
+                            "(a Vietnamese string). Keep feedback within the requested level."
+                        )
+                    else:
+                        retry_prompt += (
+                            "\nFINAL INSTRUCTION: Rewrite in Vietnamese prose only. "
+                            "Do not quote function signatures, declarations, assignments, "
+                            "return statements, code fences or corrected expressions. "
+                            "For Level 1 remove all locations and causes. For Level 2 "
+                            "retain location, cause and consequence but remove all fixes. "
+                            "For Level 3 give a correction direction in prose, not a complete solution."
+                        )
             try:
                 raw = self.runner.generate(retry_prompt)
             except Exception as exc:
@@ -113,12 +129,13 @@ class ModelPipeline:
                     f"Generation failed for {sample['sample_id']}; see {self.log_path}"
                 ) from exc
             try:
-                parsed = parse_response(raw, self.task, sample)
+                parsed = parse_response(raw, self.task, sample, self.config)
                 if self.task == "task3" and not parsed["compliance"]["pass"]:
-                    raise ValueError(
-                        "Feedback policy violation: "
-                        + ", ".join(parsed["compliance"]["violations"])
-                    )
+                    policy_warning = parsed["compliance"]["violations"]
+                    if policy == "strict":
+                        raise ValueError(
+                            "Feedback policy violation: " + ", ".join(policy_warning)
+                        )
                 error = None
             except ValueError as exc:
                 parsed = None
@@ -137,6 +154,7 @@ class ModelPipeline:
                     "raw_response": raw,
                     "parsed_output": parsed,
                     "parse_error": error,
+                    "policy_warning": policy_warning,
                     "retry_count": retry,
                     "retrieval": audit,
                     "inference": self.runner.metadata,

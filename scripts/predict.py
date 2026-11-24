@@ -1,4 +1,4 @@
-"""P0/P1/F0 or heuristic predictions; write only a complete validated file."""
+"""Persist P0/P1/F0 predictions and report per-sample warnings and failures."""
 
 import argparse
 import hashlib
@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from llm_grading.data.loader import load_samples
 from llm_grading.pipeline import build_task_pipeline
+from llm_grading.prediction import predict_samples, validate_prediction_output_path
 from llm_grading.runtime import (
     attach_saved_evidence,
     attach_task3_error_labels,
@@ -21,6 +22,11 @@ from llm_grading.utils.config import load_config
 from llm_grading.utils.logging import run_metadata, save_run_config
 from llm_grading.utils.seed import set_seed
 from llm_grading.validation.predictions import validate_prediction_records
+from llm_grading.validation.task3 import (
+    task3_feedback_policy,
+    task3_feedback_warnings,
+    uses_joint_task3_output,
+)
 
 
 def main():
@@ -53,8 +59,16 @@ def main():
     )
     args = parser.parse_args()
     config = load_config(args.config)
+    if args.resume and config["task"] == "task3" and task3_feedback_policy(config) == "warn":
+        raise ValueError("--resume is unavailable with task3.feedback_policy=warn")
     if args.adapter_path:
         config["model"]["adapter_path"] = args.adapter_path
+    directory = Path(config["saving"]["output_dir"])
+    output = Path(args.output) if args.output else directory / "predictions.json"
+    validate_prediction_output_path(
+        config, output,
+        extra_sources=(args.config, args.input, args.task3_labels, args.evidence, args.tests),
+    )
     directory = save_run_config(config)
     set_seed(config.get("seed", 42))
     samples = (
@@ -77,7 +91,7 @@ def main():
         task3_labels = args.task3_labels or config.get("task3", {}).get(
             "error_labels_path"
         )
-        if not config.get("task3", {}).get("two_stage", False):
+        if not config.get("task3", {}).get("two_stage", False) and not uses_joint_task3_output(config):
             attach_task3_error_labels(samples, task3_labels)
     metadata = {
         **run_metadata(config),
@@ -104,56 +118,75 @@ def main():
         if state.get("signature") != signature:
             raise ValueError("Resume config/data/prompts changed; use a new --output path or archive the old partial checkpoint")
         saved = state["predictions"]
+        require_task3_taxonomy = config["task"] == "task3" and uses_joint_task3_output(config)
         if ([r["sample_id"] for r in saved] != [s["sample_id"] for s in samples[:len(saved)]]
-                or validate_prediction_records(saved, config["task"])):
+                or validate_prediction_records(saved, config["task"], require_task3_taxonomy=require_task3_taxonomy)):
             raise ValueError("Invalid resume checkpoint")
         print(f"Resume: {len(saved)}/{len(samples)} completed samples", flush=True)
     write_json(directory / "prediction_manifest.json", metadata)
     try:
-        pipeline = build_task_pipeline(config) if len(saved) < len(samples) else None
-        predictions = list(saved)
-        resumed_count = len(saved)
-        inference_start = time.perf_counter()
-        for index, s in enumerate(samples, 1):
-            if index <= resumed_count:
-                continue
-            print(f"[{index}/{len(samples)}] Processing {s['sample_id']} ...", flush=True)
-            predictions.append({
-                "sample_id": s["sample_id"],
-                "output": pipeline.postprocess(pipeline.predict(s)),
-            })
-            errors = validate_prediction_records([predictions[-1]], config["task"])
-            if errors:
-                raise ValueError(str(errors))
-            if args.resume:
+        if args.resume:
+            pipeline = build_task_pipeline(config) if len(saved) < len(samples) else None
+            predictions = list(saved)
+            resumed_count = len(saved)
+            inference_start = time.perf_counter()
+            require_task3_taxonomy = config["task"] == "task3" and uses_joint_task3_output(config)
+            for index, s in enumerate(samples, 1):
+                if index <= resumed_count:
+                    continue
+                print(f"[{index}/{len(samples)}] Processing {s['sample_id']} ...", flush=True)
+                predictions.append({
+                    "sample_id": s["sample_id"],
+                    "output": pipeline.postprocess(pipeline.predict(s)),
+                })
+                errors = validate_prediction_records(
+                    [predictions[-1]], config["task"], require_task3_taxonomy=require_task3_taxonomy
+                )
+                if errors:
+                    raise ValueError(str(errors))
                 checkpoint.parent.mkdir(parents=True, exist_ok=True)
                 temporary = checkpoint.with_suffix(".tmp")
                 write_json(temporary, {"signature": signature, "predictions": predictions})
                 temporary.replace(checkpoint)
-            elapsed = time.perf_counter() - inference_start
-            remaining = elapsed / (index - resumed_count) * (len(samples) - index)
-            marker = " | FALLBACK (review diagnosis quality)" if predictions[-1]["output"].get("fallback") else ""
-            print(
-                f"[{index}/{len(samples)}] Done | elapsed {elapsed / 60:.1f} min"
-                f" | ETA {remaining / 60:.1f} min{marker}", flush=True,
+                elapsed = time.perf_counter() - inference_start
+                remaining = elapsed / (index - resumed_count) * (len(samples) - index)
+                marker = " | FALLBACK (review diagnosis quality)" if predictions[-1]["output"].get("fallback") else ""
+                print(
+                    f"[{index}/{len(samples)}] Done | elapsed {elapsed / 60:.1f} min"
+                    f" | ETA {remaining / 60:.1f} min{marker}", flush=True,
+                )
+            errors = validate_prediction_records(
+                predictions, config["task"], require_task3_taxonomy=require_task3_taxonomy
             )
-        errors = validate_prediction_records(predictions, config["task"])
-        if errors:
-            raise ValueError(str(errors))
-        write_json(output, predictions)
-        metadata.update(
-            status="completed",
-            elapsed_seconds=time.perf_counter() - start,
-            predictions=str(output),
-        )
+            if errors:
+                raise ValueError(str(errors))
+            warnings = task3_feedback_warnings(predictions) if config["task"] == "task3" else []
+            write_json(output, predictions)
+            write_json(directory / "warnings.json", warnings)
+            write_json(directory / "failures.json", [])
+            metadata.update(
+                status="completed",
+                prediction_count=len(predictions),
+                warning_count=len(warnings),
+                failure_count=0,
+                predictions=str(output),
+            )
+        else:
+            pipeline = build_task_pipeline(config)
+            metadata.update(predict_samples(pipeline, samples, config, output))
         if hasattr(pipeline, "runner"):
             metadata["model"] = pipeline.runner.metadata
+    except KeyboardInterrupt:
+        metadata.update(status="interrupted")
+        raise
     except Exception as exc:
         metadata.update(status="failed", error=str(exc))
         raise
     finally:
+        metadata["elapsed_seconds"] = time.perf_counter() - start
         write_json(directory / "prediction_manifest.json", metadata)
-    print(f"Wrote {len(predictions)} predictions: {output}")
+    print(f"Saved {metadata['prediction_count']}/{len(samples)} predictions: {output}")
+    print(f"Warnings: {metadata['warning_count']} | Failed samples: {metadata['failure_count']}")
     return 0
 
 

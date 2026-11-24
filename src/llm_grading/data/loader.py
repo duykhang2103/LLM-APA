@@ -164,13 +164,19 @@ def _normalize_raw(
     elif "total_score" in output:
         raise ValueError(f"total_score requires a rubric for {sample_id}")
     if "taxonomy_error" in output:
-        sample["error_labels"] = _error_labels(output["taxonomy_error"], sample_id)
+        labels = _error_labels(output["taxonomy_error"], sample_id)
+        if task == "task3":
+            sample["reference_error_labels"] = labels
+        else:
+            sample["error_labels"] = labels
     if "target_feedback_level" in inputs:
         sample["feedback_level"] = _feedback_level(inputs["target_feedback_level"], sample_id)
         if "taxonomy_error" in inputs:
             sample["error_labels"] = _error_labels(inputs["taxonomy_error"], sample_id)
-        else:
-            # The public test omits Task 3 input labels; never read that as "no errors".
+        elif task == "task3":
+            # Unknown input labels are distinct from an explicit no-error list.
+            # Reference taxonomy in output must not become inference context.
+            sample["error_labels"] = None
             sample["error_labels_missing"] = True
     if "feedback" in output:
         if not isinstance(output["feedback"], str):
@@ -222,6 +228,7 @@ def load_samples(
                 )
             else:
                 sample = dict(record)
+                
                 if not sample.get("code") and sample.get("code_file"):
                     sample["code"] = _read_code(
                         sample["code_file"], root, path.parent, sample["sample_id"],

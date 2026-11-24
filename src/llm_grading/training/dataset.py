@@ -6,6 +6,10 @@ from llm_grading.data.quality import select_training_samples
 from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
 from llm_grading.prompting.formatter import render_task_prompt, task_template
+from llm_grading.validation.task3 import (
+    uses_joint_task3_output,
+    validate_taxonomy_error,
+)
 from llm_grading.task2_verifier import PROMPT_VERSION, verifier_records
 
 
@@ -33,6 +37,13 @@ def build_training_dataset(samples, task, config=None, *, training=True):
             target = s.get("feedback")
             if not isinstance(target, str) or not target.strip():
                 raise ValueError(f"Missing feedback target for {s['sample_id']}")
+            if uses_joint_task3_output(config):
+                labels = validate_taxonomy_error(
+                    s.get("reference_error_labels", s.get("error_labels"))
+                )
+                target = json.dumps(
+                    {"taxonomy_error": labels, "feedback": target}, ensure_ascii=False
+                )
         else:
             raise ValueError(f"Unknown task: {task}")
         records.append(

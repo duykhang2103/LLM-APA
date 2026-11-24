@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from llm_grading.validation.task3 import task3_feedback_policy, uses_joint_task3_output
+
 try:
     import yaml
 except ImportError:
@@ -116,6 +118,9 @@ def load_config(path: str | Path) -> dict[str, Any]:
         raise ValueError("Config must define a top-level 'task' such as 'task1'")
     if task not in {"task1", "task2", "task3"}:
         raise ValueError(f"Unknown task: {task}")
+    if task == "task3":
+        uses_joint_task3_output(config)
+        task3_feedback_policy(config)
     if config["method"] not in {"heuristic", "zero_shot", "rag", "lora", "qlora"}:
         raise ValueError("Unknown experiment method")
     if any(k in config["model"] for k in ("api_key", "token")):

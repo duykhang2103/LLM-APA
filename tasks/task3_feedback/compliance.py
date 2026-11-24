@@ -5,6 +5,23 @@ import unicodedata
 from typing import Any
 
 
+def _level_one_diagnosis_text(text: str) -> str:
+    """Mask explicit no-error praise, retaining uncertain negation scopes."""
+
+    def mask(match: re.Match[str]) -> str:
+        prefix = re.split(r"[.!?;]", text[: match.start()])[-1]
+        # Conservatively retain phrases under an enclosing double negation.
+        if re.search(r"\b(?:khong|chang)\s+phai\b", prefix):
+            return match.group(0)
+        return " "
+
+    return re.sub(
+        r"\bkhong\s+co\s+loi\s+(?:logic|bien dich|vong lap|ham|nhap/xuat)\b",
+        mask,
+        text,
+    )
+
+
 def check_compliance(feedback: str, level: int) -> dict[str, Any]:
     """Return ``pass`` and policy violation names for one response."""
     if not isinstance(feedback, str) or not feedback.strip():
@@ -44,10 +61,13 @@ def check_compliance(feedback: str, level: int) -> dict[str, Any]:
         lowered,
     ):
         violations.append("concrete_fix_at_restricted_level")
+    # "Không có lỗi biên dịch" is praise, not a diagnosis. Exempt only the
+    # negated phrase so other diagnoses in the same feedback are still checked.
+    diagnosis_text = _level_one_diagnosis_text(lowered) if level == 1 else lowered
     if level == 1 and re.search(
         r"\b(?:dong (?:so )?\d+|line \d+|p[1-4]|loi (?:logic|bien dich|vong lap|ham|nhap/xuat)|"
         r"thieu|chua khoi tao|khong co ham|sai cong thuc|comment|vi .{1,80} nen)\b",
-        lowered,
+        diagnosis_text,
     ):
         violations.append("specific_diagnosis_at_level_1")
     return {
