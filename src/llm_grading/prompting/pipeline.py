@@ -242,9 +242,16 @@ class ModelPipeline:
             "Do not include corrected code. If no defect is confirmed, explain briefly. "
             "The diagnosis is internal evidence, not student feedback."
         )
+        # Optional budget: a long diagnosis is cut at max_new_tokens and its JSON breaks.
+        budget = self.config.get("task3", {}).get("diagnosis_max_new_tokens")
+        gen_cfg = None
+        if budget:
+            prompt += (" Keep diagnosis short: at most 3 sentences and about 60 words in total, "
+                       "no code, no quoted declarations.")
+            gen_cfg = {**self.config, "generation": {**self.config["generation"], "max_new_tokens": int(budget)}}
         error = None
         for attempt in range(2):
-            raw = self.runner.generate(prompt + ("\nReturn valid JSON: " + str(error) if attempt else ""))
+            raw = self.runner.generate(prompt + ("\nReturn valid JSON: " + str(error) if attempt else ""), gen_cfg)
             try:
                 from llm_grading.prompting.formatter import (
                     _clean_json_text,

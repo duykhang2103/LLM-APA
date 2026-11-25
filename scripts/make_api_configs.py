@@ -37,7 +37,7 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                  max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None,
                  method="rag", evidence=True, revision=None, price=None, attn=None,
                  tasks=None, task3_prompt="v005", task3_labels=False, diagnosis_prompt="v005",
-                 timeout=120):
+                 timeout=120, diagnosis_max_new_tokens=None):
     """method rag|zero_shot; evidence=False hides compile/test results from the prompt
     (statement + code only, like the fine-tuned Task 1 model's public inference).
     tasks: which configs to write (default: task1/task2 for api, all three for local).
@@ -105,6 +105,8 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
         if task == "task3":
             cfg["task3"].update(max_compliance_retries=2, two_stage=not task3_labels,
                                 diagnosis_prompt=diagnosis_prompt)
+            if diagnosis_max_new_tokens:
+                cfg["task3"]["diagnosis_max_new_tokens"] = diagnosis_max_new_tokens
             cfg["task2"] = {"use_grading_policy": False}  # the diagnosis stage
             cfg["generation"]["max_new_tokens"] = 1024
         cfg["retrieval"].update(k=1, key="code", index="bm25", same_exam_first=not eval_mode,

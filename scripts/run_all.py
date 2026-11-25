@@ -89,6 +89,19 @@ class Runner:
         if not self.dry_run:
             subprocess.run(command, check=True, cwd=ROOT)
 
+    def parallel(self, script, arg_lists):
+        """Run one script several times at once (API shards); fail if any run fails."""
+        commands = [[sys.executable, str(SCRIPTS / script), *map(str, args)] for args in arg_lists]
+        for command in commands:
+            print("\n$ " + " ".join(command), flush=True)
+        if self.dry_run:
+            return
+        processes = [subprocess.Popen(command, cwd=ROOT) for command in commands]
+        codes = [p.wait() for p in processes]
+        if any(codes):
+            raise SystemExit(f"{script} failed in shard(s) {[i + 1 for i, c in enumerate(codes) if c]}; "
+                             "rerun the same command: finished API answers come from the cache")
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -125,6 +138,11 @@ def main():
                              "makes the cost estimate and --max-cost work for this model")
     parser.add_argument("--timeout", type=int, default=120,
                         help="Seconds to wait for one API answer (Task 3 writes long feedback; try 300)")
+    parser.add_argument("--shards", type=int, default=1,
+                        help="API only: split each task into N parts that run at the same time (e.g. 6 for Task 3)")
+    parser.add_argument("--task3-diagnosis-tokens", type=int, default=384,
+                        help="Task 3: token budget and short-answer instruction for the diagnosis stage "
+                             "(0 = team default: the full max_new_tokens)")
     parser.add_argument("--max-cost", type=float, default=20.0,
                         help="Stop a Task 1 or Task 2 step once its estimated API cost reaches this many USD")
     parser.add_argument("--attn", help="local only: attention implementation, e.g. sdpa (default from rag.yaml)")
@@ -240,8 +258,32 @@ def main():
                            price=args.price, cache_path=args.cache_path, attn=args.attn,
                            tasks=args.tasks, task3_prompt=args.task3_prompt,
                            task3_labels=bool(args.task3_labels), diagnosis_prompt=args.task3_diagnosis_prompt,
-                           timeout=args.timeout)
+                           timeout=args.timeout, diagnosis_max_new_tokens=args.task3_diagnosis_tokens or None)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
+
+    def predict_shards(task, pred, flags):
+        """N predict.py runs on K/N of the samples, each with its own log and cache, then one merged file."""
+        base = yaml.safe_load(configs[task].read_text(encoding="utf-8"))
+        cache = Path(base["model"].get("cache_path") or out / f"{task}_cache.jsonl")
+        runs, parts = [], []
+        for k in range(1, args.shards + 1):
+            cfg = json.loads(json.dumps(base))
+            cfg["saving"]["output_dir"] = str((out / task / f"shard-{k}").resolve())
+            cfg["model"]["cache_path"] = str(cache.with_name(f"{cache.stem}-{task}-shard{k}{cache.suffix}"))
+            # Each shard has its own cost counter; split the cap so the total stays at --max-cost.
+            if cfg["model"].get("max_cost_usd") is not None:
+                cfg["model"]["max_cost_usd"] = cfg["model"]["max_cost_usd"] / args.shards
+            path = out / "configs" / f"config_{task}_shard{k}.yaml"
+            path.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            part = out / task / f"pred_shard{k}.json"
+            parts.append(part)
+            runs.append(["--config", path, "--input", data, "--output", part, "--shard", f"{k}/{args.shards}", *flags])
+        run.parallel("predict.py", runs)
+        run("merge_predictions.py", "--task", task, "--shards", *parts, "--input", data, "--output", pred)
+        if not args.dry_run:  # one log for the summary below
+            logs = [out / task / f"shard-{k}" / "responses.jsonl" for k in range(1, args.shards + 1)]
+            (out / task / "responses.jsonl").write_text(
+                "".join(p.read_text(encoding="utf-8") for p in logs if p.exists()), encoding="utf-8")
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
@@ -253,8 +295,11 @@ def main():
             if not labels.exists() and not args.dry_run:
                 raise SystemExit(f"Task 3 labels not found: {labels} (run task2 first or give a file)")
             extra = ["--task3-labels", labels]
-        run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
-            *evidence_flag, *tests_flag, *extra, *limit)
+        if args.shards > 1:
+            predict_shards(task, pred, [*evidence_flag, *tests_flag, *extra, *limit])
+        else:
+            run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
+                *evidence_flag, *tests_flag, *extra, *limit)
         if task == "task2" and not args.no_evidence:
             # Evidence rules (scripts/calibrate_task2.py): +0.04 macro-F1 on train.
             raw, pred = pred, out / "pred_task2_calib.json"
