@@ -238,6 +238,15 @@ def main():
         extra = ["--task3-labels", task2_labels] if task == "task3" else []
         run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
             *evidence_flag, *tests_flag, *extra, *limit)
+        if task == "task1" and not args.no_tests:
+            # Hybrid copy: compilable follows the real compile result (scripts/guard_task1.py);
+            # pred_task1.json stays the pure prompting result.
+            guarded = out / "pred_task1_guard.json"
+            run("guard_task1.py", "--input", data, "--predictions", pred, "--evidence", data_compile,
+                "--tests", data_tests, "--output", guarded)
+            if not args.eval:
+                run("package_predictions.py", "--task", "task1", "--input", guarded,
+                    "--output", out / "submission_task1_guard.json")
         if task == "task2" and not args.no_evidence:
             # Evidence rules (scripts/calibrate_task2.py): +0.04 macro-F1 on train.
             raw, pred = pred, out / "pred_task2_calib.json"
