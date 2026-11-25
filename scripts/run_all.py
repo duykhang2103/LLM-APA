@@ -125,6 +125,9 @@ def main():
                              "makes the cost estimate and --max-cost work for this model")
     parser.add_argument("--max-cost", type=float, default=20.0,
                         help="Stop a Task 1 or Task 2 step once its estimated API cost reaches this many USD")
+    parser.add_argument("--attn", help="local only: attention implementation, e.g. sdpa (default from rag.yaml)")
+    parser.add_argument("--cache-path", help="Response cache file (default outputs/<provider>_cache.jsonl); "
+                        "give parallel runs separate files")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
@@ -225,7 +228,7 @@ def main():
                            base_url=args.base_url, key_env=args.api_key_env,
                            extra_body=args.extra_body, method=args.method,
                            evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
-                           price=args.price)
+                           price=args.price, cache_path=args.cache_path, attn=args.attn)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
