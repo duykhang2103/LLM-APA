@@ -52,6 +52,10 @@ def main():
         help="Task 2 prediction file supplying labels when Task 3 input omits taxonomy_error",
     )
     parser.add_argument(
+        "--task3-labels-replace", action="store_true",
+        help="Use --task3-labels even where the input has taxonomy_error (labeled data: no teacher labels leak)",
+    )
+    parser.add_argument(
         "--evidence", help="scripts/compile_evidence.py output for these samples (fills compile_log)"
     )
     parser.add_argument(
@@ -92,6 +96,9 @@ def main():
             "error_labels_path"
         )
         if not config.get("task3", {}).get("two_stage", False) and not uses_joint_task3_output(config):
+            if args.task3_labels_replace:
+                for sample in samples:
+                    sample["error_labels_missing"] = True
             attach_task3_error_labels(samples, task3_labels)
     metadata = {
         **run_metadata(config),

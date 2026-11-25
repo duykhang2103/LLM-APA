@@ -89,6 +89,19 @@ class Runner:
         if not self.dry_run:
             subprocess.run(command, check=True, cwd=ROOT)
 
+    def parallel(self, script, arg_lists):
+        """Run one script several times at once (API shards); fail if any run fails."""
+        commands = [[sys.executable, str(SCRIPTS / script), *map(str, args)] for args in arg_lists]
+        for command in commands:
+            print("\n$ " + " ".join(command), flush=True)
+        if self.dry_run:
+            return
+        processes = [subprocess.Popen(command, cwd=ROOT) for command in commands]
+        codes = [p.wait() for p in processes]
+        if any(codes):
+            raise SystemExit(f"{script} failed in shard(s) {[i + 1 for i, c in enumerate(codes) if c]}; "
+                             "rerun the same command: finished API answers come from the cache")
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -125,16 +138,34 @@ def main():
     parser.add_argument("--price", nargs=2, type=float, metavar=("IN", "OUT"),
                         help="API price in USD per million prompt/completion tokens, e.g. 0.0525 0.0735; "
                              "makes the cost estimate and --max-cost work for this model")
+    parser.add_argument("--timeout", type=int, default=120,
+                        help="Seconds to wait for one API answer (Task 3 writes long feedback; try 300)")
+    parser.add_argument("--shards", type=int, default=1,
+                        help="API only: split each task into N parts that run at the same time (e.g. 6 for Task 3)")
+    parser.add_argument("--task3-diagnosis-tokens", type=int, default=384,
+                        help="Task 3: token budget and short-answer instruction for the diagnosis stage "
+                             "(0 = team default: the full max_new_tokens)")
     parser.add_argument("--max-cost", type=float, default=20.0,
                         help="Stop a Task 1 or Task 2 step once its estimated API cost reaches this many USD")
     parser.add_argument("--attn", help="local only: attention implementation, e.g. sdpa (default from rag.yaml)")
     parser.add_argument("--cache-path", help="Response cache file (default outputs/<provider>_cache.jsonl); "
                         "give parallel runs separate files")
+    parser.add_argument("--task2-method", choices=["list", "per_label"], default="list",
+                        help="list = one prompt returns the label list; per_label = one Yes/No question per label "
+                             "(scripts/predict_task2_per_label.py, API only)")
+    parser.add_argument("--workers", type=int, default=8, help="per_label: questions sent at the same time")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
     parser.add_argument("--suites", default=str(ROOT / "outputs" / "testsuites"), help="Shared test-suite folder")
     parser.add_argument("--tasks", nargs="+", choices=["task1", "task2", "task3"])
+    parser.add_argument("--task3-prompt", default="v005", help="Task 3 prompt version (team notebook: v005)")
+    parser.add_argument("--task3-diagnosis-prompt", default="v004",
+                        help="Task 2 prompt for Task 3's diagnosis stage (team notebook: v005; v004 scored higher on train)")
+    parser.add_argument("--task3-labels", metavar="task2|PATH",
+                        help="Task 3 writes feedback for given labels instead of diagnosing them itself: "
+                             "'task2' = this run's Task 2 output, or a Task 2 prediction file. "
+                             "Default: two-stage (the model diagnoses labels, then writes feedback)")
     parser.add_argument("--name", help="Run folder name under outputs/runs/ (default <data>-<prompt>)")
     parser.add_argument("--eval", action="store_true", help="Leave-one-exam-out run + metrics (labeled data)")
     parser.add_argument("--no-llm", action="store_true", help="Only evidence, tests and rule-based Task 1")
@@ -154,8 +185,8 @@ def main():
         args.extra_body = {**(args.extra_body or {}), "chat_template_kwargs": {"enable_thinking": False}}
     if args.tasks is None:
         args.tasks = ["task1", "task2"] if args.provider == "api" else ["task1", "task2", "task3"]
-    if args.provider == "api" and "task3" in args.tasks:
-        parser.error("Task 3 uses local GPU inference; use run_task3_kaggle_t4x2.ipynb or --provider local")
+    if args.task3_labels and "task3" not in args.tasks:
+        parser.error("--task3-labels needs --tasks ... task3")
 
     os.environ.setdefault("ZIG_GLOBAL_CACHE_DIR", str(ROOT / "outputs" / "tmp" / "zigcache"))
     os.environ.setdefault("ZIG_LOCAL_CACHE_DIR", os.environ["ZIG_GLOBAL_CACHE_DIR"])
@@ -230,14 +261,61 @@ def main():
                            base_url=args.base_url, key_env=args.api_key_env,
                            extra_body=args.extra_body, method=args.method,
                            evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
-                           price=args.price, cache_path=args.cache_path, attn=args.attn, k=args.k)
+                           price=args.price, cache_path=args.cache_path, attn=args.attn,
+                           tasks=args.tasks, task3_prompt=args.task3_prompt,
+                           task3_labels=bool(args.task3_labels), diagnosis_prompt=args.task3_diagnosis_prompt,
+                           timeout=args.timeout, diagnosis_max_new_tokens=args.task3_diagnosis_tokens or None, k=args.k)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
+
+    def predict_shards(task, pred, flags):
+        """N predict.py runs on K/N of the samples, each with its own log and cache, then one merged file."""
+        base = yaml.safe_load(configs[task].read_text(encoding="utf-8"))
+        cache = Path(base["model"].get("cache_path") or out / f"{task}_cache.jsonl")
+        runs, parts = [], []
+        for k in range(1, args.shards + 1):
+            cfg = json.loads(json.dumps(base))
+            cfg["saving"]["output_dir"] = str((out / task / f"shard-{k}").resolve())
+            cfg["model"]["cache_path"] = str(cache.with_name(f"{cache.stem}-{task}-shard{k}{cache.suffix}"))
+            # Each shard has its own cost counter; split the cap so the total stays at --max-cost.
+            if cfg["model"].get("max_cost_usd") is not None:
+                cfg["model"]["max_cost_usd"] = cfg["model"]["max_cost_usd"] / args.shards
+            path = out / "configs" / f"config_{task}_shard{k}.yaml"
+            path.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False), encoding="utf-8")
+            part = out / task / f"pred_shard{k}.json"
+            parts.append(part)
+            runs.append(["--config", path, "--input", data, "--output", part, "--shard", f"{k}/{args.shards}", *flags])
+        run.parallel("predict.py", runs)
+        run("merge_predictions.py", "--task", task, "--shards", *parts, "--input", data, "--output", pred)
+        if not args.dry_run:  # one log for the summary below
+            logs = [out / task / f"shard-{k}" / "responses.jsonl" for k in range(1, args.shards + 1)]
+            (out / task / "responses.jsonl").write_text(
+                "".join(p.read_text(encoding="utf-8") for p in logs if p.exists()), encoding="utf-8")
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
-        extra = ["--task3-labels", task2_labels] if task == "task3" else []
-        run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
-            *evidence_flag, *tests_flag, *extra, *limit)
+        extra = []
+        if task == "task3" and args.task3_labels:
+            labels = Path(args.task3_labels) if args.task3_labels != "task2" else task2_labels
+            if labels == out / "pred_task2.json" and (out / "pred_task2_calib.json").exists():
+                labels = out / "pred_task2_calib.json"
+            if not labels.exists() and not args.dry_run:
+                raise SystemExit(f"Task 3 labels not found: {labels} (run task2 first or give a file)")
+            # On labeled data the input carries the teacher's labels; replace them so they do not leak.
+            extra = ["--task3-labels", labels, *(["--task3-labels-replace"] if args.eval else [])]
+        if task == "task2" and args.task2_method == "per_label":
+            cache = Path(args.cache_path or ROOT / "outputs" / "api_cache.jsonl")
+            run("predict_task2_per_label.py", "--input", data, "--output", pred, *evidence_flag, *tests_flag,
+                "--base-url", args.base_url, "--api-key-env", args.api_key_env, "--model", model,
+                *(["--extra-body", json.dumps(args.extra_body)] if args.extra_body else []),
+                *(["--price", *args.price] if args.price else []), "--max-cost", args.max_cost,
+                "--timeout", args.timeout, "--workers", args.workers,
+                "--cache", cache.with_name(cache.stem + "-perlabel.jsonl"), *limit,
+                *(["--labeled"] if args.eval else []))
+        elif args.shards > 1:
+            predict_shards(task, pred, [*evidence_flag, *tests_flag, *extra, *limit])
+        else:
+            run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
+                *evidence_flag, *tests_flag, *extra, *limit)
         if task == "task1" and not args.no_tests:
             # Hybrid copy: compilable follows the real compile result (scripts/guard_task1.py);
             # pred_task1.json stays the pure prompting result.
@@ -266,6 +344,8 @@ def main():
         if args.eval and not args.max_samples:  # metrics need the whole labeled set
             run("evaluate.py", "--config", configs[task], "--predictions", pred, "--input", data,
                 "--output", out / f"metrics_{task}.json")
+            if task == "task3":
+                run("score_task3_train.py", "--input", data, "--predictions", pred)
         else:
             run("package_predictions.py", "--task", task, "--input", pred, "--output", out / f"submission_{task}.json")
 
