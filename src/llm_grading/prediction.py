@@ -5,6 +5,7 @@ from tempfile import mkdtemp
 from typing import Any, Iterable, Mapping
 
 from llm_grading.runtime import write_json
+from tasks.task3_feedback.compliance import SOFT_VIOLATIONS
 from llm_grading.validation.predictions import validate_prediction_records
 from llm_grading.validation.task3 import (
     task3_feedback_policy,
@@ -87,7 +88,10 @@ def predict_samples(
             if task == "task3" and record["output"]["feedback_level"] != sample["feedback_level"]:
                 raise ValueError("Prediction changed the requested feedback level")
             record_warnings = task3_feedback_warnings([record]) if task == "task3" else []
-            if record_warnings and not keep_going:
+            # Soft violations were already accepted by the pipeline on its last retry
+            # (Level 2 advice is cut later by scripts/relabel_task3.py).
+            hard = [w for w in record_warnings if not set(w.get("violations") or []) <= SOFT_VIOLATIONS]
+            if hard and not keep_going:
                 raise ValueError("Feedback policy violation: " + str(record_warnings))
         except Exception as exc:
             failures.append({

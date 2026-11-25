@@ -12,8 +12,8 @@ Thư mục này chứa phần **Prompting** của nhóm cho cả 3 task, gồm:
 | Task | Metric | Điểm |
 |---|---|---|
 | Task 1 | QWK | 0.8748 |
-| Task 2 | macro-F1 | 0.2917 |
-| Task 3 | LLM judge | 0.3948 |
+| Task 2 | macro-F1 | 0.3027 |
+| Task 3 | LLM judge | 0.3948 (bản trước); bản hiện tại (prompt v008) chưa có điểm |
 
 ## Pipeline
 
@@ -23,9 +23,14 @@ Thư mục này chứa phần **Prompting** của nhóm cho cả 3 task, gồm:
 2. **Sinh test bằng LLM:** `openai/gpt-oss-120b` (qua Groq) chỉ đọc đề bài, viết lời giải mẫu và input test. Output mong đợi lấy từ việc chạy lời giải mẫu. Sau đó chạy code sinh viên trên bộ test này, ra test report. Không có test viết tay.
 3. **RAG:** BM25 truy xuất 1 bài giống nhất theo code, từ 32 bài train có nhãn.
 4. **Prompt (P2)** cho `Qwen/Qwen3.5-9B` qua DeepInfra, temperature 0. Prompt gồm hướng dẫn, 1 ví dụ, đề bài, code, compile log và test report.
-5. **Hậu xử lý:**
-   - Task 2: ghép prompt liệt kê nhãn với cách hỏi Yes/No từng nhãn (chỉ lấy thêm 3 nhãn hiếm).
-   - Task 3: viết feedback dựa trên nhãn lỗi lấy từ Task 2.
+5. **Task 2, ghép nhiều cách hỏi:**
+   - Prompt liệt kê nhãn cho 7 nhãn thường, rồi luật dựa trên bằng chứng (`calibrate_task2.py`).
+   - 3 nhãn hiếm (thuật toán, hard-code, style) lấy từ cách hỏi Yes/No từng nhãn. Định nghĩa nhãn viết theo cách giảng viên dùng trên train, kèm 2 bài train có nhãn của đề khác làm ví dụ (chỉ code và Yes/No, không có feedback).
+   - Nhãn "Lỗi edge case" thêm khi cách hỏi từng nhãn trả lời Yes, hoặc khi test thường qua hết mà test biên rớt.
+6. **Task 3:** nhãn lấy từ file nộp Task 2, prompt viết feedback theo đúng định nghĩa level. Sau đó hậu xử lý bằng code:
+   - Level 1 chỉ còn một trong hai câu chuẩn.
+   - Level 2 bị cắt các câu khuyên cách sửa.
+   - Mỗi feedback được kiểm tra; vi phạm thì sinh lại tối đa 2 lần.
 
 Feedback của giảng viên không được đưa vào input của Task 1/2.
 
@@ -91,8 +96,8 @@ submission_task3.json
 
 Script tự kiểm tra định dạng nộp của cả 3 file ở bước cuối.
 
-- **Thời gian:** khoảng 40–60 phút cho 328 bài. Phần lâu nhất là Task 2 hỏi từng nhãn (3.280 câu hỏi) và Task 3.
-- **Chi phí API:** khoảng $1.5. Mỗi bước có giới hạn chi phí riêng (`max_cost_usd` trong file model). Chạm giới hạn thì bước đó dừng lại.
+- **Thời gian:** khoảng 1–1,5 giờ cho 328 bài. Phần lâu nhất là 2 lượt Task 2 hỏi từng nhãn (mỗi lượt 3.280 câu hỏi) và Task 3.
+- **Chi phí API:** khoảng $2.5 khi chạy mới hoàn toàn. Mỗi bước có giới hạn chi phí riêng (`max_cost_usd` trong file model). Chạm giới hạn thì bước đó dừng lại.
 - **Chạy lại:** câu trả lời API được lưu cache (`outputs/*.jsonl`). Lỗi giữa chừng thì chạy lại đúng lệnh cũ; phần đã xong lấy từ cache, không tốn thêm tiền. Nếu còn đủ cache của lần nộp, chạy lại sẽ ra **đúng các file đã nộp**.
 - **Xem trước các lệnh sẽ chạy:** thêm `--dry-run`.
 
@@ -120,13 +125,23 @@ Muốn thử cấu hình khác thì chép file này ra file mới, sửa, rồi 
 
 Prompt nằm trong `tasks/<task>/prompts/`. Mỗi lần sửa prompt thì lưu thành phiên bản mới, không sửa đè.
 
+Các prompt bản tốt nhất đang dùng (những file khác trong thư mục là bản cũ của các thí nghiệm trước, giữ lại để tái lập):
+
+| Task | File |
+|---|---|
+| Task 1 | `tasks/task1_grading/prompts/v004.txt` |
+| Task 2 | `tasks/task2_errors/prompts/v004.txt` (liệt kê nhãn), `per_label_v001.json` (nhãn edge case), `per_label_v002.json` (3 nhãn hiếm) |
+| Task 3 | `tasks/task3_feedback/prompts/v008.txt` |
+| Sinh test | `configs/testgen/groq.yaml` chỉ định phiên bản |
+
 ## 6. Các file trung gian
 
 | Thư mục trong `outputs/runs/` | Nội dung |
 |---|---|
 | `prompting-P2/` | Task 1 + Task 2 dạng liệt kê nhãn: `pred_task1.json`, `pred_task2_calib.json`, log từng câu trả lời trong `task1/`, `task2/` |
-| `prompting-t2pl/` | Task 2 hỏi từng nhãn: `pred_task2.probs.json` (P(Yes) của mọi nhãn), `pred_task2_combined.json` |
-| `prompting-t3/` | Task 3: `pred_task3.json`, log trong `task3/` |
+| `prompting-t2pl/` | Task 2 hỏi từng nhãn (định nghĩa v001): nguồn nhãn edge case; `pred_task2.probs.json` chứa P(Yes) của mọi nhãn |
+| `prompting-t2pl-v002/` | Task 2 hỏi từng nhãn (định nghĩa v002 + ví dụ): nguồn 3 nhãn hiếm; `pred_task2_combined.json` |
+| `prompting-t3/` | Task 3 trước hậu xử lý: `pred_task3.json`, `submission_task3.json`, log trong `task3/` |
 | `prompting/final/` | 3 file nộp |
 
 `outputs/` không được commit, vì chứa code sinh viên và kết quả dự đoán.

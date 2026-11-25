@@ -15,7 +15,7 @@ from llm_grading.utils.logging import append_jsonl, sample_metadata
 from llm_grading.validation.task3 import task3_feedback_policy, uses_joint_task3_output
 from tasks.task1_grading.evidence_rules import FIELDS as RUBRIC_FIELDS
 from tasks.task1_grading.evidence_rules import rubric_from_evidence
-from tasks.task3_feedback.compliance import check_compliance
+from tasks.task3_feedback.compliance import SOFT_VIOLATIONS, check_compliance
 
 
 class ModelPipeline:
@@ -153,7 +153,10 @@ class ModelPipeline:
                 parsed = parse_response(raw, self.task, sample, self.config)
                 if self.task == "task3" and not parsed["compliance"]["pass"]:
                     policy_warning = parsed["compliance"]["violations"]
-                    if policy == "strict":
+                    # Soft violations (style of Level 2/3 advice) get the retries, but on
+                    # the last attempt the model's feedback beats the generic fallback.
+                    soft_only = set(policy_warning) <= SOFT_VIOLATIONS
+                    if policy == "strict" and not (soft_only and retry == attempts - 1):
                         raise ValueError(
                             "Feedback policy violation: " + ", ".join(policy_warning)
                         )
@@ -324,4 +327,6 @@ def level_safe_feedback(labels, level):
     if level == 1:
         return "Bài làm của em vẫn chưa đáp ứng hết yêu cầu của đề, em hãy đọc lại đề và tự kiểm tra với vài bộ dữ liệu nhé."
     kinds = ", ".join(label[0].lower() + label[1:] for label in labels)
+    if level == 2:  # Level 2 names the problems but gives no fix direction
+        return f"Bài làm của em còn {kinds}."
     return f"Bài làm của em còn {kinds}; em hãy xem lại phần xử lý liên quan trong bài và đối chiếu với yêu cầu của đề."

@@ -53,6 +53,28 @@ def answer_probability(choice):
     return None, text
 
 
+def label_examples(train, label, sample, positives, max_chars=1200):
+    """Teacher-labelled training code for one error type, from OTHER exams only.
+
+    Up to `positives` submissions the teacher gave this label, plus one without it,
+    so the model sees how the teacher uses the label. Only code and the Yes/No
+    label are shown (never the teacher's feedback). Empty when nothing qualifies.
+    """
+    if positives <= 0:
+        return ""
+    others = [t for t in train if t["problem_id"] != sample.get("problem_id")
+              and t["sample_id"] != sample["sample_id"]]
+    pos = [t for t in others if label in (t.get("error_labels") or [])][:positives]
+    neg = [t for t in others if label not in (t.get("error_labels") or []) and t.get("error_labels")][:1]
+    if not pos:
+        return ""
+    parts = [f'Teacher-labelled training submissions from other exams (code only) for "{label}":']
+    for k, (item, answer) in enumerate([*((t, "Yes") for t in pos), *((t, "No") for t in neg)], 1):
+        code = item["code"] if len(item["code"]) <= max_chars else item["code"][:max_chars] + "\n// ... (cut)"
+        parts.append(f"Example {k} (teacher's answer: {answer}):\n{code}")
+    return "\n\n".join(parts)
+
+
 def decide(probability, text, threshold):
     if probability is not None:
         return probability > threshold
@@ -135,6 +157,9 @@ def main():
     parser.add_argument("--retries", type=int, default=8)
     parser.add_argument("--cache", required=True)
     parser.add_argument("--definitions", default=str(DEFINITIONS))
+    parser.add_argument("--train", help="Labeled training dataset for --examples")
+    parser.add_argument("--examples", type=int, default=0,
+                        help="Training submissions WITH the label shown per question (plus one without); 0 = none")
     parser.add_argument("--max-samples", type=int)
     parser.add_argument("--labeled", action="store_true", help="Input carries teacher labels: print macro-F1")
     args = parser.parse_args()
@@ -143,6 +168,9 @@ def main():
     assert set(spec["labels"]) == set(ERROR_LABELS), "definitions must cover the ten official labels"
     samples = load_samples(args.input, task="task2")[: args.max_samples]
     attach_saved_evidence(samples, args.evidence, args.tests)
+    if args.examples and not args.train:
+        raise SystemExit("--examples needs --train")
+    train = load_samples(args.train, task="task2") if args.examples else []
     jobs = []
     for sample in samples:
         view = build_task2_input(sample)
@@ -150,7 +178,8 @@ def main():
         text = json.dumps(view, ensure_ascii=False)
         for label in ERROR_LABELS:
             prompt = spec["template"].replace("{input_json}", text).replace("{label}", label) \
-                .replace("{definition}", spec["labels"][label])
+                .replace("{definition}", spec["labels"][label]) \
+                .replace("{examples}", label_examples(train, label, sample, args.examples))
             jobs.append((sample["sample_id"], label, prompt))
     client = Client(args)
     probs, start = {}, time.time()
