@@ -4,11 +4,24 @@ import hashlib
 import json
 import os
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
 from llm_grading.models.generation import generate_text
 from llm_grading.models.loader import load_model
+
+RETRY_STATUS = {408, 429, 500, 502, 503, 504}
+
+
+def retry_wait(attempt, retry_after=None, cap=120.0):
+    """Seconds before retry `attempt` (0-based): the server's Retry-After, else 20s, 40s, ... up to cap."""
+    try:
+        if retry_after is not None:
+            return min(max(float(retry_after), 1.0), cap)
+    except ValueError:
+        pass  # an HTTP-date Retry-After; fall back to backoff
+    return min(20.0 * (attempt + 1), cap)
 
 
 def cache_key(cfg, prompt):
@@ -120,8 +133,11 @@ class ModelRunner:
                     "User-Agent": "Mozilla/5.0 (compatible; llm-apa/1.0)",
                 },
             )
-            max_api_retries = 5
+            # Free tiers (e.g. OpenRouter ":free") rate-limit a shared pool for
+            # minutes at a time, so rate limits and transient errors wait and retry.
+            max_api_retries = settings.get("max_api_retries", 12)
             for attempt in range(max_api_retries):
+                last = attempt == max_api_retries - 1
                 try:
                     with urllib.request.urlopen(
                         request, timeout=settings.get("timeout_seconds", 120)
@@ -130,10 +146,20 @@ class ModelRunner:
                     break
                 except urllib.error.HTTPError as e:
                     err_body = e.read().decode("utf-8", errors="replace")
-                    if e.code == 429 and attempt < max_api_retries - 1:
-                        time.sleep(15 * (attempt + 1))
+                    if e.code in RETRY_STATUS and not last:
+                        wait = retry_wait(attempt, e.headers.get("Retry-After"))
+                        print(f"  API {e.code}; waiting {wait:.0f}s (retry {attempt + 1}/{max_api_retries - 1})",
+                              flush=True)
+                        time.sleep(wait)
                         continue
                     raise RuntimeError(f"API request failed with {e.code} {e.reason}: {err_body}") from e
+                except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+                    if last:
+                        raise RuntimeError(f"API request failed: {e}") from e
+                    wait = retry_wait(attempt)
+                    print(f"  API network error ({e}); waiting {wait:.0f}s (retry {attempt + 1}/{max_api_retries - 1})",
+                          flush=True)
+                    time.sleep(wait)
             text = result["choices"][0]["message"]["content"]
             usage = result.get("usage", {})
             revision = result.get("system_fingerprint") or settings.get("revision")

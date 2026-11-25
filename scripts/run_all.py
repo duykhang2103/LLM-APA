@@ -11,6 +11,11 @@ Public/private test:  python scripts/run_all.py --data <dataset folder>
 Score a setup first:  python scripts/run_all.py --data <train folder> --eval
 (--eval: leave-one-exam-out retrieval, then metrics against teacher labels.)
 --no-llm stops after the rule-based Task 1 file (no API calls for grading).
+
+Prompting variants (compare with the fine-tuned model on the same Qwen3.5-4B):
+  P0 zero-shot, statement + code only:  --method zero_shot --no-evidence
+  P1 RAG k=1, statement + code only:    --no-evidence
+  P2 RAG k=1 + compile/test evidence:   (default)
 """
 
 import argparse
@@ -29,6 +34,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from make_api_configs import make_configs  # noqa: E402
 
+# Same Qwen3.5-4B build as the team's fine-tuned Task 1 model, so prompting and
+# fine-tuning differ only in the method (reports/task1_task2_models_training_and_data.md).
+PINNED_REVISIONS = {"Qwen/Qwen3.5-4B": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a"}
 DEFAULT_TRAIN = ROOT.parent / "Data" / "public-test-cham-diem-phan-hoi-files" / "sample_dataset" / "sample_dataset"
 SCRIPTS = ROOT / "scripts"
 
@@ -49,7 +57,8 @@ def check_models(models, base_url="https://api.groq.com/openai/v1", key_env="GRO
             available = sorted(m["id"] for m in json.load(response)["data"])
     except urllib.error.HTTPError as error:
         raise SystemExit(f"API key check failed: {error.code} {error.read().decode(errors='replace')[:300]}")
-    missing = [m for m in models if m not in available]
+    # Hugging Face router ids may name a provider: "Qwen/Qwen3.5-4B:featherless-ai".
+    missing = [m for m in models if m not in available and m.split(":")[0] not in available]
     if missing:
         raise SystemExit(f"Model(s) not available for this key: {missing}\nAvailable: {available}\n"
                          "Choose with --testgen-model (test suites) and --model (grading).")
@@ -93,6 +102,34 @@ def main():
     parser.add_argument("--base-url", default="https://api.groq.com/openai/v1",
                         help="Grading API (OpenAI-compatible), e.g. https://openrouter.ai/api/v1")
     parser.add_argument("--api-key-env", default="GROQ_API_KEY", help="Env variable holding the grading API key")
+    parser.add_argument("--no-reasoning", dest="extra_body", action="store_const",
+                        const={"reasoning": {"enabled": False}},
+                        help="OpenRouter: turn off hidden reasoning so a reasoning model (e.g. DeepSeek V4) "
+                             "answers within the token budget")
+    parser.add_argument("--no-thinking", action="store_true",
+                        help="Qwen3/3.5 behind vLLM-style APIs (e.g. Hugging Face router): send "
+                             "chat_template_kwargs.enable_thinking=false (local runs already do this)")
+    parser.add_argument("--extra-body", dest="extra_body_json", type=json.loads, default=None, metavar="JSON",
+                        help='Extra API request fields as JSON, e.g. {"reasoning_effort": "none"}')
+    parser.add_argument("--reasoning-effort", metavar="EFFORT",
+                        help="OpenAI-style reasoning_effort field, e.g. none (Requesty); no JSON quoting needed")
+    parser.add_argument("--revision", help="Model revision (local: loaded; api: recorded). "
+                        "Default for Qwen/Qwen3.5-4B: the fine-tuned model's revision")
+    parser.add_argument("--method", choices=["rag", "zero_shot"], default="rag",
+                        help="rag = one BM25 training example in the prompt (P1/P2); zero_shot = none (P0)")
+    parser.add_argument("--k", type=int, choices=[1, 3, 5], default=1,
+                        help="RAG: number of graded training examples in each prompt")
+    parser.add_argument("--no-evidence", action="store_true",
+                        help="Prompt with statement + code only, no compile/test results (P0/P1); "
+                             "implies --no-tests and skips the evidence-based Task 2 calibration")
+    parser.add_argument("--price", nargs=2, type=float, metavar=("IN", "OUT"),
+                        help="API price in USD per million prompt/completion tokens, e.g. 0.0525 0.0735; "
+                             "makes the cost estimate and --max-cost work for this model")
+    parser.add_argument("--max-cost", type=float, default=20.0,
+                        help="Stop a Task 1 or Task 2 step once its estimated API cost reaches this many USD")
+    parser.add_argument("--attn", help="local only: attention implementation, e.g. sdpa (default from rag.yaml)")
+    parser.add_argument("--cache-path", help="Response cache file (default outputs/<provider>_cache.jsonl); "
+                        "give parallel runs separate files")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
@@ -107,6 +144,14 @@ def main():
     parser.add_argument("--max-samples", type=int, help="Smoke run on the first N samples")
     parser.add_argument("--dry-run", action="store_true", help="Print the commands only")
     args = parser.parse_args()
+    if args.no_evidence:
+        args.no_tests = True
+    if args.extra_body_json:
+        args.extra_body = {**(args.extra_body or {}), **args.extra_body_json}
+    if args.reasoning_effort:
+        args.extra_body = {**(args.extra_body or {}), "reasoning_effort": args.reasoning_effort}
+    if args.no_thinking:
+        args.extra_body = {**(args.extra_body or {}), "chat_template_kwargs": {"enable_thinking": False}}
     if args.tasks is None:
         args.tasks = ["task1", "task2"] if args.provider == "api" else ["task1", "task2", "task3"]
     if args.provider == "api" and "task3" in args.tasks:
@@ -120,6 +165,7 @@ def main():
         raise SystemExit("--data and --train must be dataset folders containing exams.json")
     suites = Path(args.suites).resolve()
     model = args.model or ("Qwen/Qwen3.5-4B" if args.provider == "local" else None)
+    revision = args.revision or PINNED_REVISIONS.get((model or "").split(":")[0])
     if args.provider == "api" and not args.no_llm and not model:
         raise SystemExit("--provider api needs --model (a <=10B open-weight model the API offers)")
     if not args.dry_run:
@@ -131,7 +177,8 @@ def main():
             check_models([args.testgen_model or testgen["name_or_path"]], testgen["base_url"], testgen["api_key_env"])
         if args.provider == "api" and not args.no_llm:
             check_models([model], args.base_url, args.api_key_env)
-    name = args.name or f"{tag_of(data)}-{args.prompt}{'-eval' if args.eval else ''}"
+    variant = ("-zeroshot" if args.method == "zero_shot" else "") + ("-noevid" if args.no_evidence else "")
+    name = args.name or f"{tag_of(data)}-{args.prompt}{variant}{'-eval' if args.eval else ''}"
     out = ROOT / "outputs" / "runs" / name
     out.mkdir(parents=True, exist_ok=True)
     print(f"Run folder: {out}")
@@ -151,11 +198,15 @@ def main():
             "--output-dir", suites, "--skip-existing",
             *(["--model", args.testgen_model] if args.testgen_model else []))
         if args.force or not tests_path.exists() or stale_tests(path, tests_path, suites):
-            run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs)
+            # Without --force, keep results of unchanged suites and run only new/rewritten ones.
+            run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs,
+                *([] if args.force else ["--incremental"]))
 
     data_compile, data_tests = dataset_files(data)
     train_compile, train_tests = dataset_files(train)
     tests_flag = [] if args.no_tests else ["--tests", data_tests]
+    # --no-evidence: the model sees no compile or test results at all.
+    evidence_flag = [] if args.no_evidence else ["--evidence", data_compile]
 
     def rules_task1():
         """Rule-based Task 1; exams without a suite fall back to the LLM prediction."""
@@ -176,15 +227,27 @@ def main():
     configs = make_configs(out, train, model, args.prompt, train_compile,
                            None if args.no_tests else train_tests, eval_mode=args.eval,
                            provider=args.provider, dtype=args.dtype,
-                           base_url=args.base_url, key_env=args.api_key_env)
+                           base_url=args.base_url, key_env=args.api_key_env,
+                           extra_body=args.extra_body, method=args.method,
+                           evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
+                           price=args.price, cache_path=args.cache_path, attn=args.attn, k=args.k)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
         extra = ["--task3-labels", task2_labels] if task == "task3" else []
         run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
-            "--evidence", data_compile, *tests_flag, *extra, *limit)
-        if task == "task2":
+            *evidence_flag, *tests_flag, *extra, *limit)
+        if task == "task1" and not args.no_tests:
+            # Hybrid copy: compilable follows the real compile result (scripts/guard_task1.py);
+            # pred_task1.json stays the pure prompting result.
+            guarded = out / "pred_task1_guard.json"
+            run("guard_task1.py", "--input", data, "--predictions", pred, "--evidence", data_compile,
+                "--tests", data_tests, "--output", guarded)
+            if not args.eval:
+                run("package_predictions.py", "--task", "task1", "--input", guarded,
+                    "--output", out / "submission_task1_guard.json")
+        if task == "task2" and not args.no_evidence:
             # Evidence rules (scripts/calibrate_task2.py): +0.04 macro-F1 on train.
             raw, pred = pred, out / "pred_task2_calib.json"
             run("calibrate_task2.py", "--predictions", raw, "--evidence", data_compile, *tests_flag,
@@ -200,7 +263,7 @@ def main():
             salvaged = {r["sample_id"] for r in rows if (r.get("parsed_output") or {}).get("salvaged")}
             print(f"{task}: {len(fallbacks)} samples used the fallback, {len(salvaged)} had labels salvaged "
                   f"(see {log})")
-        if args.eval:
+        if args.eval and not args.max_samples:  # metrics need the whole labeled set
             run("evaluate.py", "--config", configs[task], "--predictions", pred, "--input", data,
                 "--output", out / f"metrics_{task}.json")
         else:

@@ -16,6 +16,7 @@ from llm_grading.validation.task3 import (
     uses_joint_task3_output,
     validate_taxonomy_error,
 )
+from tasks.task1_grading.evidence_rules import rubric_from_evidence
 from tasks.task3_feedback.compliance import check_compliance
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -72,18 +73,34 @@ def render_task_prompt(sample, task, config, examples=None):
     settings = config.get(task, {})
     # The lecturer later said to ignore the P1 prerequisite rule stated in
     # grading_policy; new configs can drop it with use_grading_policy: false.
-    for field in ("compile_log", "test_report", "grading_policy"):
-        if settings.get(f"use_{field}", True) is False:
-            view.pop(field, None)
+    dropped = [f for f in ("compile_log", "test_report", "grading_policy")
+               if settings.get(f"use_{f}", True) is False]
+    for field in dropped:
+        view.pop(field, None)
+    if dropped and examples:
+        # RAG examples must show the same fields as the query.
+        examples = [{**ex, "input": {k: v for k, v in ex["input"].items() if k not in dropped}}
+                    for ex in examples]
     # Only serialized whitelisted records are substituted; braces in C++ stay literal.
+    # Templates that do not name {rule_suggestion} render exactly as before.
     return format_prompt(
         template,
         {
             "input_json": json.dumps(view, ensure_ascii=False),
             "taxonomy": json.dumps(list(ERROR_LABELS), ensure_ascii=False),
             "examples": json.dumps(examples or [], ensure_ascii=False),
+            "rule_suggestion": rule_suggestion(sample) if task == "task1" else "",
         },
     )
+
+
+def rule_suggestion(sample):
+    """The rule-based Task 1 rubric (compile result + generated-test pass rate) as
+    prompt text: a starting point the model may change, not a prediction."""
+    rubric = rubric_from_evidence(sample, sample.get("compile_evidence"), sample.get("test_results"))
+    if rubric is None:
+        return "none (no test results for this submission); grade from the code"
+    return f"{json.dumps(rubric)} (total {sum(rubric.values())})"
 
 
 def _unique_object(pairs):

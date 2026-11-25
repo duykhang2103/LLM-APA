@@ -147,6 +147,51 @@ def test_api_cache_avoids_paying_twice_and_cost_cap_stops(tmp_path, monkeypatch)
         assert rerun.generate("p2") == "ok"  # cached answers still free
 
 
+def test_api_rate_limit_waits_and_retries(tmp_path, monkeypatch):
+    import urllib.error
+    from email.message import Message
+    from io import BytesIO
+
+    from llm_grading.models import inference
+    from llm_grading.models.inference import ModelRunner, retry_wait
+
+    cfg = config(tmp_path)
+    cfg.update(
+        model={
+            "provider": "api",
+            "allow_private_data": True,
+            "name_or_path": "fake",
+            "base_url": "https://example.invalid/v1",
+            "max_api_retries": 4,
+        },
+        generation={"temperature": 0, "max_new_tokens": 20},
+    )
+    monkeypatch.setenv("LLM_API_KEY", "test-only")
+    waits = []
+    monkeypatch.setattr(inference.time, "sleep", waits.append)
+
+    def limited(code, retry_after=None):
+        headers = Message()
+        if retry_after:
+            headers["Retry-After"] = retry_after
+        return urllib.error.HTTPError("u", code, "Too Many Requests", headers, BytesIO(b"{}"))
+
+    ok = BytesIO(json.dumps({"choices": [{"message": {"content": "ok"}}], "usage": {}}).encode())
+    replies = [limited(429), limited(503, "7"), urllib.error.URLError("reset"), ok]
+    with patch("urllib.request.urlopen", side_effect=replies) as request:
+        assert ModelRunner(cfg).generate("p") == "ok"
+    assert request.call_count == 4 and waits == [20.0, 7.0, 60.0]
+
+    with patch("urllib.request.urlopen", side_effect=[limited(429)] * 4):
+        with pytest.raises(RuntimeError, match="429"):
+            ModelRunner(cfg).generate("p")
+    with patch("urllib.request.urlopen", side_effect=[limited(401)]) as request:
+        with pytest.raises(RuntimeError, match="401"):
+            ModelRunner(cfg).generate("p")
+    assert request.call_count == 1  # a bad key fails at once
+    assert retry_wait(20) == 120.0 and retry_wait(0, "Wed, 21 Oct 2026 07:28:00 GMT") == 20.0
+
+
 def test_real_dense_encoder_without_download(tmp_path):
     from sentence_transformers import SentenceTransformer
     from sentence_transformers.sentence_transformer.modules import Pooling, Transformer
