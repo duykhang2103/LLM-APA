@@ -34,32 +34,40 @@ def prompt_for(task, wanted):
 
 def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_tests=None,
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
-                 max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None):
+                 max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None,
+                 method="rag", evidence=True, revision=None):
+    """method rag|zero_shot; evidence=False hides compile/test results from the prompt
+    (statement + code only, like the fine-tuned Task 1 model's public inference)."""
     out_dir = Path(out_dir)
     paths = {}
     for task in TASK_DIRS:
         if task == "task3" and provider == "api":
             continue
         cfg = yaml.safe_load((ROOT / "configs" / task / "rag.yaml").read_text(encoding="utf-8"))
+        cfg["method"] = method
         version = prompt_for(task, prompt)
-        tag = f"{provider}-{version}{'-loeo' if eval_mode else ''}"
+        tag = f"{provider}-{method}-{version}{'' if evidence else '-noevid'}{'-loeo' if eval_mode else ''}"
         cfg["prompt"]["version"] = version
         cfg["experiment"].update(
             id=f"{task}-{tag}", name=f"{task}_{tag}",
-            notes=f"{model}; prompt {version}; code-keyed BM25 k=1; compile+test evidence"
+            notes=f"{model}; prompt {version}; "
+            + ("code-keyed BM25 k=1" if method == "rag" else "zero-shot")
+            + ("; compile+test evidence" if evidence else "; no compile/test evidence")
             + ("; leave-one-exam-out evaluation" if eval_mode else ""),
         )
         cache = str(Path(cache_path or ROOT / "outputs" / f"{provider}_cache.jsonl").resolve())
         if provider == "local":
-            # Keep the team's local model block (quantization, revision, adapter).
+            # Keep the team's local model block (quantization, adapter).
             cfg["model"].update(name_or_path=model, cache_path=cache)
+            if revision:
+                cfg["model"]["revision"] = revision
             if dtype:
                 cfg["model"]["dtype"] = dtype
         else:
             cfg["model"] = {
                 "provider": "api",
                 "name_or_path": model,
-                "revision": None,
+                "revision": revision,  # recorded only; the API serves its own build
                 "base_url": base_url,
                 "api_key_env": key_env,
                 "allow_private_data": True,  # lecturer allowed sending student code to an API
@@ -77,6 +85,9 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                            prepared_dir=str((out_dir / task / "prepared").resolve()))
         cfg["saving"]["output_dir"] = str((out_dir / task).resolve())
         cfg.setdefault(task, {})["use_grading_policy"] = False
+        if not evidence:
+            cfg[task].update(use_compile_log=False, use_test_report=False)
+            train_compile = train_tests = None
         # One unparseable sample must not stop a 328-sample run; fallbacks are logged.
         cfg[task]["fallback_on_failure"] = True
         if task == "task2":

@@ -54,9 +54,14 @@ def render_task_prompt(sample, task, config, examples=None):
     settings = config.get(task, {})
     # The lecturer later said to ignore the P1 prerequisite rule stated in
     # grading_policy; new configs can drop it with use_grading_policy: false.
-    for field in ("compile_log", "test_report", "grading_policy"):
-        if settings.get(f"use_{field}", True) is False:
-            view.pop(field, None)
+    dropped = [f for f in ("compile_log", "test_report", "grading_policy")
+               if settings.get(f"use_{f}", True) is False]
+    for field in dropped:
+        view.pop(field, None)
+    if dropped and examples:
+        # RAG examples must show the same fields as the query.
+        examples = [{**ex, "input": {k: v for k, v in ex["input"].items() if k not in dropped}}
+                    for ex in examples]
     # Only serialized whitelisted records are substituted; braces in C++ stay literal.
     # Templates that do not name {rule_suggestion} render exactly as before.
     return format_prompt(
