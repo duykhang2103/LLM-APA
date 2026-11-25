@@ -64,3 +64,11 @@ def test_task3_diagnosis_prompt_and_v006(tmp_path):
               "feedback_level": 2, "error_labels": ["Lỗi logic"]}
     prompt = render_task_prompt(sample, "task3", cfg, [])
     assert "P1 đúng; P2 sai" in prompt and "Lỗi logic" in prompt
+
+
+def test_v007_renders_and_k_reaches_the_config(tmp_path):
+    sample = {"sample_id": "s", "problem_type": "single_problem", "problem_statement": "Sum", "code": "int main(){}"}
+    prompt = render_task_prompt(sample, "task1", {"prompt": {"version": "v007"}})
+    assert "Suspicion is not a bug" in prompt and '"compilable": 0-1' in prompt
+    paths = make_configs(tmp_path, tmp_path / "train", "m", "v007", k=3)
+    assert yaml.safe_load(paths["task1"].read_text(encoding="utf-8"))["retrieval"]["k"] == 3

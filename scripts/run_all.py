@@ -130,6 +130,8 @@ def main():
                         "Default for Qwen/Qwen3.5-4B: the fine-tuned model's revision")
     parser.add_argument("--method", choices=["rag", "zero_shot"], default="rag",
                         help="rag = one BM25 training example in the prompt (P1/P2); zero_shot = none (P0)")
+    parser.add_argument("--k", type=int, choices=[1, 3, 5], default=1,
+                        help="RAG: number of graded training examples in each prompt")
     parser.add_argument("--no-evidence", action="store_true",
                         help="Prompt with statement + code only, no compile/test results (P0/P1); "
                              "implies --no-tests and skips the evidence-based Task 2 calibration")
@@ -148,6 +150,10 @@ def main():
     parser.add_argument("--attn", help="local only: attention implementation, e.g. sdpa (default from rag.yaml)")
     parser.add_argument("--cache-path", help="Response cache file (default outputs/<provider>_cache.jsonl); "
                         "give parallel runs separate files")
+    parser.add_argument("--task2-method", choices=["list", "per_label"], default="list",
+                        help="list = one prompt returns the label list; per_label = one Yes/No question per label "
+                             "(scripts/predict_task2_per_label.py, API only)")
+    parser.add_argument("--workers", type=int, default=8, help="per_label: questions sent at the same time")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
@@ -258,7 +264,7 @@ def main():
                            price=args.price, cache_path=args.cache_path, attn=args.attn,
                            tasks=args.tasks, task3_prompt=args.task3_prompt,
                            task3_labels=bool(args.task3_labels), diagnosis_prompt=args.task3_diagnosis_prompt,
-                           timeout=args.timeout, diagnosis_max_new_tokens=args.task3_diagnosis_tokens or None)
+                           timeout=args.timeout, diagnosis_max_new_tokens=args.task3_diagnosis_tokens or None, k=args.k)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
 
     def predict_shards(task, pred, flags):
@@ -296,11 +302,29 @@ def main():
                 raise SystemExit(f"Task 3 labels not found: {labels} (run task2 first or give a file)")
             # On labeled data the input carries the teacher's labels; replace them so they do not leak.
             extra = ["--task3-labels", labels, *(["--task3-labels-replace"] if args.eval else [])]
-        if args.shards > 1:
+        if task == "task2" and args.task2_method == "per_label":
+            cache = Path(args.cache_path or ROOT / "outputs" / "api_cache.jsonl")
+            run("predict_task2_per_label.py", "--input", data, "--output", pred, *evidence_flag, *tests_flag,
+                "--base-url", args.base_url, "--api-key-env", args.api_key_env, "--model", model,
+                *(["--extra-body", json.dumps(args.extra_body)] if args.extra_body else []),
+                *(["--price", *args.price] if args.price else []), "--max-cost", args.max_cost,
+                "--timeout", args.timeout, "--workers", args.workers,
+                "--cache", cache.with_name(cache.stem + "-perlabel.jsonl"), *limit,
+                *(["--labeled"] if args.eval else []))
+        elif args.shards > 1:
             predict_shards(task, pred, [*evidence_flag, *tests_flag, *extra, *limit])
         else:
             run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
                 *evidence_flag, *tests_flag, *extra, *limit)
+        if task == "task1" and not args.no_tests:
+            # Hybrid copy: compilable follows the real compile result (scripts/guard_task1.py);
+            # pred_task1.json stays the pure prompting result.
+            guarded = out / "pred_task1_guard.json"
+            run("guard_task1.py", "--input", data, "--predictions", pred, "--evidence", data_compile,
+                "--tests", data_tests, "--output", guarded)
+            if not args.eval:
+                run("package_predictions.py", "--task", "task1", "--input", guarded,
+                    "--output", out / "submission_task1_guard.json")
         if task == "task2" and not args.no_evidence:
             # Evidence rules (scripts/calibrate_task2.py): +0.04 macro-F1 on train.
             raw, pred = pred, out / "pred_task2_calib.json"
