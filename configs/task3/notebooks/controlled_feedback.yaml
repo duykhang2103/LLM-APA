@@ -1,0 +1,23 @@
+# Shared defaults baked into all three standalone notebooks by the builder.
+model: Qwen/Qwen3-4B
+# Immutable commit prefix from the official HF commit history (Create LICENSE).
+# Runtime records the full 40-character resolved snapshot SHA.
+model_revision: 1cfa9a7
+seed: 42
+batch_size: 1
+max_new_tokens: 512
+context_limit: 8192
+# P2-only admission limit; P1/P3 keep the original shared default above.
+p2_context_limit: 12288
+mode: smoke  # smoke (10 dev samples), dev (328), or validation
+input_root: /kaggle/input
+output_root: /kaggle/working
+shared_dir: /kaggle/working/task3_comparison_v005
+dev_path: null  # directory, task3_feedback.json, or public_test.zip; auto-discover
+levels_path: null  # task3_requested_levels__DL-DNTYCN1P.json (requested_level)
+train_path: null  # P2 builder defaults to auto_sample_dataset; explicit directory/ZIP overrides it
+confirm_training_partition: true  # user authorized sample_dataset for P2 demonstrations
+json_retries: 1  # bounded local regeneration only on invalid JSON/schema/compliance
+failure_retry_passes: 1  # retry unresolved samples after processing the remaining inputs
+validation_fraction: 0.2
+gpu_ids: null  # null = up to two visible GPUs; e.g. ["0"] for single GPU

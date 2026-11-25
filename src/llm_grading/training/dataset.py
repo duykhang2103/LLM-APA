@@ -8,7 +8,7 @@ from llm_grading.data.taxonomy import ERROR_LABELS
 from llm_grading.prompting.formatter import render_task_prompt
 
 
-def build_training_dataset(samples, task, config=None, *, training=True):
+def build_training_dataset(samples, task, config=None, *, training=True, render_prompts=True):
     if training:
         samples, _ = select_training_samples(samples, task, config or {})
     records = []
@@ -34,7 +34,7 @@ def build_training_dataset(samples, task, config=None, *, training=True):
         records.append(
             {
                 "sample_id": s["sample_id"],
-                "prompt": render_task_prompt(s, task, config or {}),
+                "prompt": render_task_prompt(s, task, config or {}) if render_prompts else "",
                 "target": target,
             }
         )

@@ -1,0 +1,4 @@
+KIỂM TRA LẠI CHẨN ĐOÁN NHÁP TRƯỚC KHI VIẾT PHẢN HỒI.
+Bản nháp dưới đây có thể sai: {candidate_json}
+Đọc lại đề và CODE GỐC ở trên. Không mặc nhiên đồng ý với bản nháp. Kiểm tra từng cáo buộc: đầu vào gây lỗi có được đề cho phép không, đoạn code có thực sự tạo hành vi đó không, kết quả mong đợi và kết quả thực tế có khác nhau không? Bỏ lỗi thiếu main nếu chỉ nộp hàm; bỏ lỗi cho dữ liệu ngoài ràng buộc; bỏ lỗi do hiểu nhầm tham chiếu, toán tử hoặc thứ tự cập nhật. Xem lại các hàm/câu còn bị bỏ sót. Không bịa test đã chạy và không đưa code sửa.
+Trả lại JSON CUỐI CÙNG đúng hai khóa "error_labels" và "diagnosis", thay thế hoàn toàn bản nháp. Giữ nhãn chính thức chỉ cho lỗi có căn cứ. diagnosis bằng tiếng Việt tối đa 180 từ, gồm vị trí, nguyên nhân, hậu quả và hướng sửa bằng lời của các lỗi đã xác nhận. Nhãn rỗng nếu chưa xác nhận lỗi; không đổi sự không chắc chắn thành lời khen tuyệt đối. Không thêm lời dẫn hoặc markdown.

@@ -95,7 +95,7 @@ def main():
     checkpoint = output.with_suffix(".partial.json")
     signature = hashlib.sha256(json.dumps(
         {"config": config, "samples": samples,
-         "prompts": [p.read_text(encoding="utf-8") for p in sorted((ROOT / "tasks").glob("*/prompts/v*.txt"))]},
+         "prompts": [p.read_text(encoding="utf-8") for p in sorted((ROOT / "tasks").glob("*/prompts/*.txt"))]},
         sort_keys=True, ensure_ascii=False,
     ).encode()).hexdigest()
     saved = []

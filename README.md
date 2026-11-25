@@ -358,6 +358,15 @@ Use `--no-llm` for evidence, tests and the rule baseline only. Use `--dry-run` t
 
 ### Task 3 on Kaggle T4 x2 (local model)
 
+For the requested Qwen3-4B FP16 comparison with independent error diagnosis, use
+[P1 zero-shot](notebooks/Task3_P1_ZeroShot_LevelAware.ipynb),
+[P2 TF-IDF RAG](notebooks/Task3_P2_RAG.ipynb), and
+[P3 Plan-then-Render](notebooks/Task3_P3_PlanThenRender.ipynb).
+These standalone notebooks use no target labels and export the official nested
+submission schema. See [configuration, data provenance, and execution instructions](docs/project/TASK3_CONTROLLED_NOTEBOOKS.md).
+
+For the lower-memory setup, use [run_task3_kaggle_v3.ipynb](notebooks/run_task3_kaggle_v3.ipynb) and [the v3 guide](docs/project/TASK3_KAGGLE_V3.md): Qwen3-4B-Instruct-2507, 4-bit FP16, bounded query-chunk attention and compact feedback prompts. Run the CUDA stress test and smoke cells before full inference. This setup has CPU numerical tests; full Kaggle GPU execution still requires verification.
+
 Use [run_task3_kaggle_t4x2.ipynb](notebooks/run_task3_kaggle_t4x2.ipynb) and follow [the T4 x2 guide](docs/project/TASK3_T4X2.md). This runs Qwen3-8B in NF4/FP16, one worker per GPU, with prompt v005 and training-only RAG from 32 samples. Public test is inference only. It requires no API key and does not fine-tune the model. Per-sample checkpoints support resume with matching config/data/prompts; fallback usage is reported separately from diagnosis quality.
 
 ## 13. Configs, artifacts, and limitations

@@ -51,6 +51,12 @@ def render_task_prompt(sample, task, config, examples=None):
     template = task_template(task, config)
     view = BUILDERS[task](sample)
     settings = config.get(task, {})
+    if task == "task3" and settings.get("compact_feedback_input", False):
+        if not sample.get("diagnosis"):
+            raise ValueError("compact_feedback_input requires a grounded diagnosis")
+        view = {key: view[key] for key in ("error_labels", "feedback_level", "diagnosis", "problem_type") if key in view}
+        examples = [{"feedback_level": e["input"]["feedback_level"], "feedback": e["target"]}
+                    for e in (examples or [])]
     # The lecturer later said to ignore the P1 prerequisite rule stated in
     # grading_policy; new configs can drop it with use_grading_policy: false.
     for field in ("compile_log", "test_report", "grading_policy"):

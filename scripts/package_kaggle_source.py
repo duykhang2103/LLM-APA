@@ -15,8 +15,10 @@ def main():
                 if (path.is_file() and path.suffix in {".py", ".txt", ".yaml", ".md"}
                         and "__pycache__" not in path.parts):
                     archive.write(path, path.relative_to(ROOT))
-        guide = ROOT / "docs/project/TASK3_T4X2.md"
-        archive.write(guide, "TASK3_T4X2.md")
+        for name in ("TASK3_T4X2.md", "TASK3_KAGGLE_V3.md"):
+            guide = ROOT / "docs/project" / name
+            if guide.exists():
+                archive.write(guide, name)
     print(target)
 
 

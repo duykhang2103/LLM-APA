@@ -55,6 +55,22 @@ class ModelPipeline:
     def predict(self, sample):
         if self.task == "task3" and self.config.get("task3", {}).get("two_stage", False):
             sample = self._diagnose(sample)
+            if sample.get("diagnosis_unavailable"):
+                return self._fallback(sample, sample["diagnosis_failure"])
+        if (self.task == "task3" and sample["feedback_level"] == 1
+                and self.config.get("task3", {}).get("level1_summary", False)):
+            # Diagnose first so taxonomy remains meaningful, then project to the
+            # allowed level without asking the model to conceal its findings.
+            text = (
+                "Bài làm của em còn vấn đề và chưa đáp ứng đầy đủ yêu cầu của đề."
+                if sample.get("error_labels") else
+                "Qua xem xét bài làm, chưa phát hiện vấn đề rõ ràng; em hãy tiếp tục tự kiểm tra với các dữ liệu hợp lệ của đề."
+            )
+            result = parse_response(text, "task3", sample)
+            append_jsonl(self.log_path, {
+                **sample_metadata(sample), "stage": "level1_summary", "parsed_output": result,
+            })
+            return result
         examples, audit = (
             self.retriever.retrieve(sample) if self.retriever else ([], {})
         )
@@ -119,6 +135,16 @@ class ModelPipeline:
                         "Feedback policy violation: "
                         + ", ".join(parsed["compliance"]["violations"])
                     )
+                if (self.task == "task3"
+                        and self.config.get("task3", {}).get("require_correction_direction", False)
+                        and sample["feedback_level"] >= 3 and sample.get("error_labels")):
+                    from tasks.task3_feedback.compliance import has_correction_direction
+
+                    if not has_correction_direction(parsed["feedback"]):
+                        raise ValueError(
+                            "Level 3/4 needs an explicit correction direction in Vietnamese, "
+                            "grounded in the diagnosis, not just a description of defects"
+                        )
                 error = None
             except ValueError as exc:
                 parsed = None
@@ -169,6 +195,8 @@ class ModelPipeline:
             result = {"error_labels": evidence_labels(sample), "fallback": True}
         else:
             feedback = level_safe_feedback(sample.get("error_labels", []), sample["feedback_level"])
+            if sample.get("diagnosis_unavailable"):
+                feedback = "Em hãy đối chiếu bài làm với yêu cầu của đề và tự kiểm tra bằng các bộ dữ liệu hợp lệ; hiện chưa đủ cơ sở để đưa ra nhận xét cụ thể."
             result = {
                 "error_labels": list(sample.get("error_labels", [])),
                 "feedback": feedback,
@@ -176,6 +204,8 @@ class ModelPipeline:
                 "compliance": check_compliance(feedback, sample["feedback_level"]),
                 "fallback": True,
             }
+            if sample.get("diagnosis_unavailable"):
+                result["diagnosis_unavailable"] = True
         append_jsonl(
             self.log_path,
             {**sample_metadata(sample), "fallback": True, "fallback_reason": reason, "parsed_output": result},
@@ -185,15 +215,30 @@ class ModelPipeline:
     def postprocess(self, output):
         return output
 
-    def _diagnose(self, sample):
+    def _diagnose(self, sample, *, candidate=None):
         """Infer labels and a grounded diagnosis without using test targets."""
         import json
 
         from llm_grading.data.taxonomy import ERROR_LABELS
 
         cfg = {**self.config, "prompt": {"version": "v005"}}
+        compact_diagnosis = self.config.get("task3", {}).get("compact_diagnosis_prompt", False)
+        if compact_diagnosis:
+            from llm_grading.prompting.formatter import ROOT
+
+            version = self.config.get("task3", {}).get("diagnosis_prompt_version", "v001")
+            if version not in {"v001", "v002", "v003"}:
+                raise ValueError("Unknown diagnosis_prompt_version")
+            cfg["prompt"] = {"path": str(ROOT / "tasks/task3_feedback/prompts" / f"diagnosis_{version}.txt")}
         prompt = render_task_prompt(sample, "task2", cfg)
-        prompt += (
+        if candidate is not None:
+            from llm_grading.prompting.formatter import ROOT, format_prompt
+
+            template = (ROOT / "tasks/task3_feedback/prompts/diagnosis_review_v001.txt").read_text(encoding="utf-8")
+            prompt += "\n" + format_prompt(template, {
+                "candidate_json": json.dumps(candidate, ensure_ascii=False),
+            })
+        prompt += "" if compact_diagnosis else (
             "\nOverride the output format: return ONLY JSON with error_labels and diagnosis. "
             "diagnosis is a Vietnamese string identifying the function/problem, cause and "
             "consequence of each confirmed defect, with evidence from code. For multi_problem, "
@@ -202,8 +247,21 @@ class ModelPipeline:
             "The diagnosis is internal evidence, not student feedback."
         )
         error = None
+        raw = ""
         for attempt in range(2):
-            raw = self.runner.generate(prompt + ("\nReturn valid JSON: " + str(error) if attempt else ""))
+            repair = ""
+            if attempt:
+                repair = (
+                    "\nPrevious output rejected: " + str(error)
+                    + "\nPrevious output excerpt (may be truncated): " + raw[:2000]
+                    + "\nRecheck the source and return ONLY a complete JSON object with error_labels "
+                    "and diagnosis. Use exact official labels. diagnosis must be under 120 words; "
+                    "state only confirmed findings, no self-debate or long numerical traces. "
+                    "If a trace matches the expected result it does not demonstrate a bug. "
+                    "Close every string and brace. Do not repeat the excerpt."
+                )
+            raw = self.runner.generate(prompt + repair)
+            normalized = None
             try:
                 from llm_grading.prompting.formatter import (
                     _clean_json_text,
@@ -213,24 +271,47 @@ class ModelPipeline:
                 if not isinstance(obj, dict) or set(obj) != {"error_labels", "diagnosis"}:
                     raise ValueError("Expected error_labels and diagnosis")
                 labels = obj["error_labels"]
+                if isinstance(labels, list) and all(isinstance(x, str) for x in labels):
+                    original_labels = list(labels)
+                    aliases = {"Lỗi biên": "Lỗi edge case"}
+                    labels = list(dict.fromkeys(aliases.get(x.strip(), x.strip()) for x in labels))
+                    if labels != original_labels:
+                        normalized = {"original": original_labels, "normalized": labels}
                 if (not isinstance(labels, list)
                         or any(not isinstance(x, str) or x not in ERROR_LABELS for x in labels)
                         or len(labels) != len(set(labels))):
                     raise ValueError("Invalid taxonomy labels")
                 if not isinstance(obj["diagnosis"], str) or not obj["diagnosis"].strip():
                     raise ValueError("Missing grounded diagnosis")
+                if len(obj["diagnosis"].split()) > 200:
+                    raise ValueError("Diagnosis exceeds 200 words; return concise confirmed findings")
                 error = None
             except (ValueError, TypeError) as exc:
                 error = str(exc)
             append_jsonl(self.log_path, {
-                **sample_metadata(sample), "stage": "diagnosis", "retry_count": attempt,
+                **sample_metadata(sample), "stage": "diagnosis_review" if candidate is not None else "diagnosis", "retry_count": attempt,
                 "raw_response": raw, "parse_error": error, "inference": self.runner.metadata,
+                "taxonomy_normalization": normalized,
             })
             if error is None:
+                if (candidate is None
+                        and self.config.get("task3", {}).get("verify_diagnosis", False)):
+                    # Re-read the full original source, not only the compressed
+                    # diagnosis. The reviewed JSON replaces the draft, including
+                    # labels; unioning the lists would retain false positives.
+                    return self._diagnose(sample, candidate={
+                        "error_labels": labels, "diagnosis": obj["diagnosis"],
+                    })
                 result = dict(sample)
                 result.pop("error_labels_missing", None)
                 result.update(error_labels=labels, diagnosis=obj["diagnosis"])
                 return result
+        if self._fallback_enabled():
+            result = dict(sample)
+            result.pop("error_labels_missing", None)
+            result.update(diagnosis_unavailable=True,
+                          diagnosis_failure=f"Invalid diagnosis: {error}")
+            return result
         raise ValueError(f"Invalid diagnosis for {sample['sample_id']}: {error}")
 
 

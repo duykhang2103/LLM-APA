@@ -48,7 +48,7 @@ class Retriever:
         self.key = self.settings.get("key", "input_json")
         if self.key not in {"input_json", "code"}:
             raise ValueError("retrieval.key must be input_json or code")
-        records = build_training_dataset(samples, task, config, training=False)
+        records = build_training_dataset(samples, task, config, training=False, render_prompts=False)
         self.targets = [row["target"] for row in records]
         self.normalized = [normalized_code(s["code"]) for s in samples]
         self.hashes = [code_hash(s["code"]) for s in samples]
