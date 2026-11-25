@@ -36,7 +36,7 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
                  max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None,
                  method="rag", evidence=True, revision=None, price=None, attn=None,
-                 tasks=None, task3_prompt="v005", task3_labels=False):
+                 tasks=None, task3_prompt="v005", task3_labels=False, diagnosis_prompt="v005"):
     """method rag|zero_shot; evidence=False hides compile/test results from the prompt
     (statement + code only, like the fine-tuned Task 1 model's public inference).
     tasks: which configs to write (default: task1/task2 for api, all three for local).
@@ -102,7 +102,8 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
         if task == "task2":
             cfg["task2"].update(salvage_labels=True, max_labels=3)
         if task == "task3":
-            cfg["task3"].update(max_compliance_retries=2, two_stage=not task3_labels)
+            cfg["task3"].update(max_compliance_retries=2, two_stage=not task3_labels,
+                                diagnosis_prompt=diagnosis_prompt)
             cfg["task2"] = {"use_grading_policy": False}  # the diagnosis stage
             cfg["generation"]["max_new_tokens"] = 1024
         cfg["retrieval"].update(k=1, key="code", index="bm25", same_exam_first=not eval_mode,

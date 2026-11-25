@@ -230,7 +230,9 @@ class ModelPipeline:
 
         from llm_grading.data.taxonomy import ERROR_LABELS
 
-        cfg = {**self.config, "prompt": {"version": "v005"}}
+        # Task 2 prompt used to diagnose labels (team notebook: v005).
+        version = self.config.get("task3", {}).get("diagnosis_prompt", "v005")
+        cfg = {**self.config, "prompt": {"version": version}}
         prompt = render_task_prompt(sample, "task2", cfg)
         prompt += (
             "\nOverride the output format: return ONLY JSON with error_labels and diagnosis. "

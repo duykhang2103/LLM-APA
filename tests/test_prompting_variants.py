@@ -53,3 +53,14 @@ def test_task3_api_config_follows_the_team_notebook(tmp_path):
     assert yaml.safe_load(paths["task1"].read_text(encoding="utf-8"))["prompt"]["version"] == "v004"
     labelled = make_configs(tmp_path / "b", tmp_path / "train", "m", "v004", tasks=["task3"], task3_labels=True)
     assert yaml.safe_load(labelled["task3"].read_text(encoding="utf-8"))["task3"]["two_stage"] is False
+
+
+def test_task3_diagnosis_prompt_and_v006(tmp_path):
+    paths = make_configs(tmp_path, tmp_path / "train", "m", "v004", tasks=["task3"], task3_prompt="v006",
+                         diagnosis_prompt="v004")
+    cfg = yaml.safe_load(paths["task3"].read_text(encoding="utf-8"))
+    assert cfg["prompt"]["version"] == "v006" and cfg["task3"]["diagnosis_prompt"] == "v004"
+    sample = {"sample_id": "s", "problem_type": "multi_problem", "problem_statement": "P", "code": "int f(){}",
+              "feedback_level": 2, "error_labels": ["Lỗi logic"]}
+    prompt = render_task_prompt(sample, "task3", cfg, [])
+    assert "P1 đúng; P2 sai" in prompt and "Lỗi logic" in prompt

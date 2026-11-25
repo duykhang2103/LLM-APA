@@ -134,6 +134,8 @@ def main():
     parser.add_argument("--suites", default=str(ROOT / "outputs" / "testsuites"), help="Shared test-suite folder")
     parser.add_argument("--tasks", nargs="+", choices=["task1", "task2", "task3"])
     parser.add_argument("--task3-prompt", default="v005", help="Task 3 prompt version (team notebook: v005)")
+    parser.add_argument("--task3-diagnosis-prompt", default="v004",
+                        help="Task 2 prompt for Task 3's diagnosis stage (team notebook: v005; v004 scored higher on train)")
     parser.add_argument("--task3-labels", metavar="task2|PATH",
                         help="Task 3 writes feedback for given labels instead of diagnosing them itself: "
                              "'task2' = this run's Task 2 output, or a Task 2 prediction file. "
@@ -235,7 +237,7 @@ def main():
                            evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
                            price=args.price, cache_path=args.cache_path, attn=args.attn,
                            tasks=args.tasks, task3_prompt=args.task3_prompt,
-                           task3_labels=bool(args.task3_labels))
+                           task3_labels=bool(args.task3_labels), diagnosis_prompt=args.task3_diagnosis_prompt)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
@@ -269,6 +271,8 @@ def main():
         if args.eval and not args.max_samples:  # metrics need the whole labeled set
             run("evaluate.py", "--config", configs[task], "--predictions", pred, "--input", data,
                 "--output", out / f"metrics_{task}.json")
+            if task == "task3":
+                run("score_task3_train.py", "--input", data, "--predictions", pred)
         else:
             run("package_predictions.py", "--task", task, "--input", pred, "--output", out / f"submission_{task}.json")
 
