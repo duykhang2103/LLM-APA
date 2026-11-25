@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from llm_grading.runtime import write_json
 from llm_grading.validation.predictions import validate_prediction_records
@@ -13,8 +13,10 @@ from llm_grading.validation.task3 import (
 )
 
 
-def validate_prediction_output_path(config: Mapping[str, Any], output_path: str | Path) -> None:
-    """Protect run metadata and configured inputs before any prediction writes."""
+def validate_prediction_output_path(
+    config: Mapping[str, Any], output_path: str | Path, extra_sources: Iterable[Any] = ()
+) -> None:
+    """Protect run metadata, configured inputs and CLI input files before any prediction writes."""
     directory = Path(config["saving"]["output_dir"])
     reserved = {
         (directory / name).resolve() for name in (
@@ -28,6 +30,7 @@ def validate_prediction_output_path(config: Mapping[str, Any], output_path: str 
     sources += [config.get("data", {}).get(key) for key in (
         "input_path", "train_path", "validation_path", "test_path",
     )]
+    sources += list(extra_sources)
     reserved.update(Path(source).resolve() for source in sources if source)
     if Path(output_path).resolve() in reserved:
         raise ValueError("Prediction output aliases a reserved artifact or configured input")
