@@ -9,7 +9,7 @@ name: prompting-qwen35-9b-best
 public_scores:                 # điểm leaderboard public của bản tốt nhất
   task1_qwk: 0.8748
   task2_macro_f1: 0.3027
-  task3_llm_judge: null        # bản v008 mới, chưa có điểm (bản trước: 0.3948)
+  task3_llm_judge: 0.4223     # prompt v008 (bản v007 trước đó: 0.3948)
 
 llm:                           # LLM chấm bài (cả 3 task)
   model: Qwen/Qwen3.5-9B       # open-weight 9B; DeepInfra không có Qwen3.5-4B
