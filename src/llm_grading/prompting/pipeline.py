@@ -251,7 +251,8 @@ class ModelPipeline:
             gen_cfg = {**self.config, "generation": {**self.config["generation"], "max_new_tokens": int(budget)}}
         error = None
         for attempt in range(2):
-            raw = self.runner.generate(prompt + ("\nReturn valid JSON: " + str(error) if attempt else ""), gen_cfg)
+            text = prompt + ("\nReturn valid JSON: " + str(error) if attempt else "")
+            raw = self.runner.generate(text, gen_cfg) if gen_cfg else self.runner.generate(text)
             try:
                 from llm_grading.prompting.formatter import (
                     _clean_json_text,
