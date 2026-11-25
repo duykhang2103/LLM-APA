@@ -36,7 +36,8 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
                  max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None,
                  method="rag", evidence=True, revision=None, price=None, attn=None,
-                 tasks=None, task3_prompt="v005", task3_labels=False, diagnosis_prompt="v005"):
+                 tasks=None, task3_prompt="v005", task3_labels=False, diagnosis_prompt="v005",
+                 timeout=120):
     """method rag|zero_shot; evidence=False hides compile/test results from the prompt
     (statement + code only, like the fine-tuned Task 1 model's public inference).
     tasks: which configs to write (default: task1/task2 for api, all three for local).
@@ -79,7 +80,7 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                 "base_url": base_url,
                 "api_key_env": key_env,
                 "allow_private_data": True,  # lecturer allowed sending student code to an API
-                "timeout_seconds": 120,
+                "timeout_seconds": timeout,
                 "cost_per_million_tokens": (dict(zip(("prompt", "completion"), price)) if price
                                             else PRICES.get(model, {})),
                 "max_cost_usd": max_cost,

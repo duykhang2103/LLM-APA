@@ -123,6 +123,8 @@ def main():
     parser.add_argument("--price", nargs=2, type=float, metavar=("IN", "OUT"),
                         help="API price in USD per million prompt/completion tokens, e.g. 0.0525 0.0735; "
                              "makes the cost estimate and --max-cost work for this model")
+    parser.add_argument("--timeout", type=int, default=120,
+                        help="Seconds to wait for one API answer (Task 3 writes long feedback; try 300)")
     parser.add_argument("--max-cost", type=float, default=20.0,
                         help="Stop a Task 1 or Task 2 step once its estimated API cost reaches this many USD")
     parser.add_argument("--attn", help="local only: attention implementation, e.g. sdpa (default from rag.yaml)")
@@ -237,7 +239,8 @@ def main():
                            evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
                            price=args.price, cache_path=args.cache_path, attn=args.attn,
                            tasks=args.tasks, task3_prompt=args.task3_prompt,
-                           task3_labels=bool(args.task3_labels), diagnosis_prompt=args.task3_diagnosis_prompt)
+                           task3_labels=bool(args.task3_labels), diagnosis_prompt=args.task3_diagnosis_prompt,
+                           timeout=args.timeout)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
