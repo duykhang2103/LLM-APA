@@ -62,7 +62,7 @@ Cần 2 key, đặt trong biến môi trường (không ghi key vào file):
 | Biến | Dùng cho | Khi nào cần |
 |---|---|---|
 | `DEEPINFRA_API_KEY` | Qwen3.5-9B chấm bài | Luôn cần |
-| `GROQ_API_KEY` | gpt-oss-120b sinh test | Chỉ khi `outputs/testsuites/` chưa có bộ test của đề |
+| `GROQ_API_KEY` | gpt-oss-120b sinh test | Chỉ khi `outputs/testsuites/` chưa có bộ test của đề. Repo đã kèm bộ test của 8 đề (6 đề public + 2 đề train), nên với các đề này không cần key |
 
 PowerShell:
 
@@ -100,6 +100,7 @@ Script tự kiểm tra định dạng nộp của cả 3 file ở bước cuối
 - **Chi phí API:** khoảng $2.5 khi chạy mới hoàn toàn. Mỗi bước có giới hạn chi phí riêng (`max_cost_usd` trong file model). Chạm giới hạn thì bước đó dừng lại.
 - **Chạy lại:** câu trả lời API được lưu cache (`outputs/*.jsonl`). Lỗi giữa chừng thì chạy lại đúng lệnh cũ; phần đã xong lấy từ cache, không tốn thêm tiền. Nếu còn đủ cache của lần nộp, chạy lại sẽ ra **đúng các file đã nộp**.
 - **Xem trước các lệnh sẽ chạy:** thêm `--dry-run`.
+- **Độ lệch khi chạy trên máy khác:** bộ test đã kèm sẵn nên test giống hệt bản nộp. Tuy vậy, câu trả lời của LLM qua API ở temperature 0 không bảo đảm giống từng chữ, và log biên dịch có thể khác nhau giữa g++ với clang. Vì vậy điểm chạy lại có thể lệch nhẹ so với điểm đã nộp. Cache API (`outputs/*.jsonl`) chứa code sinh viên nên không đưa lên repo.
 
 ## 4. Đo điểm trên train (ablation, leave-one-exam-out)
 

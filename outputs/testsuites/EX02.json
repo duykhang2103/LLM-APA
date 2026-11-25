@@ -1,0 +1,123 @@
+{
+  "exam_id": "EX02",
+  "mode": "stdio",
+  "data_files": [],
+  "tests": [
+    {
+      "name": "normal_153",
+      "category": "normal",
+      "problem": null,
+      "input": "153",
+      "expected": "True"
+    },
+    {
+      "name": "normal_370",
+      "category": "normal",
+      "problem": null,
+      "input": "370",
+      "expected": "True"
+    },
+    {
+      "name": "normal_371",
+      "category": "normal",
+      "problem": null,
+      "input": "371",
+      "expected": "True"
+    },
+    {
+      "name": "normal_407",
+      "category": "normal",
+      "problem": null,
+      "input": "407",
+      "expected": "True"
+    },
+    {
+      "name": "normal_1634",
+      "category": "normal",
+      "problem": null,
+      "input": "1634",
+      "expected": "True"
+    },
+    {
+      "name": "normal_123",
+      "category": "normal",
+      "problem": null,
+      "input": "123",
+      "expected": "False"
+    },
+    {
+      "name": "edge_min_1",
+      "category": "edge",
+      "problem": null,
+      "input": "1",
+      "expected": "True"
+    },
+    {
+      "name": "edge_max_digit_9",
+      "category": "edge",
+      "problem": null,
+      "input": "9",
+      "expected": "True"
+    },
+    {
+      "name": "edge_two_digits_10",
+      "category": "edge",
+      "problem": null,
+      "input": "10",
+      "expected": "False"
+    },
+    {
+      "name": "edge_largest_allowed",
+      "category": "edge",
+      "problem": null,
+      "input": "1000000000",
+      "expected": "False"
+    },
+    {
+      "name": "edge_near_limit",
+      "category": "edge",
+      "problem": null,
+      "input": "999999999",
+      "expected": "False"
+    },
+    {
+      "name": "large_146511208",
+      "category": "large",
+      "problem": null,
+      "input": "146511208",
+      "expected": "True"
+    },
+    {
+      "name": "large_912985153",
+      "category": "large",
+      "problem": null,
+      "input": "912985153",
+      "expected": "True"
+    },
+    {
+      "name": "example1",
+      "category": "example",
+      "problem": null,
+      "input": "1634",
+      "expected": "True"
+    },
+    {
+      "name": "example2",
+      "category": "example",
+      "problem": null,
+      "input": "123",
+      "expected": "False"
+    }
+  ],
+  "generator": {
+    "model": "openai/gpt-oss-120b",
+    "prompt_version": "v001",
+    "attempt": 1,
+    "compiler": [
+      "D:\\LLM-FINAL\\LLM-APA\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ziglang",
+      "c++"
+    ]
+  }
+}

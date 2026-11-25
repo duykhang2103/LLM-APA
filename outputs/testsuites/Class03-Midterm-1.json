@@ -1,0 +1,130 @@
+{
+  "exam_id": "Class03-Midterm-1",
+  "mode": "stdio",
+  "data_files": [],
+  "tests": [
+    {
+      "name": "t1",
+      "category": "normal",
+      "problem": null,
+      "input": "153",
+      "expected": "True"
+    },
+    {
+      "name": "t2",
+      "category": "normal",
+      "problem": null,
+      "input": "370",
+      "expected": "True"
+    },
+    {
+      "name": "t3",
+      "category": "normal",
+      "problem": null,
+      "input": "371",
+      "expected": "True"
+    },
+    {
+      "name": "t4",
+      "category": "normal",
+      "problem": null,
+      "input": "9474",
+      "expected": "True"
+    },
+    {
+      "name": "t5",
+      "category": "normal",
+      "problem": null,
+      "input": "9475",
+      "expected": "False"
+    },
+    {
+      "name": "t6",
+      "category": "normal",
+      "problem": null,
+      "input": "9926315",
+      "expected": "True"
+    },
+    {
+      "name": "t7",
+      "category": "edge",
+      "problem": null,
+      "input": "1",
+      "expected": "True"
+    },
+    {
+      "name": "t8",
+      "category": "edge",
+      "problem": null,
+      "input": "9",
+      "expected": "True"
+    },
+    {
+      "name": "t9",
+      "category": "edge",
+      "problem": null,
+      "input": "10",
+      "expected": "False"
+    },
+    {
+      "name": "t10",
+      "category": "edge",
+      "problem": null,
+      "input": "1000000000",
+      "expected": "False"
+    },
+    {
+      "name": "t11",
+      "category": "edge",
+      "problem": null,
+      "input": "999999999",
+      "expected": "False"
+    },
+    {
+      "name": "t12",
+      "category": "large",
+      "problem": null,
+      "input": "146511208",
+      "expected": "True"
+    },
+    {
+      "name": "t13",
+      "category": "large",
+      "problem": null,
+      "input": "472335975",
+      "expected": "True"
+    },
+    {
+      "name": "t14",
+      "category": "large",
+      "problem": null,
+      "input": "912985153",
+      "expected": "True"
+    },
+    {
+      "name": "example1",
+      "category": "example",
+      "problem": null,
+      "input": "1634",
+      "expected": "True"
+    },
+    {
+      "name": "example2",
+      "category": "example",
+      "problem": null,
+      "input": "123",
+      "expected": "False"
+    }
+  ],
+  "generator": {
+    "model": "openai/gpt-oss-120b",
+    "prompt_version": "v002",
+    "attempt": 1,
+    "compiler": [
+      "D:\\LLM-FINAL\\LLM-APA\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ziglang",
+      "c++"
+    ]
+  }
+}

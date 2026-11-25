@@ -1,0 +1,74 @@
+{
+  "EX01": {
+    "kept": 8,
+    "dropped": [
+      {
+        "name": "P1_normal",
+        "reason": "needs an unavailable data file"
+      },
+      {
+        "name": "P1_empty",
+        "reason": "needs an unavailable data file"
+      },
+      {
+        "name": "P1_notfound",
+        "reason": "needs an unavailable data file"
+      }
+    ],
+    "attempts": [
+      {
+        "attempt": 1,
+        "error": "drivers declare struct arrays on the stack; allocate every array and node passed to a required function with new and set every field: P2_normal: General g[3];"
+      }
+    ]
+  },
+  "EX02": {
+    "kept": 15,
+    "dropped": [],
+    "attempts": []
+  },
+  "Class03-Midterm-2": {
+    "kept": 13,
+    "dropped": [
+      {
+        "name": "large_distinct",
+        "reason": "generator: build ['lld-link: error: undefined symbol: WinMain']"
+      },
+      {
+        "name": "large_repeat",
+        "reason": "generator: build ['lld-link: error: undefined symbol: WinMain']"
+      }
+    ],
+    "attempts": []
+  },
+  "Class01-Test1": {
+    "kept": 8,
+    "dropped": [
+      {
+        "name": "P2_empty",
+        "reason": "checks a NULL result the statement does not specify"
+      }
+    ],
+    "attempts": [
+      {
+        "attempt": 1,
+        "error": "drivers declare struct arrays on the stack; allocate every array and node passed to a required function with new and set every field: P2_normal: General arr[2] =; P3_normal: General arr[3] =; P3_single: General arr[1] =; P4_remove_middle: General arr[4] =; P4_remove_all: General arr[2] ="
+      }
+    ]
+  },
+  "Class01-Test2": {
+    "kept": 7,
+    "dropped": [],
+    "attempts": [
+      {
+        "attempt": 1,
+        "error": "response has no JSON object with reference_solution"
+      }
+    ]
+  },
+  "Class02-Test1": {
+    "kept": 8,
+    "dropped": [],
+    "attempts": []
+  }
+}

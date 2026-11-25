@@ -1,0 +1,76 @@
+{
+  "exam_id": "Class01-Test1",
+  "mode": "function",
+  "data_files": [
+    "50-best-european-generals-cleaned-first-20.csv"
+  ],
+  "tests": [
+    {
+      "name": "P1_normal",
+      "category": "normal",
+      "problem": "P1",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){\n    int n; General* arr = prob1(\"50-best-european-generals-cleaned-first-20.csv\", n);\n    cout << n << \"\\n\";\n    if (n>0) cout << arr[0].name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "20\nRichard the Lionheart\n"
+    },
+    {
+      "name": "P2_normal",
+      "category": "normal",
+      "problem": "P2",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n// helper to fill a General\nvoid t_fill(General &g, const string &name, const string &nation, int bday, int bmon, int byear, const string &ber, int dday, int dmon, int dyear, const string &der, const vector<string> &battles){\n    g.name = name; g.nationality = nation;\n    g.born = {bday,bmon,byear,ber};\n    g.death = {dday,dmon,dyear,der};\n    g.total_known_battles = (int)battles.size();\n    if (!battles.empty()){\n        g.known_battles = new string[battles.size()];\n        for (size_t i=0;i<battles.size();++i) g.known_battles[i]=battles[i];\n    } else g.known_battles = nullptr;\n}\nint main(){\n    General* arr = new General[3];\n    t_fill(arr[0],\"A\",\"X\",1,1,1000,\"AD\",1,1,1050,\"AD\", {\"B1\",\"B2\"});\n    t_fill(arr[1],\"B\",\"Y\",2,2,1010,\"AD\",2,2,1060,\"AD\", {\"C1\"});\n    t_fill(arr[2],\"C\",\"Z\",3,3,1020,\"AD\",3,3,1070,\"AD\", {});\n    Node* head = prob2(arr,3);\n    for(Node* cur=head;cur;cur=cur->next){\n        cout << cur->general.name << \"\\n\";\n    }\n    return 0;\n}\n",
+      "expected": "A\nB\nC\n"
+    },
+    {
+      "name": "P3_normal",
+      "category": "normal",
+      "problem": "P3",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\nvoid t_fill(General &g, const string &name, const string &nation, int by, int bm, int byy, const string &ber, int dy, int dm, int dyy, const string &der){\n    g.name=name; g.nationality=nation;\n    g.born={by,bm,byy,ber};\n    g.death={dy,dm,dyy,der};\n    g.total_known_battles=0; g.known_battles=nullptr;\n}\nint main(){\n    General* arr = new General[3];\n    t_fill(arr[0],\"Old\",\"A\",1,1,100,\"BC\",1,1,200,\"AD\"); // age 300\n    t_fill(arr[1],\"Mid\",\"B\",1,1,150,\"AD\",1,1,250,\"AD\"); // age 100\n    t_fill(arr[2],\"Young\",\"C\",1,1,180,\"AD\",1,1,210,\"AD\"); // age 30\n    Node* head = prob2(arr,3);\n    General g = prob3(head);\n    cout << g.name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "Old\n"
+    },
+    {
+      "name": "P3_tie",
+      "category": "edge",
+      "problem": "P3",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\nvoid t_fill(General &g, const string &name, int by, const string &ber, int dy, const string &der){\n    g.name=name; g.nationality=\"X\";\n    g.born={1,1,by,ber};\n    g.death={1,1,dy,der};\n    g.total_known_battles=0; g.known_battles=nullptr;\n}\nint main(){\n    General* arr = new General[2];\n    t_fill(arr[0],\"First\",100,\"BC\",200,\"AD\"); // age 300\n    t_fill(arr[1],\"Second\",100,\"BC\",200,\"AD\"); // same age\n    Node* head = prob2(arr,2);\n    General g = prob3(head);\n    cout << g.name << \"\\n\"; // should be First\n    return 0;\n}\n",
+      "expected": "First\n"
+    },
+    {
+      "name": "P3_single",
+      "category": "edge",
+      "problem": "P3",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\nvoid t_fill(General &g){\n    g.name=\"Solo\"; g.nationality=\"X\";\n    g.born={1,1,500,\"AD\"};\n    g.death={1,1,600,\"AD\"};\n    g.total_known_battles=0; g.known_battles=nullptr;\n}\nint main(){\n    General* arr = new General[1];\n    t_fill(arr[0]);\n    Node* head = prob2(arr,1);\n    General g = prob3(head);\n    cout << g.name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "Solo\n"
+    },
+    {
+      "name": "P4_remove_middle",
+      "category": "normal",
+      "problem": "P4",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\nvoid t_fill(General &g, const string &name, const string &nation){\n    g.name=name; g.nationality=nation;\n    g.born={1,1,1000,\"AD\"}; g.death={1,1,1100,\"AD\"};\n    g.total_known_battles=0; g.known_battles=nullptr;\n}\nint main(){\n    General* arr = new General[4];\n    t_fill(arr[0],\"A\",\"French\");\n    t_fill(arr[1],\"B\",\"German\");\n    t_fill(arr[2],\"C\",\"French\");\n    t_fill(arr[3],\"D\",\"Italian\");\n    Node* head = prob2(arr,4);\n    prob4(head,\"French\");\n    for(Node* cur=head;cur;cur=cur->next) cout << cur->general.name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "B\nD\n"
+    },
+    {
+      "name": "P4_remove_all",
+      "category": "edge",
+      "problem": "P4",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\nvoid t_fill(General &g, const string &name){\n    g.name=name; g.nationality=\"Spanish\";\n    g.born={1,1,1000,\"AD\"}; g.death={1,1,1100,\"AD\"};\n    g.total_known_battles=0; g.known_battles=nullptr;\n}\nint main(){\n    General* arr = new General[2];\n    t_fill(arr[0],\"X\");\n    t_fill(arr[1],\"Y\");\n    Node* head = prob2(arr,2);\n    prob4(head,\"Spanish\");\n    if (!head) cout << \"empty\" << \"\\n\";\n    else cout << \"notempty\" << \"\\n\";\n    return 0;\n}\n",
+      "expected": "empty\n"
+    },
+    {
+      "name": "P4_remove_none",
+      "category": "edge",
+      "problem": "P4",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\nvoid t_fill(General &g, const string &name, const string &nation){\n    g.name=name; g.nationality=nation;\n    g.born={1,1,1000,\"AD\"}; g.death={1,1,1100,\"AD\"};\n    g.total_known_battles=0; g.known_battles=nullptr;\n}\nint main(){\n    General* arr = new General[2];\n    t_fill(arr[0],\"A\",\"German\");\n    t_fill(arr[1],\"B\",\"Italian\");\n    Node* head = prob2(arr,2);\n    prob4(head,\"French\"); // none to remove\n    for(Node* cur=head;cur;cur=cur->next) cout << cur->general.name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "A\nB\n"
+    }
+  ],
+  "generator": {
+    "model": "openai/gpt-oss-120b",
+    "prompt_version": "v003",
+    "attempt": 2,
+    "compiler": [
+      "D:\\LLM-FINAL\\LLM-APA\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ziglang",
+      "c++"
+    ]
+  }
+}
