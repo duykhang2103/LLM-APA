@@ -12,14 +12,11 @@ from llm_grading.data.preprocess import (
 )
 from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
-<<<<<<< HEAD
-from tasks.task1_grading.evidence_rules import rubric_from_evidence
-=======
 from llm_grading.validation.task3 import (
     uses_joint_task3_output,
     validate_taxonomy_error,
 )
->>>>>>> origin/main
+from tasks.task1_grading.evidence_rules import rubric_from_evidence
 from tasks.task3_feedback.compliance import check_compliance
 
 ROOT = Path(__file__).resolve().parents[3]
