@@ -39,3 +39,10 @@ def test_two_stage_rejects_invalid_taxonomy(tmp_path):
     raw = json.dumps({'error_labels': ['invalid'], 'diagnosis': 'bug'})
     with pytest.raises(ValueError, match='Invalid diagnosis'):
         ModelPipeline(cfg, Runner([raw, raw])).predict(sample())
+
+
+def test_salvage_diagnosis_with_unescaped_quotes():
+    from llm_grading.prompting.pipeline import salvage_diagnosis
+    raw = '{"error_labels": ["Lỗi logic", "Lỗi nhập/xuất"], "diagnosis": "In ra "TRUE" thay vì "True"."}'
+    assert salvage_diagnosis(raw) == (["Lỗi logic", "Lỗi nhập/xuất"], 'In ra "TRUE" thay vì "True".')
+    assert salvage_diagnosis('{"error_labels": []}') is None

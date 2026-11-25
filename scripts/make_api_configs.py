@@ -104,7 +104,7 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
             cfg["task2"].update(salvage_labels=True, max_labels=3)
         if task == "task3":
             cfg["task3"].update(max_compliance_retries=2, two_stage=not task3_labels,
-                                diagnosis_prompt=diagnosis_prompt)
+                                diagnosis_prompt=diagnosis_prompt, salvage_diagnosis=True)
             if diagnosis_max_new_tokens:
                 cfg["task3"]["diagnosis_max_new_tokens"] = diagnosis_max_new_tokens
             cfg["task2"] = {"use_grading_policy": False}  # the diagnosis stage

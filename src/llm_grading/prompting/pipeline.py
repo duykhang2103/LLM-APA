@@ -271,9 +271,17 @@ class ModelPipeline:
                 error = None
             except (ValueError, TypeError) as exc:
                 error = str(exc)
+            salvaged = False
+            if error is not None and self.config.get("task3", {}).get("salvage_diagnosis"):
+                # Small models often put unescaped quotes inside the diagnosis text.
+                rescue = salvage_diagnosis(raw)
+                if rescue is not None:
+                    labels, diagnosis = rescue
+                    obj, error, salvaged = {"error_labels": labels, "diagnosis": diagnosis}, None, True
             append_jsonl(self.log_path, {
                 **sample_metadata(sample), "stage": "diagnosis", "retry_count": attempt,
-                "raw_response": raw, "parse_error": error, "inference": self.runner.metadata,
+                "raw_response": raw, "parse_error": error, "salvaged": salvaged,
+                "inference": self.runner.metadata,
             })
             if error is None:
                 result = dict(sample)
@@ -281,6 +289,22 @@ class ModelPipeline:
                 result.update(error_labels=labels, diagnosis=obj["diagnosis"])
                 return result
         raise ValueError(f"Invalid diagnosis for {sample['sample_id']}: {error}")
+
+
+def salvage_diagnosis(raw):
+    """(labels, diagnosis) from a diagnosis answer whose JSON is broken, or None.
+    Labels are official ones named before "diagnosis"; the diagnosis is the rest of the text."""
+    from llm_grading.prompting.formatter import salvage_task2_labels
+
+    text = str(raw)
+    start = text.find('"diagnosis"')
+    if start < 0 or '"error_labels"' not in text[:start]:
+        return None
+    labels = salvage_task2_labels(text[:start], max_labels=10)
+    rest = text[start + len('"diagnosis"'):].lstrip(" :")
+    rest = rest[1:] if rest.startswith('"') else rest
+    rest = rest.rstrip().rstrip("`").rstrip().rstrip("}").rstrip().rstrip('"').strip()
+    return (labels, rest) if rest else None
 
 
 def evidence_labels(sample):
