@@ -294,7 +294,8 @@ def main():
                 labels = out / "pred_task2_calib.json"
             if not labels.exists() and not args.dry_run:
                 raise SystemExit(f"Task 3 labels not found: {labels} (run task2 first or give a file)")
-            extra = ["--task3-labels", labels]
+            # On labeled data the input carries the teacher's labels; replace them so they do not leak.
+            extra = ["--task3-labels", labels, *(["--task3-labels-replace"] if args.eval else [])]
         if args.shards > 1:
             predict_shards(task, pred, [*evidence_flag, *tests_flag, *extra, *limit])
         else:
