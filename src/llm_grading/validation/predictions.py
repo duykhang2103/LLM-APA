@@ -10,10 +10,13 @@ from pathlib import Path
 from typing import Any
 
 from llm_grading.data.taxonomy import ERROR_LABELS
+from llm_grading.validation.task3 import validate_taxonomy_error
 from tasks.task1_grading.postprocess import postprocess_rubric
 
 
-def validate_predictions(path: str | Path, task: str) -> list[str]:
+def validate_predictions(
+    path: str | Path, task: str, *, require_task3_taxonomy: bool = False
+) -> list[str]:
     """Return validation messages; an empty list means the file is valid."""
     prediction_path = Path(path)
     if not prediction_path.exists():
@@ -22,10 +25,12 @@ def validate_predictions(path: str | Path, task: str) -> list[str]:
         payload = json.loads(prediction_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         return [f"Could not read prediction JSON: {error}"]
-    return validate_prediction_records(payload, task)
+    return validate_prediction_records(payload, task, require_task3_taxonomy=require_task3_taxonomy)
 
 
-def validate_prediction_records(records: Any, task: str) -> list[str]:
+def validate_prediction_records(
+    records: Any, task: str, *, require_task3_taxonomy: bool = False
+) -> list[str]:
     """Validate already-loaded prediction records and return all messages."""
     if task not in {"task1", "task2", "task3"}:
         return [f"Unknown task: {task}"]
@@ -65,11 +70,19 @@ def validate_prediction_records(records: Any, task: str) -> list[str]:
                 if unknown:
                     messages.append(f"{prefix}: unknown Task 2 labels {unknown}")
         elif task == "task3":
-            labels = output.get("error_labels")
-            if not isinstance(labels, list) or any(not isinstance(x, str) for x in labels):
-                messages.append(f"{prefix}: Task 3 error_labels must be a list")
-            elif len(labels) != len(set(labels)) or set(labels).difference(ERROR_LABELS):
-                messages.append(f"{prefix}: Task 3 error_labels must be unique official labels")
+            if require_task3_taxonomy or "taxonomy_error" in output:
+                try:
+                    validate_taxonomy_error(output.get("taxonomy_error"))
+                except ValueError as error:
+                    messages.append(f"{prefix}: {error}")
+            elif "error_labels" in output:
+                labels = output["error_labels"]
+                if not isinstance(labels, list) or any(not isinstance(x, str) for x in labels):
+                    messages.append(f"{prefix}: Task 3 error_labels must be a list")
+                elif len(labels) != len(set(labels)) or set(labels).difference(ERROR_LABELS):
+                    messages.append(f"{prefix}: Task 3 error_labels must be unique official labels")
+            else:
+                messages.append(f"{prefix}: Task 3 requires error_labels or taxonomy_error")
             feedback = output.get("feedback")
             if not isinstance(feedback, str) or not feedback.strip():
                 messages.append(f"{prefix}: missing Task 3 feedback")

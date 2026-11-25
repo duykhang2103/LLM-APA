@@ -1,1 +1,3 @@
 experiment_id,date,owner,task,method,model,model_revision,seed,dataset_version,split_version,config_path,primary_metric,primary_score,secondary_metrics,git_commit,checkpoint,notes
+task1-compile-only-attempt18,2026-11-19,HNHKB,task1,compile-only replay,Qwen/Qwen3.5-4B,851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a,42,official-public-test,release328,,qwk_total,0.8212,mae_total=1.5884,,,Attempt 18 changed 14 compilability scores; see reproducibility report
+task2-d3-defined-release-v001,2026-10-16,HNHKB,task2,defined binary decisions,vllm-sr/d3-mini,97dd054df4b3e0b3beb6af23ab8c82b7c0052e0e,42,official-public-test,release328,configs/releases/task2_defined_decisions_v001.yaml,macro_f1,0.2760,micro_f1=0.3398,,,Official upload reproduced on 2026-11-19

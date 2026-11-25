@@ -35,17 +35,23 @@ def prompt_for(task, wanted):
 def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_tests=None,
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
                  max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None,
-                 method="rag", evidence=True, revision=None, price=None, attn=None):
+                 method="rag", evidence=True, revision=None, price=None, attn=None,
+                 tasks=None, task3_prompt="v005", task3_labels=False):
     """method rag|zero_shot; evidence=False hides compile/test results from the prompt
-    (statement + code only, like the fine-tuned Task 1 model's public inference)."""
+    (statement + code only, like the fine-tuned Task 1 model's public inference).
+    tasks: which configs to write (default: task1/task2 for api, all three for local).
+    Task 3 follows the team's T4 notebook (prompt v005, two-stage diagnosis then feedback,
+    1024 new tokens); task3_labels=True instead takes labels from a Task 2 prediction file."""
     out_dir = Path(out_dir)
     paths = {}
     for task in TASK_DIRS:
-        if task == "task3" and provider == "api":
+        if tasks is None and task == "task3" and provider == "api":
+            continue
+        if tasks is not None and task not in tasks:
             continue
         cfg = yaml.safe_load((ROOT / "configs" / task / "rag.yaml").read_text(encoding="utf-8"))
         cfg["method"] = method
-        version = prompt_for(task, prompt)
+        version = prompt_for(task, task3_prompt if task == "task3" else prompt)
         tag = f"{provider}-{method}-{version}{'' if evidence else '-noevid'}{'-loeo' if eval_mode else ''}"
         cfg["prompt"]["version"] = version
         cfg["experiment"].update(
@@ -96,7 +102,9 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
         if task == "task2":
             cfg["task2"].update(salvage_labels=True, max_labels=3)
         if task == "task3":
-            cfg["task3"].update(max_compliance_retries=2)
+            cfg["task3"].update(max_compliance_retries=2, two_stage=not task3_labels)
+            cfg["task2"] = {"use_grading_policy": False}  # the diagnosis stage
+            cfg["generation"]["max_new_tokens"] = 1024
         cfg["retrieval"].update(k=1, key="code", index="bm25", same_exam_first=not eval_mode,
                                 exclude_same_exam=eval_mode, compact_examples=True,
                                 exclude_duplicates=True, near_duplicate_threshold=0.95)

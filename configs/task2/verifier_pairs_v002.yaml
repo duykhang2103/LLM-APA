@@ -1,0 +1,55 @@
+experiment:
+  id: task2-verifier-pairs-v002
+task: task2
+method: lora
+seed: 42
+model:
+  provider: local
+  name_or_path: Qwen/Qwen3.5-4B
+  revision: 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a
+  dtype: bfloat16
+  device: cuda
+  attn_implementation: eager
+prompt:
+  version: verifier_v001
+lora:
+  rank: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules: all-linear
+quantization:
+  load_in_4bit: true
+  double_quant: true
+  quant_type: nf4
+data:
+  dataset_version: task2-verifier-authored-pairs-v002
+  split_version: family-held-out-v002
+  train_path: outputs/task2-verifier-pairs-v002/train.json
+  validation_path: outputs/task2-verifier-pairs-v002/val.json
+training:
+  num_train_epochs: 2
+  max_steps: 32
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 2
+  learning_rate: 0.00001
+  warmup_steps: 0
+  lr_scheduler_type: constant
+  max_sequence_length: 1024
+  gradient_checkpointing: true
+  time_budget_seconds: 1800
+logging:
+  logging_steps: 1
+  report_to: []
+saving:
+  output_dir: outputs/task2-verifier-pairs-v002/kaggle
+  save_strategy: steps
+  save_steps: 16
+  save_total_limit: 2
+evaluation:
+  strategy: "no"
+  generated_metrics: false
+generation:
+  max_input_tokens: 1023
+  max_new_tokens: 1
+  do_sample: false

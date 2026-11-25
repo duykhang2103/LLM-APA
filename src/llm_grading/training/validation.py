@@ -21,7 +21,7 @@ def evaluate_generated(bundle, samples, config, *, generate=None):
         )
         record = {"sample_id": sample["sample_id"], "raw_response": raw}
         try:
-            output = parse_response(raw, task, sample)
+            output = parse_response(raw, task, sample, config)
             record["output"] = output
             valid.append({"output": output})
             references.append(sample)

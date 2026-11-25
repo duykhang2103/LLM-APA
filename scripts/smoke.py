@@ -18,6 +18,7 @@ from llm_grading.utils.config import load_config
 from llm_grading.utils.logging import save_run_config
 from llm_grading.utils.seed import set_seed
 from llm_grading.validation.predictions import validate_prediction_records
+from llm_grading.validation.task3 import uses_joint_task3_output
 
 
 def main():
@@ -54,7 +55,9 @@ def main():
             "sample_id": samples[0]["sample_id"],
             "output": pipeline.postprocess(pipeline.predict(samples[0])),
         }
-        errors = validate_prediction_records([prediction], cfg["task"])
+        errors = validate_prediction_records(
+            [prediction], cfg["task"], require_task3_taxonomy=uses_joint_task3_output(cfg)
+        )
         if errors:
             raise ValueError(str(errors))
         metrics = EVALUATORS[cfg["task"]]([prediction], [samples[0]])

@@ -42,3 +42,14 @@ def test_price_sets_the_cost_cap_rates(tmp_path):
     model = yaml.safe_load(paths["task1"].read_text(encoding="utf-8"))["model"]
     assert model["cost_per_million_tokens"] == {"prompt": 0.0525, "completion": 0.0735}
     assert model["max_cost_usd"] == 1.0 and model["extra_body"] == {"reasoning_effort": "none"}
+
+
+def test_task3_api_config_follows_the_team_notebook(tmp_path):
+    paths = make_configs(tmp_path / "a", tmp_path / "train", "m", "v004", tasks=["task1", "task3"])
+    assert set(paths) == {"task1", "task3"}
+    cfg = yaml.safe_load(paths["task3"].read_text(encoding="utf-8"))
+    assert cfg["prompt"]["version"] == "v005" and cfg["model"]["provider"] == "api"
+    assert cfg["task3"]["two_stage"] is True and cfg["generation"]["max_new_tokens"] == 1024
+    assert yaml.safe_load(paths["task1"].read_text(encoding="utf-8"))["prompt"]["version"] == "v004"
+    labelled = make_configs(tmp_path / "b", tmp_path / "train", "m", "v004", tasks=["task3"], task3_labels=True)
+    assert yaml.safe_load(labelled["task3"].read_text(encoding="utf-8"))["task3"]["two_stage"] is False

@@ -133,6 +133,11 @@ def main():
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
     parser.add_argument("--suites", default=str(ROOT / "outputs" / "testsuites"), help="Shared test-suite folder")
     parser.add_argument("--tasks", nargs="+", choices=["task1", "task2", "task3"])
+    parser.add_argument("--task3-prompt", default="v005", help="Task 3 prompt version (team notebook: v005)")
+    parser.add_argument("--task3-labels", metavar="task2|PATH",
+                        help="Task 3 writes feedback for given labels instead of diagnosing them itself: "
+                             "'task2' = this run's Task 2 output, or a Task 2 prediction file. "
+                             "Default: two-stage (the model diagnoses labels, then writes feedback)")
     parser.add_argument("--name", help="Run folder name under outputs/runs/ (default <data>-<prompt>)")
     parser.add_argument("--eval", action="store_true", help="Leave-one-exam-out run + metrics (labeled data)")
     parser.add_argument("--no-llm", action="store_true", help="Only evidence, tests and rule-based Task 1")
@@ -152,8 +157,8 @@ def main():
         args.extra_body = {**(args.extra_body or {}), "chat_template_kwargs": {"enable_thinking": False}}
     if args.tasks is None:
         args.tasks = ["task1", "task2"] if args.provider == "api" else ["task1", "task2", "task3"]
-    if args.provider == "api" and "task3" in args.tasks:
-        parser.error("Task 3 uses local GPU inference; use run_task3_kaggle_t4x2.ipynb or --provider local")
+    if args.task3_labels and "task3" not in args.tasks:
+        parser.error("--task3-labels needs --tasks ... task3")
 
     os.environ.setdefault("ZIG_GLOBAL_CACHE_DIR", str(ROOT / "outputs" / "tmp" / "zigcache"))
     os.environ.setdefault("ZIG_LOCAL_CACHE_DIR", os.environ["ZIG_GLOBAL_CACHE_DIR"])
@@ -228,12 +233,21 @@ def main():
                            base_url=args.base_url, key_env=args.api_key_env,
                            extra_body=args.extra_body, method=args.method,
                            evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
-                           price=args.price, cache_path=args.cache_path, attn=args.attn)
+                           price=args.price, cache_path=args.cache_path, attn=args.attn,
+                           tasks=args.tasks, task3_prompt=args.task3_prompt,
+                           task3_labels=bool(args.task3_labels))
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
-        extra = ["--task3-labels", task2_labels] if task == "task3" else []
+        extra = []
+        if task == "task3" and args.task3_labels:
+            labels = Path(args.task3_labels) if args.task3_labels != "task2" else task2_labels
+            if labels == out / "pred_task2.json" and (out / "pred_task2_calib.json").exists():
+                labels = out / "pred_task2_calib.json"
+            if not labels.exists() and not args.dry_run:
+                raise SystemExit(f"Task 3 labels not found: {labels} (run task2 first or give a file)")
+            extra = ["--task3-labels", labels]
         run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
             *evidence_flag, *tests_flag, *extra, *limit)
         if task == "task2" and not args.no_evidence:

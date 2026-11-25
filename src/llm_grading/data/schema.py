@@ -60,6 +60,7 @@ EXPECTED_SAMPLE_FIELDS = (
     "rubric",
     "total_score",
     "error_labels",
+    "reference_error_labels",
     "feedback",
     "feedback_level",
 )
@@ -79,7 +80,8 @@ FIELD_DESCRIPTIONS = {
     "test_report": "Optional test evidence when supplied by the challenge.",
     "rubric": "Reference Task 1 components; never an inference-time input.",
     "total_score": "Optional Task 1 reference total, checked against the rubric sum by the raw loader.",
-    "error_labels": "Reference Task 2 labels; supplied to Task 3 as context.",
+    "error_labels": "Reference Task 2 labels; optional supplied Task 3 context. For Task 3, None means not supplied and [] means explicitly no errors.",
+    "reference_error_labels": "Optional Task 3 labels from output.taxonomy_error; targets only, never inference context.",
     "feedback": "Reference Task 3 text; forbidden as Task 1/2 input.",
     "feedback_level": "Requested Task 3 feedback level, normally 1 through 4.",
 }
