@@ -252,7 +252,7 @@ def main():
             salvaged = {r["sample_id"] for r in rows if (r.get("parsed_output") or {}).get("salvaged")}
             print(f"{task}: {len(fallbacks)} samples used the fallback, {len(salvaged)} had labels salvaged "
                   f"(see {log})")
-        if args.eval:
+        if args.eval and not args.max_samples:  # metrics need the whole labeled set
             run("evaluate.py", "--config", configs[task], "--predictions", pred, "--input", data,
                 "--output", out / f"metrics_{task}.json")
         else:
