@@ -54,7 +54,17 @@ class ModelPipeline:
 
     def predict(self, sample):
         if self.task == "task3" and self.config.get("task3", {}).get("two_stage", False):
-            sample = self._diagnose(sample)
+            try:
+                sample = self._diagnose(sample)
+            except ValueError as exc:
+                # Diagnosis JSON invalid twice or prompt too long for the GPU:
+                # still write feedback, with evidence-only labels.
+                if not self._fallback_enabled():
+                    raise
+                sample = {**sample, "error_labels": evidence_labels(sample)}
+                sample.pop("error_labels_missing", None)
+                append_jsonl(self.log_path, {**sample_metadata(sample), "stage": "diagnosis",
+                                             "diagnosis_fallback": str(exc)})
         examples, audit = (
             self.retriever.retrieve(sample) if self.retriever else ([], {})
         )
@@ -94,7 +104,18 @@ class ModelPipeline:
                         "For Level 3 give a correction direction in prose, not a complete solution."
                     )
             try:
-                raw = self.runner.generate(retry_prompt)
+                try:
+                    raw = self.runner.generate(retry_prompt)
+                except ValueError as first:
+                    if not examples:
+                        raise
+                    # Too long for the GPU: drop the RAG example, keep the student's code whole.
+                    suffix = retry_prompt[len(prompt):]
+                    examples = []
+                    audit = {**(audit or {}), "dropped_examples": str(first)}
+                    prompt = render_task_prompt(sample, self.task, self.config, examples)
+                    retry_prompt = prompt + suffix
+                    raw = self.runner.generate(retry_prompt)
             except Exception as exc:
                 append_jsonl(
                     self.log_path,

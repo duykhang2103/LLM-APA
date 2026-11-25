@@ -93,6 +93,10 @@ def main():
     parser.add_argument("--base-url", default="https://api.groq.com/openai/v1",
                         help="Grading API (OpenAI-compatible), e.g. https://openrouter.ai/api/v1")
     parser.add_argument("--api-key-env", default="GROQ_API_KEY", help="Env variable holding the grading API key")
+    parser.add_argument("--no-reasoning", dest="extra_body", action="store_const",
+                        const={"reasoning": {"enabled": False}},
+                        help="OpenRouter: turn off hidden reasoning so a reasoning model (e.g. DeepSeek V4) "
+                             "answers within the token budget")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
@@ -151,7 +155,9 @@ def main():
             "--output-dir", suites, "--skip-existing",
             *(["--model", args.testgen_model] if args.testgen_model else []))
         if args.force or not tests_path.exists() or stale_tests(path, tests_path, suites):
-            run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs)
+            # Without --force, keep results of unchanged suites and run only new/rewritten ones.
+            run("run_tests.py", "--input", path, "--suites", suites, "--output", tests_path, "--jobs", args.jobs,
+                *([] if args.force else ["--incremental"]))
 
     data_compile, data_tests = dataset_files(data)
     train_compile, train_tests = dataset_files(train)
@@ -176,7 +182,8 @@ def main():
     configs = make_configs(out, train, model, args.prompt, train_compile,
                            None if args.no_tests else train_tests, eval_mode=args.eval,
                            provider=args.provider, dtype=args.dtype,
-                           base_url=args.base_url, key_env=args.api_key_env)
+                           base_url=args.base_url, key_env=args.api_key_env,
+                           extra_body=args.extra_body)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:

@@ -8,7 +8,7 @@ rate relates to the teacher's scores, which is how a suite is judged useful.
 import argparse
 import json
 import sys
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +40,22 @@ def spearman(xs, ys):
     return round(cov / var, 3) if var else None
 
 
+def reusable_reports(args, suites, todo, compiler):
+    """Reports in an existing output whose exam suite has not changed since it was written."""
+    output = Path(args.output)
+    if not output.exists():
+        return {}
+    old = read_json(output)
+    if old.get("compiler") != compiler:
+        return {}
+    written = output.stat().st_mtime
+    keep = {exam for exam, suite in suites.items()
+            if suite and old.get("suites", {}).get(exam) == len(suite["tests"])
+            and Path(args.suites, f"{exam}.json").stat().st_mtime <= written}
+    return {s["sample_id"]: old["reports"][s["sample_id"]] for s in todo
+            if s["problem_id"] in keep and s["sample_id"] in old.get("reports", {})}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, help="Dataset folder")
@@ -47,6 +63,9 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--timeout", type=float, default=2.0, help="Seconds per test run")
+    parser.add_argument("--incremental", action="store_true",
+                        help="Keep reports from an existing --output for exams whose suite is unchanged; "
+                             "run only new or rewritten suites")
     args = parser.parse_args()
 
     samples = load_samples(args.input, task="task1")
@@ -62,12 +81,22 @@ def main():
     compiler = default_compiler(native=True)
     data_dir = Path(args.input, "data_files")
     todo = [s for s in samples if suites[s["problem_id"]]]
+    reports = reusable_reports(args, suites, todo, compiler) if args.incremental else {}
+    pending = [s for s in todo if s["sample_id"] not in reports]
+    if reports:
+        print(f"Reusing {len(reports)} reports from {args.output}; running {len(pending)} submissions")
 
     def run(sample):
         return run_suite(sample["code"], suites[sample["problem_id"]], compiler, data_dir, args.timeout)
 
+    # Building one program per test is slow (minutes per exam), so report progress.
     with ThreadPoolExecutor(args.jobs) as pool:
-        reports = dict(zip((s["sample_id"] for s in todo), pool.map(run, todo)))
+        futures = {pool.submit(run, s): s["sample_id"] for s in pending}
+        for done, future in enumerate(as_completed(futures), 1):
+            reports[futures[future]] = future.result()
+            if done % 10 == 0 or done == len(pending):
+                print(f"  tests: {done}/{len(pending)} submissions done", flush=True)
+    reports = {s["sample_id"]: reports[s["sample_id"]] for s in todo}
     write_json(args.output, {
         "compiler": compiler,
         "suites": {k: len(v["tests"]) for k, v in suites.items() if v},

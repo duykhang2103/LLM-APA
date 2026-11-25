@@ -12,6 +12,7 @@ from llm_grading.data.preprocess import (
 )
 from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
+from tasks.task1_grading.evidence_rules import rubric_from_evidence
 from tasks.task3_feedback.compliance import check_compliance
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -57,14 +58,25 @@ def render_task_prompt(sample, task, config, examples=None):
         if settings.get(f"use_{field}", True) is False:
             view.pop(field, None)
     # Only serialized whitelisted records are substituted; braces in C++ stay literal.
+    # Templates that do not name {rule_suggestion} render exactly as before.
     return format_prompt(
         template,
         {
             "input_json": json.dumps(view, ensure_ascii=False),
             "taxonomy": json.dumps(list(ERROR_LABELS), ensure_ascii=False),
             "examples": json.dumps(examples or [], ensure_ascii=False),
+            "rule_suggestion": rule_suggestion(sample) if task == "task1" else "",
         },
     )
+
+
+def rule_suggestion(sample):
+    """The rule-based Task 1 rubric (compile result + generated-test pass rate) as
+    prompt text: a starting point the model may change, not a prediction."""
+    rubric = rubric_from_evidence(sample, sample.get("compile_evidence"), sample.get("test_results"))
+    if rubric is None:
+        return "none (no test results for this submission); grade from the code"
+    return f"{json.dumps(rubric)} (total {sum(rubric.values())})"
 
 
 def _unique_object(pairs):

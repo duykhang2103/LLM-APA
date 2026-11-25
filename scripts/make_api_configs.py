@@ -34,7 +34,7 @@ def prompt_for(task, wanted):
 
 def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_tests=None,
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
-                 max_cost=20.0, cache_path=None, provider="api", dtype=None):
+                 max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None):
     out_dir = Path(out_dir)
     paths = {}
     for task in TASK_DIRS:
@@ -68,6 +68,10 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                 "max_cost_usd": max_cost,
                 "cache_path": cache,
             }
+            if extra_body:
+                # Provider request fields, e.g. {"reasoning": {"enabled": false}} so a
+                # reasoning model answers within max_new_tokens instead of thinking.
+                cfg["model"]["extra_body"] = extra_body
         train = str(Path(train_dir).resolve())
         cfg["data"].update(input_path=train, train_path=train, validation_path=None, test_path=None,
                            prepared_dir=str((out_dir / task / "prepared").resolve()))

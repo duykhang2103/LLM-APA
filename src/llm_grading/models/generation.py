@@ -40,7 +40,17 @@ def generate_text(bundle, prompt, settings):
     if sample:
         kwargs["temperature"] = float(settings.get("temperature", 0.7))
         kwargs["top_p"] = float(settings.get("top_p", 1.0))
-    with torch.inference_mode():
-        tokens = model.generate(**inputs, **kwargs)[0, length:]
+    try:
+        with torch.inference_mode():
+            tokens = model.generate(**inputs, **kwargs)[0, length:]
+    except torch.OutOfMemoryError as error:
+        # A long prompt (T4, ~7k tokens) can exhaust VRAM; free it and report it
+        # like an oversized prompt so the pipeline can shorten it or fall back.
+        del inputs
+        import gc
+
+        gc.collect()
+        torch.cuda.empty_cache()
+        raise ValueError(f"CUDA out of memory with a {length}-token prompt") from error
     bundle["last_usage"] = {"prompt_tokens": length, "completion_tokens": len(tokens)}
     return tokenizer.decode(tokens, skip_special_tokens=True)
