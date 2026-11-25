@@ -35,7 +35,7 @@ def prompt_for(task, wanted):
 def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_tests=None,
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
                  max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None,
-                 method="rag", evidence=True, revision=None, price=None, attn=None):
+                 method="rag", evidence=True, revision=None, price=None, attn=None, k=1):
     """method rag|zero_shot; evidence=False hides compile/test results from the prompt
     (statement + code only, like the fine-tuned Task 1 model's public inference)."""
     out_dir = Path(out_dir)
@@ -97,7 +97,7 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
             cfg["task2"].update(salvage_labels=True, max_labels=3)
         if task == "task3":
             cfg["task3"].update(max_compliance_retries=2)
-        cfg["retrieval"].update(k=1, key="code", index="bm25", same_exam_first=not eval_mode,
+        cfg["retrieval"].update(k=k, key="code", index="bm25", same_exam_first=not eval_mode,
                                 exclude_same_exam=eval_mode, compact_examples=True,
                                 exclude_duplicates=True, near_duplicate_threshold=0.95)
         cfg["evidence"] = {

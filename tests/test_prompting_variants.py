@@ -42,3 +42,11 @@ def test_price_sets_the_cost_cap_rates(tmp_path):
     model = yaml.safe_load(paths["task1"].read_text(encoding="utf-8"))["model"]
     assert model["cost_per_million_tokens"] == {"prompt": 0.0525, "completion": 0.0735}
     assert model["max_cost_usd"] == 1.0 and model["extra_body"] == {"reasoning_effort": "none"}
+
+
+def test_v007_renders_and_k_reaches_the_config(tmp_path):
+    sample = {"sample_id": "s", "problem_type": "single_problem", "problem_statement": "Sum", "code": "int main(){}"}
+    prompt = render_task_prompt(sample, "task1", {"prompt": {"version": "v007"}})
+    assert "Suspicion is not a bug" in prompt and '"compilable": 0-1' in prompt
+    paths = make_configs(tmp_path, tmp_path / "train", "m", "v007", k=3)
+    assert yaml.safe_load(paths["task1"].read_text(encoding="utf-8"))["retrieval"]["k"] == 3

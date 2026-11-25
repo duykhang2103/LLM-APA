@@ -117,6 +117,8 @@ def main():
                         "Default for Qwen/Qwen3.5-4B: the fine-tuned model's revision")
     parser.add_argument("--method", choices=["rag", "zero_shot"], default="rag",
                         help="rag = one BM25 training example in the prompt (P1/P2); zero_shot = none (P0)")
+    parser.add_argument("--k", type=int, choices=[1, 3, 5], default=1,
+                        help="RAG: number of graded training examples in each prompt")
     parser.add_argument("--no-evidence", action="store_true",
                         help="Prompt with statement + code only, no compile/test results (P0/P1); "
                              "implies --no-tests and skips the evidence-based Task 2 calibration")
@@ -228,7 +230,7 @@ def main():
                            base_url=args.base_url, key_env=args.api_key_env,
                            extra_body=args.extra_body, method=args.method,
                            evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
-                           price=args.price, cache_path=args.cache_path, attn=args.attn)
+                           price=args.price, cache_path=args.cache_path, attn=args.attn, k=args.k)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
