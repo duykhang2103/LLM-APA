@@ -1,0 +1,69 @@
+{
+  "exam_id": "Class01-Test2",
+  "mode": "function",
+  "data_files": [
+    "50-best-european-generals-cleaned-first-20.csv"
+  ],
+  "tests": [
+    {
+      "name": "P1_basic",
+      "category": "normal",
+      "problem": "P1",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main(){\n    vector<General> v = prob1(\"50-best-european-generals-cleaned-first-20.csv\");\n    cout << v.size() << \"\\n\";\n    if (!v.empty()){\n        const General& g = v[0];\n        cout << g.name << \"\\n\";\n        cout << g.nationality << \"\\n\";\n        cout << g.born.day << '-' << g.born.month << '-' << g.born.year << ' ' << g.born.era << \"\\n\";\n        for (size_t i=0;i<g.known_battles.size();++i){\n            if (i) cout << \",\";\n            cout << g.known_battles[i];\n        }\n        cout << \"\\n\";\n    }\n    return 0;\n}\n",
+      "expected": "20\nRichard the Lionheart\nEngland\n9-8-1157 AD\nSiege of Acre,Battle of Arsuf,Battle of Jaffa\n"
+    },
+    {
+      "name": "P2_inorder_full",
+      "category": "normal",
+      "problem": "P2",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid inorder(Node* r){\n    if(!r) return;\n    inorder(r->left);\n    cout << r->general.name << \"\\n\";\n    inorder(r->right);\n}\n\nint main(){\n    vector<General> vec = prob1(\"50-best-european-generals-cleaned-first-20.csv\");\n    Node* root = prob2(vec);\n    inorder(root);\n    return 0;\n}\n",
+      "expected": "Germanicus\nJulius Caesar\nGaius Marius\nScipio Africanus\nEl Cid (Rodrigo Diaz de Vivar)\nRichard the Lionheart\nEdward the Black Prince\nJan Zizka\nGonzalo Fernandez de Cordoba\nDuke of Marlborough\nPrince Eugene of Savoy\nAlexander Suvorov\nHoratio Nelson\nLouis-Nicolas Davout\nHelmuth von Moltke the Elder\nFerdinand Foch\nErich von Manstein\nHeinz Guderian\nGeorgy Zhukov\nKonstantin Rokossovsky\n"
+    },
+    {
+      "name": "P2_single_element",
+      "category": "edge",
+      "problem": "P2",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main(){\n    General g;\n    g.name = \"Solo\";\n    g.nationality = \"Nowhere\";\n    g.born = {1,1,2000,\"AD\"};\n    g.death = {1,1,2050,\"AD\"};\n    g.known_battles = {};\n    vector<General> v = {g};\n    Node* root = prob2(v);\n    if(root && root->general.name==\"Solo\") cout << \"OK\\n\"; else cout << \"FAIL\\n\";\n    return 0;\n}\n",
+      "expected": "OK\n"
+    },
+    {
+      "name": "P3_count_existing",
+      "category": "normal",
+      "problem": "P3",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main(){\n    vector<General> vec = prob1(\"50-best-european-generals-cleaned-first-20.csv\");\n    Node* root = prob2(vec);\n    cout << prob3(root, \"1157 AD\") << \"\\n\"; // Richard the Lionheart\n    return 0;\n}\n",
+      "expected": "1\n"
+    },
+    {
+      "name": "P3_count_missing",
+      "category": "edge",
+      "problem": "P3",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main(){\n    vector<General> vec = prob1(\"50-best-european-generals-cleaned-first-20.csv\");\n    Node* root = prob2(vec);\n    cout << prob3(root, \"9999 AD\") << \"\\n\"; // none\n    return 0;\n}\n",
+      "expected": "0\n"
+    },
+    {
+      "name": "P4_keep_one",
+      "category": "normal",
+      "problem": "P4",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid inorder(Node* r){\n    if(!r) return;\n    inorder(r->left);\n    cout << r->general.name << \"\\n\";\n    inorder(r->right);\n}\n\nint main(){\n    vector<General> vec = prob1(\"50-best-european-generals-cleaned-first-20.csv\");\n    Node* root = prob2(vec);\n    prob4(root, \"Battle of Sedan\");\n    if(!root) { cout << \"EMPTY\\n\"; return 0; }\n    inorder(root);\n    return 0;\n}\n",
+      "expected": "Helmuth von Moltke the Elder\n"
+    },
+    {
+      "name": "P4_remove_all",
+      "category": "edge",
+      "problem": "P4",
+      "driver": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main(){\n    vector<General> vec = prob1(\"50-best-european-generals-cleaned-first-20.csv\");\n    Node* root = prob2(vec);\n    prob4(root, \"Nonexistent Battle\");\n    if(!root) cout << \"EMPTY\\n\"; else cout << \"NOT EMPTY\\n\";\n    return 0;\n}\n",
+      "expected": "EMPTY\n"
+    }
+  ],
+  "generator": {
+    "model": "openai/gpt-oss-120b",
+    "prompt_version": "v003",
+    "attempt": 2,
+    "compiler": [
+      "D:\\LLM-FINAL\\LLM-APA\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ziglang",
+      "c++"
+    ]
+  }
+}

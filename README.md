@@ -8,7 +8,42 @@ This is a **four-week university product-research project**, with about two week
 
 Start with [RUN_EXPERIMENTS.md](docs/project/RUN_EXPERIMENTS.md), [the QLoRA notebook](notebooks/train_qwen_qlora.ipynb), or [the prompting notebook](notebooks/run_prompting.ipynb).
 
-**Prompting submission (Task 1–3, one command):** see [prompting/README.md](prompting/README.md).
+## Hướng Prompting: kết quả tốt nhất và cách tái lập
+
+Không huấn luyện mô hình. Dùng Qwen3.5-9B qua API, cùng ba thành phần:
+- bằng chứng thật: biên dịch code và chạy test do LLM sinh từ đề bài;
+- RAG lấy 1 bài train giống nhất;
+- hậu xử lý bằng code.
+
+| Task | Metric | Điểm public tốt nhất |
+|---|---|---|
+| Task 1: chấm rubric | QWK | 0.8748 |
+| Task 2: phân loại lỗi | macro-F1 | 0.3027 |
+| Task 3: phản hồi | LLM judge | 0.3948 |
+
+Riêng Task 3: lệnh dưới đây chạy prompt mới v008, bản này chưa có điểm. Điểm 0.3948 trong bảng thuộc về prompt trước đó.
+
+Tạo lại cả 3 file nộp bằng một lệnh:
+
+```sh
+python prompting/run_prompting.py --data <thư mục dataset>
+# kết quả: outputs/runs/prompting/final/submission_task1.json, submission_task2.json, submission_task3.json
+```
+
+### Các file prompt `vxxx` là gì?
+
+Mỗi file `vxxx` trong `tasks/<task>/prompts/` là **một phiên bản prompt**. Khi sửa prompt, nhóm lưu thành phiên bản mới (v001, v002, ...) thay vì sửa đè. Nhờ vậy, mọi kết quả đã ghi trong report đều chạy lại được bằng đúng prompt đã dùng.
+
+| Task | Bản dùng cho kết quả tốt nhất | Các bản còn lại |
+|---|---|---|
+| Task 1 | `tasks/task1_grading/prompts/v004.txt` | thí nghiệm trước/sau, bản v006–v007 không tốt hơn |
+| Task 2 | `tasks/task2_errors/prompts/v004.txt` (liệt kê nhãn), `per_label_v001.json` (nhãn edge case), `per_label_v002.json` (3 nhãn hiếm) | bản v007 kém hơn v004 trên train nên không dùng |
+| Task 3 | `tasks/task3_feedback/prompts/v008.txt` | bản v007 là bản đạt 0.3948 |
+| Sinh test | `tasks/testgen/prompts/` (phiên bản chỉ định trong `configs/testgen/groq.yaml`) | |
+
+Người chạy lại không cần chọn prompt. `prompting/run_prompting.py` đọc đúng các bản trên từ file cấu hình.
+
+Cài đặt, API key, thời gian, chi phí và cách đo trên train: xem [prompting/README.md](prompting/README.md). Toàn bộ cấu hình đã chốt nằm trong [prompting/model/prompting_model.yaml](prompting/model/prompting_model.yaml).
 
 This README is written as a beginner guide. It explains what the project means, what each group should do, how the two technical approaches connect, and what evidence the team must save.
 

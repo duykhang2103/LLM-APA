@@ -1,0 +1,77 @@
+{
+  "exam_id": "EX01",
+  "mode": "function",
+  "data_files": [],
+  "tests": [
+    {
+      "name": "P2_normal",
+      "category": "normal",
+      "problem": "P2",
+      "driver": "#include <iostream>\nint main(){\n    int n = 3;\n    General* gens = new General[n];\n    gens[0].name = \"A\"; gens[0].nationality = \"X\"; gens[0].total_known_battles = 0; gens[0].known_battles = nullptr;\n    gens[1].name = \"B\"; gens[1].nationality = \"Y\"; gens[1].total_known_battles = 0; gens[1].known_battles = nullptr;\n    gens[2].name = \"C\"; gens[2].nationality = \"Z\"; gens[2].total_known_battles = 0; gens[2].known_battles = nullptr;\n    Node* head = prob2(gens, n);\n    for (Node* cur = head; cur; cur = cur->next) {\n        std::cout << cur->general.name << \"\\n\";\n    }\n    return 0;\n}",
+      "expected": "A\nB\nC\n"
+    },
+    {
+      "name": "P2_one",
+      "category": "edge",
+      "problem": "P2",
+      "driver": "#include <iostream>\nint main(){\n    int n = 1;\n    General* gens = new General[n];\n    gens[0].name = \"Solo\"; gens[0].nationality = \"U\"; gens[0].total_known_battles = 0; gens[0].known_battles = nullptr;\n    Node* head = prob2(gens, n);\n    if (head) std::cout << head->general.name << \"\\n\"; else std::cout << \"null\\n\";\n    return 0;\n}",
+      "expected": "Solo\n"
+    },
+    {
+      "name": "P2_empty",
+      "category": "edge",
+      "problem": "P2",
+      "driver": "#include <iostream>\nint main(){\n    Node* head = prob2(nullptr, 0);\n    if (!head) std::cout << \"empty\" << \"\\n\";\n    else std::cout << \"nonempty\" << \"\\n\";\n    return 0;\n}",
+      "expected": "empty\n"
+    },
+    {
+      "name": "P3_normal",
+      "category": "normal",
+      "problem": "P3",
+      "driver": "#include <iostream>\nint main(){\n    // create three nodes with different ages\n    Node* n1 = new Node; n1->general.name = \"Old\"; n1->general.born = {1,1,1800,\"AD\"}; n1->general.death = {1,1,1880,\"AD\"}; n1->general.total_known_battles = 0; n1->general.known_battles = nullptr;\n    Node* n2 = new Node; n2->general.name = \"Older\"; n2->general.born = {1,1,100,\"BC\"}; n2->general.death = {1,1,10,\"AD\"}; n2->general.total_known_battles = 0; n2->general.known_battles = nullptr;\n    Node* n3 = new Node; n3->general.name = \"Young\"; n3->general.born = {1,1,1900,\"AD\"}; n3->general.death = {1,1,1950,\"AD\"}; n3->general.total_known_battles = 0; n3->general.known_battles = nullptr;\n    n1->next = n2; n2->next = n3; n3->next = nullptr;\n    General g = prob3(n1);\n    std::cout << g.name << \"\\n\";\n    return 0;\n}",
+      "expected": "Older\n"
+    },
+    {
+      "name": "P3_tie",
+      "category": "edge",
+      "problem": "P3",
+      "driver": "#include <iostream>\nint main(){\n    // two generals with same max age, first should be returned\n    Node* a = new Node; a->general.name = \"First\"; a->general.born = {1,1,200,\"BC\"}; a->general.death = {1,1,100,\"AD\"}; a->general.total_known_battles = 0; a->general.known_battles = nullptr;\n    Node* b = new Node; b->general.name = \"Second\"; b->general.born = {1,1,200,\"BC\"}; b->general.death = {1,1,100,\"AD\"}; b->general.total_known_battles = 0; b->general.known_battles = nullptr;\n    a->next = b; b->next = nullptr;\n    General g = prob3(a);\n    std::cout << g.name << \"\\n\";\n    return 0;\n}",
+      "expected": "First\n"
+    },
+    {
+      "name": "P4_remove_some",
+      "category": "normal",
+      "problem": "P4",
+      "driver": "#include <iostream>\nint main(){\n    // Build list: A, B, A, C\n    Node* n1 = new Node; n1->general.name = \"G1\"; n1->general.nationality = \"A\"; n1->general.total_known_battles = 0; n1->general.known_battles = nullptr;\n    Node* n2 = new Node; n2->general.name = \"G2\"; n2->general.nationality = \"B\"; n2->general.total_known_battles = 0; n2->general.known_battles = nullptr;\n    Node* n3 = new Node; n3->general.name = \"G3\"; n3->general.nationality = \"A\"; n3->general.total_known_battles = 0; n3->general.known_battles = nullptr;\n    Node* n4 = new Node; n4->general.name = \"G4\"; n4->general.nationality = \"C\"; n4->general.total_known_battles = 0; n4->general.known_battles = nullptr;\n    n1->next = n2; n2->next = n3; n3->next = n4; n4->next = nullptr;\n    Node* head = n1;\n    prob4(head, \"A\");\n    for (Node* cur = head; cur; cur = cur->next) {\n        std::cout << cur->general.name << \"\\n\";\n    }\n    return 0;\n}",
+      "expected": "G2\nG4\n"
+    },
+    {
+      "name": "P4_remove_all",
+      "category": "edge",
+      "problem": "P4",
+      "driver": "#include <iostream>\nint main(){\n    // All nodes have nationality X\n    Node* n1 = new Node; n1->general.name = \"One\"; n1->general.nationality = \"X\"; n1->general.total_known_battles = 0; n1->general.known_battles = nullptr;\n    Node* n2 = new Node; n2->general.name = \"Two\"; n2->general.nationality = \"X\"; n2->general.total_known_battles = 0; n2->general.known_battles = nullptr;\n    n1->next = n2; n2->next = nullptr;\n    Node* head = n1;\n    prob4(head, \"X\");\n    if (!head) std::cout << \"empty\" << \"\\n\"; else std::cout << \"not empty\" << \"\\n\";\n    return 0;\n}",
+      "expected": "empty\n"
+    },
+    {
+      "name": "P4_remove_none",
+      "category": "edge",
+      "problem": "P4",
+      "driver": "#include <iostream>\nint main(){\n    // No node matches nationality Y\n    Node* n1 = new Node; n1->general.name = \"Alpha\"; n1->general.nationality = \"A\"; n1->general.total_known_battles = 0; n1->general.known_battles = nullptr;\n    Node* n2 = new Node; n2->general.name = \"Beta\"; n2->general.nationality = \"B\"; n2->general.total_known_battles = 0; n2->general.known_battles = nullptr;\n    n1->next = n2; n2->next = nullptr;\n    Node* head = n1;\n    prob4(head, \"Y\");\n    for (Node* cur = head; cur; cur = cur->next) {\n        std::cout << cur->general.name << \"\\n\";\n    }\n    return 0;\n}",
+      "expected": "Alpha\nBeta\n"
+    }
+  ],
+  "untested_problems": [
+    "P1"
+  ],
+  "generator": {
+    "model": "openai/gpt-oss-120b",
+    "prompt_version": "v002",
+    "attempt": 2,
+    "compiler": [
+      "D:\\LLM-FINAL\\LLM-APA\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ziglang",
+      "c++"
+    ]
+  }
+}

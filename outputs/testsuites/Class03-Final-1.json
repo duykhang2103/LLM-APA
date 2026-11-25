@@ -1,0 +1,130 @@
+{
+  "exam_id": "Class03-Final-1",
+  "mode": "stdio",
+  "data_files": [],
+  "tests": [
+    {
+      "name": "normal1",
+      "category": "normal",
+      "problem": null,
+      "input": "harry potter",
+      "expected": "hap"
+    },
+    {
+      "name": "normal2",
+      "category": "normal",
+      "problem": null,
+      "input": "tom riddle",
+      "expected": "tomr"
+    },
+    {
+      "name": "normal3",
+      "category": "normal",
+      "problem": null,
+      "input": "alice bob",
+      "expected": "ab"
+    },
+    {
+      "name": "normal4",
+      "category": "normal",
+      "problem": null,
+      "input": "john doe",
+      "expected": "jd"
+    },
+    {
+      "name": "normal5",
+      "category": "normal",
+      "problem": null,
+      "input": "mike smith",
+      "expected": "mikes"
+    },
+    {
+      "name": "normal6",
+      "category": "normal",
+      "problem": null,
+      "input": "zara zorro",
+      "expected": "zaraz"
+    },
+    {
+      "name": "edge1",
+      "category": "edge",
+      "problem": null,
+      "input": "a b",
+      "expected": "ab"
+    },
+    {
+      "name": "edge2",
+      "category": "edge",
+      "problem": null,
+      "input": "aaaaaaaaaa aaaaaaaaaa",
+      "expected": "aa"
+    },
+    {
+      "name": "edge3",
+      "category": "edge",
+      "problem": null,
+      "input": "zzzzzzzzzz aaaaaaaaaa",
+      "expected": "za"
+    },
+    {
+      "name": "edge4",
+      "category": "edge",
+      "problem": null,
+      "input": "ab aa",
+      "expected": "aa"
+    },
+    {
+      "name": "edge5",
+      "category": "edge",
+      "problem": null,
+      "input": "b a",
+      "expected": "ba"
+    },
+    {
+      "name": "large1",
+      "category": "large",
+      "problem": null,
+      "input": "abcdefghij klmnopqrst",
+      "expected": "abcdefghijk"
+    },
+    {
+      "name": "large2",
+      "category": "large",
+      "problem": null,
+      "input": "qwertyuiop asdfghjklz",
+      "expected": "qa"
+    },
+    {
+      "name": "large3",
+      "category": "large",
+      "problem": null,
+      "input": "mnbvcxzlkj poiuytrewq",
+      "expected": "mnbp"
+    },
+    {
+      "name": "example1",
+      "category": "example",
+      "problem": null,
+      "input": "harry potter",
+      "expected": "hap"
+    },
+    {
+      "name": "example2",
+      "category": "example",
+      "problem": null,
+      "input": "tom riddle",
+      "expected": "tomr"
+    }
+  ],
+  "generator": {
+    "model": "openai/gpt-oss-120b",
+    "prompt_version": "v002",
+    "attempt": 1,
+    "compiler": [
+      "D:\\LLM-FINAL\\LLM-APA\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ziglang",
+      "c++"
+    ]
+  }
+}

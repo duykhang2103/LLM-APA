@@ -22,6 +22,42 @@ def _level_one_diagnosis_text(text: str) -> str:
     )
 
 
+def _plain(text: str) -> str:
+    """Lower case without Vietnamese diacritics, for keyword rules."""
+    return "".join(
+        c for c in unicodedata.normalize("NFD", text.lower()) if unicodedata.category(c) != "Mn"
+    ).replace("đ", "d")
+
+
+# Advice addressed to the student ("em cần thêm ...", "em hãy xem lại ...",
+# "Cần sửa ..."): a fix direction, which Level 2 must not give.
+_ADVICE = re.compile(
+    r"\bem\s+(?:can|nen|hay|phai|thu|kiem tra lai|xem lai)\b"
+    r"|(?:^|[.;!?]\s*)(?:can|nen|hay)\s+(?:sua|them|bo sung|kiem tra|xem lai|dieu chinh|hoan thien|viet lai|doi)\b"
+)
+# Any correction direction in prose, which Level 3 must give.
+_DIRECTION = re.compile(
+    r"\b(?:can|nen|hay|phai)\b|\b(?:sua|them|bo sung|kiem tra lai|xem lai|dieu chinh|thay doi|doi lai|viet lai|hoan thien)\b"
+)
+# Violations a retry should try to fix, but that are better kept than replaced
+# by generic fallback feedback once the retries are used up.
+SOFT_VIOLATIONS = frozenset({"fix_advice_at_level_2", "missing_fix_direction_at_level_3"})
+
+
+def strip_fix_advice(feedback: str) -> str:
+    """Drop the clauses of a Level 2 feedback that advise the student how to fix.
+
+    The diagnosis before them is kept; if every clause is advice the text is
+    returned unchanged.
+    """
+    clauses = re.split(r"(?<=[.;!?])\s+|,\s+(?=[Ee]m\s)", feedback.strip())
+    kept = [c for c in clauses if not _ADVICE.search(_plain(c))]
+    if not kept or len(kept) == len(clauses):
+        return feedback
+    text = " ".join(kept).strip().rstrip(",;")
+    return text if text.endswith((".", "!", "?")) else text + "."
+
+
 def check_compliance(feedback: str, level: int) -> dict[str, Any]:
     """Return ``pass`` and policy violation names for one response."""
     if not isinstance(feedback, str) or not feedback.strip():
@@ -70,6 +106,12 @@ def check_compliance(feedback: str, level: int) -> dict[str, Any]:
         diagnosis_text,
     ):
         violations.append("specific_diagnosis_at_level_1")
+    if level == 2 and _ADVICE.search(lowered):
+        violations.append("fix_advice_at_level_2")
+    # A Level 3 feedback that reports a problem must say how to fix it; praise needs no fix.
+    reports_problem = re.search(r"\b(?:sai|loi|thieu|chua|khong dung|crash)\b", lowered)
+    if level == 3 and reports_problem and not _DIRECTION.search(lowered):
+        violations.append("missing_fix_direction_at_level_3")
     return {
         "pass": not violations,
         "violations": violations,

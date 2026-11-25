@@ -6,7 +6,7 @@ from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
 from llm_grading.validation.predictions import validate_prediction_records
 from llm_grading.validation.task3 import validate_taxonomy_error
-from tasks.task3_feedback.compliance import check_compliance
+from tasks.task3_feedback.compliance import SOFT_VIOLATIONS, check_compliance
 
 
 def validate_challenge_predictions(
@@ -87,9 +87,10 @@ def export_challenge_predictions(
         elif task == "task2":
             target = {"taxonomy_error": list(output["error_labels"])}
         else:
-            if not allow_feedback_warnings and not check_compliance(output["feedback"], output["feedback_level"])[
-                "pass"
-            ]:
+            violations = check_compliance(output["feedback"], output["feedback_level"])["violations"]
+            # Soft violations (Level 2 advice, Level 3 without a fix) are accepted by the
+            # pipeline after its retries; scripts/relabel_task3.py cuts the Level 2 advice.
+            if not allow_feedback_warnings and not set(violations) <= SOFT_VIOLATIONS:
                 raise ValueError(
                     f"Feedback policy violation for {row['sample_id']}; regenerate before export"
                 )

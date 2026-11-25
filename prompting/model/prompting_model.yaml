@@ -1,16 +1,15 @@
-# "Model" của hướng Prompting sau khi tối ưu (bản đã nộp leaderboard ngày 2026-11-25).
+# "Model" của hướng Prompting sau khi tối ưu (bản tốt nhất trên leaderboard public, 2026-11-25).
 #
 # Hướng prompting không huấn luyện trọng số nào. Phần đã tối ưu là cách dùng một
 # LLM có sẵn: model, prompt, RAG, bằng chứng biên dịch/test và hậu xử lý.
 # File này chốt toàn bộ các lựa chọn đó. prompting/run_prompting.py đọc file này
 # để chạy lại đúng pipeline đã nộp, nên muốn đổi gì thì đổi ở đây.
 
-name: prompting-qwen35-9b-p2
-git_commit: d76618e            # commit trên main chứa code của bản nộp
-public_scores:                 # điểm leaderboard public của bản nộp
+name: prompting-qwen35-9b-best
+public_scores:                 # điểm leaderboard public của bản tốt nhất
   task1_qwk: 0.8748
-  task2_macro_f1: 0.2917
-  task3_llm_judge: 0.3948
+  task2_macro_f1: 0.3027
+  task3_llm_judge: null        # bản v008 mới, chưa có điểm (bản trước: 0.3948)
 
 llm:                           # LLM chấm bài (cả 3 task)
   model: Qwen/Qwen3.5-9B       # open-weight 9B; DeepInfra không có Qwen3.5-4B
@@ -38,21 +37,24 @@ task1:
   cache: outputs/di9b-cache-2.jsonl
 
 task2:
-  list_prompt: tasks/task2_errors/prompts/v004.txt
-  per_label_prompt: tasks/task2_errors/prompts/per_label_v001.json
-  calibration: scripts/calibrate_task2.py   # luật dựa trên bằng chứng, áp cho cả 2 cách hỏi
+  list_prompt: tasks/task2_errors/prompts/v004.txt   # prompt liệt kê nhãn (giữ v004: v007 kém hơn trên train)
+  calibration: scripts/calibrate_task2.py           # luật dựa trên bằng chứng, áp cho mọi cách hỏi
   per_label_threshold: 0.5
   per_label_workers: 8
-  per_label_max_cost_usd: 2.0
+  per_label_max_cost_usd: 1.5
+  # Hỏi Yes/No từng nhãn, bản mới: định nghĩa nhãn theo cách giảng viên dùng + 2 bài train
+  # có nhãn (đề khác) làm ví dụ. Dùng cho 3 nhãn hiếm.
+  rare_labels_prompt: tasks/task2_errors/prompts/per_label_v002.json
+  rare_label_examples: 2
   combine_rare_labels: ["Lỗi thuật toán", "Lỗi hard-code", "Lỗi style"]
+  # Hỏi Yes/No từng nhãn, bản cũ: nguồn của nhãn "Lỗi edge case" trong file nộp tốt nhất.
+  edge_case_prompt: tasks/task2_errors/prompts/per_label_v001.json
   # cache của cách hỏi từng nhãn: outputs/api_cache-perlabel.jsonl (mặc định của run_all.py)
 
 task3:
-  prompt: v007                 # tasks/task3_feedback/prompts/v007.txt
-  diagnosis_prompt: v004
-  diagnosis_tokens: 384
-  labels_from: task2_list_calibrated   # nhãn lấy từ pred_task2_calib.json của bước Task 1/2
+  prompt: v008                 # tasks/task3_feedback/prompts/v008.txt
+  labels_from: task2_final     # nhãn = file nộp Task 2 cuối cùng
   shards: 6
-  timeout_seconds: 300
   max_cost_usd: 0.6
-  cache: outputs/t3-pub.jsonl  # mỗi shard ghi outputs/t3-pub-task3-shard<k>.jsonl
+  # cache: outputs/api_cache.jsonl (mặc định của run_all.py)
+  postprocess: scripts/relabel_task3.py   # chuẩn hoá Level 1, cắt lời khuyên ở Level 2, đồng bộ nhãn

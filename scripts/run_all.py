@@ -154,6 +154,11 @@ def main():
                         help="list = one prompt returns the label list; per_label = one Yes/No question per label "
                              "(scripts/predict_task2_per_label.py, API only)")
     parser.add_argument("--workers", type=int, default=8, help="per_label: questions sent at the same time")
+    parser.add_argument("--task2-definitions", help="per_label: label definitions JSON "
+                        "(default tasks/task2_errors/prompts/per_label_v001.json)")
+    parser.add_argument("--task2-examples", type=int, default=0,
+                        help="per_label: training submissions with the label shown per question, "
+                             "from other exams only (RAG per label); 0 = none")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
@@ -310,6 +315,8 @@ def main():
                 *(["--price", *args.price] if args.price else []), "--max-cost", args.max_cost,
                 "--timeout", args.timeout, "--workers", args.workers,
                 "--cache", cache.with_name(cache.stem + "-perlabel.jsonl"), *limit,
+                *(["--definitions", args.task2_definitions] if args.task2_definitions else []),
+                *(["--train", train, "--examples", args.task2_examples] if args.task2_examples else []),
                 *(["--labeled"] if args.eval else []))
         elif args.shards > 1:
             predict_shards(task, pred, [*evidence_flag, *tests_flag, *extra, *limit])

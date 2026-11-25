@@ -1,0 +1,76 @@
+{
+  "exam_id": "Class02-Test1",
+  "mode": "function",
+  "data_files": [
+    "50-european-battles-first-20.csv"
+  ],
+  "tests": [
+    {
+      "name": "P1_normal",
+      "category": "normal",
+      "problem": "P1",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\n\nextern Battle* prob1(string filename, int& n);\n\nint main(){\n    int n=0;\n    Battle* arr = prob1(\"50-european-battles-first-20.csv\", n);\n    cout << n << \"\\n\";\n    if (arr && n>0) cout << arr[0].name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "20\nBattle of the Marne (First)\n"
+    },
+    {
+      "name": "P1_empty",
+      "category": "edge",
+      "problem": "P1",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\nextern Battle* prob1(string filename, int& n);\nint main(){\n    int n=0;\n    Battle* arr = prob1(\"nonexistent.csv\", n);\n    cout << n << \"\\n\";\n    cout << (arr==nullptr ? 1 : 0) << \"\\n\";\n    return 0;\n}\n",
+      "expected": "0\n1\n"
+    },
+    {
+      "name": "P2_normal",
+      "category": "normal",
+      "problem": "P2",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\nextern Battle* prob1(string filename, int& n);\nextern Node* prob2(Battle* battles, int n);\nint main(){\n    int n; Battle* arr = prob1(\"50-european-battles-first-20.csv\", n);\n    Node* head = prob2(arr, n);\n    int count=0; for(Node* cur=head; cur; cur=cur->next) ++count;\n    cout << count << \"\\n\";\n    if (head) cout << head->battle.name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "20\nBattle of the Marne (First)\n"
+    },
+    {
+      "name": "P2_one",
+      "category": "edge",
+      "problem": "P2",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\nextern Node* prob2(Battle* battles, int n);\nint main(){\n    Battle b; b.name=\"Solo\"; b.location=\"Nowhere\"; b.from_date=\"01-01-2000\"; b.to_date=\"01-01-2000\"; b.total_famous_generals=0; b.list_famous_generals=nullptr;\n    Battle* arr = new Battle[1]; arr[0]=b;\n    Node* head = prob2(arr,1);\n    cout << (head!=nullptr) << \"\\n\";\n    cout << head->battle.name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "1\nSolo\n"
+    },
+    {
+      "name": "P3_normal",
+      "category": "normal",
+      "problem": "P3",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\nextern Node* prob2(Battle* battles, int n);\nextern int prob3(Node* head, string start_year, string end_year);\nextern Battle* prob1(string filename, int& n);\nint main(){\n    int n; Battle* arr = prob1(\"50-european-battles-first-20.csv\", n);\n    Node* head = prob2(arr, n);\n    cout << prob3(head, \"1914\", \"1918\") << \"\\n\"; // WWI years, should count battles in 1914 etc.\n    return 0;\n}\n",
+      "expected": "3\n"
+    },
+    {
+      "name": "P3_edge",
+      "category": "edge",
+      "problem": "P3",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\nextern Node* prob2(Battle* battles, int n);\nextern int prob3(Node* head, string start_year, string end_year);\nint main(){\n    Battle b; b.name=\"A\"; b.from_date=\"15-05-1999\"; b.to_date=\"15-05-1999\"; b.total_famous_generals=0; b.list_famous_generals=nullptr;\n    Battle* arr = new Battle[1]; arr[0]=b;\n    Node* head = prob2(arr,1);\n    cout << prob3(head, \"2000\", \"2005\") << \"\\n\"; // no battle in range\n    return 0;\n}\n",
+      "expected": "0\n"
+    },
+    {
+      "name": "P4_remove_some",
+      "category": "normal",
+      "problem": "P4",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\nextern Node* prob2(Battle* battles, int n);\nextern void prob4(Node*& head, string general);\nint main(){\n    Battle b1; b1.name=\"B1\"; b1.from_date=\"01-01-2000\"; b1.total_famous_generals=1; b1.list_famous_generals=new string[1]; b1.list_famous_generals[0]=\"Napoleon\";\n    Battle b2; b2.name=\"B2\"; b2.from_date=\"01-01-2001\"; b2.total_famous_generals=1; b2.list_famous_generals=new string[1]; b2.list_famous_generals[0]=\"Julius\";\n    Battle b3; b3.name=\"B3\"; b3.from_date=\"01-01-2002\"; b3.total_famous_generals=2; b3.list_famous_generals=new string[2]; b3.list_famous_generals[0]=\"Napoleon\"; b3.list_famous_generals[1]=\"Julius\";\n    Battle* arr = new Battle[3]; arr[0]=b1; arr[1]=b2; arr[2]=b3;\n    Node* head = prob2(arr,3);\n    prob4(head, \"Napoleon\");\n    for(Node* cur=head; cur; cur=cur->next) cout << cur->battle.name << \"\\n\";\n    return 0;\n}\n",
+      "expected": "B1\nB3\n"
+    },
+    {
+      "name": "P4_all_removed",
+      "category": "edge",
+      "problem": "P4",
+      "driver": "#include <iostream>\n#include <string>\nusing namespace std;\nextern Node* prob2(Battle* battles, int n);\nextern void prob4(Node*& head, string general);\nint main(){\n    Battle b; b.name=\"Solo\"; b.from_date=\"01-01-2000\"; b.total_famous_generals=1; b.list_famous_generals=new string[1]; b.list_famous_generals[0]=\"Genghis\";\n    Battle* arr = new Battle[1]; arr[0]=b;\n    Node* head = prob2(arr,1);\n    prob4(head, \"Napoleon\");\n    cout << (head==nullptr ? 1 : 0) << \"\\n\";\n    return 0;\n}\n",
+      "expected": "1\n"
+    }
+  ],
+  "generator": {
+    "model": "openai/gpt-oss-120b",
+    "prompt_version": "v003",
+    "attempt": 1,
+    "compiler": [
+      "D:\\LLM-FINAL\\LLM-APA\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ziglang",
+      "c++"
+    ]
+  }
+}
