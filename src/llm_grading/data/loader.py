@@ -55,7 +55,10 @@ def _load_exams(root: Path) -> dict[str, dict[str, Any]]:
     return result
 
 
-def _read_code(code_file: object, root: Path, record_directory: Path, sample_id: str) -> str:
+def _read_code(
+    code_file: object, root: Path, record_directory: Path, sample_id: str,
+    *, preserve_source_bytes: bool,
+) -> str:
     if not isinstance(code_file, str) or not code_file:
         raise ValueError(f"Missing or invalid code_file for {sample_id}")
     reference = Path(code_file)
@@ -67,6 +70,8 @@ def _read_code(code_file: object, root: Path, record_directory: Path, sample_id:
         if not resolved.is_relative_to(root):
             raise ValueError(f"code_file escapes the dataset root for {sample_id}: {code_file}")
         if resolved.is_file():
+            if preserve_source_bytes:
+                return resolved.read_bytes().decode("utf-8")
             return resolved.read_text(encoding="utf-8-sig")
     raise FileNotFoundError(f"Could not resolve code_file for {sample_id}: {code_file}")
 
@@ -106,6 +111,7 @@ def _raw_task(payload: dict[str, Any], path: Path, configured_task: str | None) 
 
 def _normalize_raw(
     record: dict[str, Any], exams: dict[str, dict[str, Any]], root: Path, task: str,
+    *, preserve_source_bytes: bool,
 ) -> NormalizedSample:
     sample_id = record["sample_id"]
     inputs = record.get("input")
@@ -134,7 +140,10 @@ def _normalize_raw(
         "problems": exam.get("problems", []),
         "grading_policy": exam.get("grading_policy", ""),
         "code_file": inputs.get("code_file"),
-        "code": _read_code(inputs.get("code_file"), root, root, sample_id),
+        "code": _read_code(
+            inputs.get("code_file"), root, root, sample_id,
+            preserve_source_bytes=preserve_source_bytes,
+        ),
         "compile_log": inputs.get("compile_log", ""),
         "test_report": inputs.get("test_report"),
         "rubric": {},
@@ -155,13 +164,19 @@ def _normalize_raw(
     elif "total_score" in output:
         raise ValueError(f"total_score requires a rubric for {sample_id}")
     if "taxonomy_error" in output:
-        sample["error_labels"] = _error_labels(output["taxonomy_error"], sample_id)
+        labels = _error_labels(output["taxonomy_error"], sample_id)
+        if task == "task3":
+            sample["reference_error_labels"] = labels
+        else:
+            sample["error_labels"] = labels
     if "target_feedback_level" in inputs:
         sample["feedback_level"] = _feedback_level(inputs["target_feedback_level"], sample_id)
         if "taxonomy_error" in inputs:
             sample["error_labels"] = _error_labels(inputs["taxonomy_error"], sample_id)
-        else:
-            # The public test omits Task 3 input labels; never read that as "no errors".
+        elif task == "task3":
+            # Unknown input labels are distinct from an explicit no-error list.
+            # Reference taxonomy in output must not become inference context.
+            sample["error_labels"] = None
             sample["error_labels_missing"] = True
     if "feedback" in output:
         if not isinstance(output["feedback"], str):
@@ -172,6 +187,7 @@ def _normalize_raw(
 
 def load_samples(
     source: str | Path, max_samples: int | None = None, *, task: str | None = None,
+    preserve_source_bytes: bool = False,
 ) -> list[NormalizedSample]:
     """Load a task JSON or directory, validating all records before limiting.
 
@@ -179,6 +195,7 @@ def load_samples(
     sibling ``exams.json``. A multi-task directory requires ``task`` because
     the files share sample IDs. Flat normalized object/list files still work.
     No source data is modified, and compiler/test evidence is preserved.
+    Set preserve_source_bytes to retain UTF-8 BOMs and CRLF for source hashes.
     """
     if task is not None and task not in TASK_FILENAMES:
         raise ValueError(f"Unknown task: {task!r}")
@@ -206,11 +223,17 @@ def load_samples(
             if not isinstance(record, dict) or not isinstance(record.get("sample_id"), str) or not record["sample_id"]:
                 raise ValueError(f"Every sample must be an object with sample_id: {path}")
             if is_raw:
-                sample = _normalize_raw(record, exams, root, raw_task)
+                sample = _normalize_raw(
+                    record, exams, root, raw_task, preserve_source_bytes=preserve_source_bytes,
+                )
             else:
                 sample = dict(record)
+                
                 if not sample.get("code") and sample.get("code_file"):
-                    sample["code"] = _read_code(sample["code_file"], root, path.parent, sample["sample_id"])
+                    sample["code"] = _read_code(
+                        sample["code_file"], root, path.parent, sample["sample_id"],
+                        preserve_source_bytes=preserve_source_bytes,
+                    )
                 sample.setdefault("code", "")
             records.append(sample)
     duplicates = sorted(sample_id for sample_id, count in Counter(record["sample_id"] for record in records).items() if count > 1)

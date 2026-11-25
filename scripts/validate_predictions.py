@@ -20,14 +20,20 @@ def main() -> int:
     parser.add_argument(
         "--format", choices=("internal", "challenge"), default="internal"
     )
+    parser.add_argument("--require-task3-taxonomy", action="store_true",
+                        help="Require the release Task 3 taxonomy_error plus feedback contract")
     args = parser.parse_args()
     if args.format == "challenge":
         try:
-            messages = validate_challenge_predictions(read_json(args.input), args.task)
+            messages = validate_challenge_predictions(
+                read_json(args.input), args.task, require_task3_taxonomy=args.require_task3_taxonomy
+            )
         except (OSError, ValueError) as error:
             messages = [str(error)]
     else:
-        messages = validate_predictions(args.input, args.task)
+        messages = validate_predictions(
+            args.input, args.task, require_task3_taxonomy=args.require_task3_taxonomy
+        )
     if messages:
         print("Prediction validation failed:")
         for message in messages:

@@ -12,7 +12,14 @@ from llm_grading.data.preprocess import (
 )
 from llm_grading.data.schema import RUBRIC_RANGES, validate_rubric
 from llm_grading.data.taxonomy import ERROR_LABELS
+<<<<<<< HEAD
 from tasks.task1_grading.evidence_rules import rubric_from_evidence
+=======
+from llm_grading.validation.task3 import (
+    uses_joint_task3_output,
+    validate_taxonomy_error,
+)
+>>>>>>> origin/main
 from tasks.task3_feedback.compliance import check_compliance
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -51,6 +58,21 @@ def prompt_hash(task, config):
 def render_task_prompt(sample, task, config, examples=None):
     template = task_template(task, config)
     view = BUILDERS[task](sample)
+    if task == "task3" and uses_joint_task3_output(config):
+        # Legacy examples provide labels as inputs; joint prediction must infer them.
+        view.pop("error_labels", None)
+        examples = [
+            {
+                **example,
+                "input": {
+                    key: value for key, value in example["input"].items()
+                    if key != "error_labels"
+                },
+                "target": json.loads(example["target"])
+                if isinstance(example["target"], str) else example["target"],
+            }
+            for example in (examples or [])
+        ]
     settings = config.get(task, {})
     # The lecturer later said to ignore the P1 prerequisite rule stated in
     # grading_policy; new configs can drop it with use_grading_policy: false.
@@ -95,6 +117,9 @@ def _unique_object(pairs):
 
 def _clean_json_text(text: str) -> str:
     cleaned = text.strip()
+    if cleaned.startswith("{"):
+        # Fences inside a JSON feedback string are data, not an outer wrapper.
+        return cleaned
     if "```" in cleaned:
         start = cleaned.find("```")
         end = cleaned.rfind("```")
@@ -124,13 +149,16 @@ def salvage_task2_labels(text, max_labels=3):
     return labels[:max_labels]
 
 
-def parse_response(text, task, sample):
-    if task == "task3":
+def parse_response(text, task, sample, config=None):
+    if task == "task3" and not uses_joint_task3_output(config):
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Empty feedback")
+        labels = sample.get("error_labels")
+        if not isinstance(labels, list):
+            raise ValueError("Task 3 feedback-only output requires supplied error_labels")
         level = sample["feedback_level"]
         return {
-            "error_labels": list(sample.get("error_labels", [])),
+            "error_labels": list(labels),
             "feedback": text.strip(),
             "feedback_level": level,
             "compliance": check_compliance(text, level),
@@ -142,6 +170,19 @@ def parse_response(text, task, sample):
         raise ValueError(f"Invalid JSON: {e}") from e
     if not isinstance(obj, dict):
         raise ValueError("Response must be a JSON object")
+    if task == "task3":
+        if set(obj) != {"taxonomy_error", "feedback"}:
+            raise ValueError("Return exactly taxonomy_error and feedback")
+        labels = validate_taxonomy_error(obj["taxonomy_error"])
+        feedback = obj["feedback"]
+        if not isinstance(feedback, str) or not feedback.strip():
+            raise ValueError("feedback must be nonempty text")
+        return {
+            "taxonomy_error": labels,
+            "feedback": feedback.strip(),
+            "feedback_level": sample["feedback_level"],
+            "compliance": check_compliance(feedback, sample["feedback_level"]),
+        }
     if task == "task1":
         if set(obj) != set(RUBRIC_RANGES):
             raise ValueError(
