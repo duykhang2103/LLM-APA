@@ -93,10 +93,12 @@ def export_challenge_predictions(
                 raise ValueError(
                     f"Feedback policy violation for {row['sample_id']}; regenerate before export"
                 )
-            target = {"feedback": output["feedback"]}
+            # Same key order as the lecturer's sample submission: labels, then feedback.
+            target = {}
             labels = output.get("taxonomy_error", output.get("error_labels"))
             if labels is not None:
                 target["taxonomy_error"] = list(labels)
+            target["feedback"] = output["feedback"]
         exported.append({"sample_id": row["sample_id"], "output": target})
     errors = validate_challenge_predictions(exported, task, require_task3_taxonomy=require_task3_taxonomy)
     if errors:

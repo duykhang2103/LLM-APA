@@ -8,6 +8,8 @@ This is a **four-week university product-research project**, with about two week
 
 Start with [RUN_EXPERIMENTS.md](docs/project/RUN_EXPERIMENTS.md), [the QLoRA notebook](notebooks/train_qwen_qlora.ipynb), or [the prompting notebook](notebooks/run_prompting.ipynb).
 
+**Prompting submission (Task 1–3, one command):** see [prompting/README.md](prompting/README.md).
+
 This README is written as a beginner guide. It explains what the project means, what each group should do, how the two technical approaches connect, and what evidence the team must save.
 
 ## Quick start for the scored Task 1 and Task 2 runs

@@ -1,0 +1,58 @@
+# "Model" của hướng Prompting sau khi tối ưu (bản đã nộp leaderboard ngày 2026-11-25).
+#
+# Hướng prompting không huấn luyện trọng số nào. Phần đã tối ưu là cách dùng một
+# LLM có sẵn: model, prompt, RAG, bằng chứng biên dịch/test và hậu xử lý.
+# File này chốt toàn bộ các lựa chọn đó. prompting/run_prompting.py đọc file này
+# để chạy lại đúng pipeline đã nộp, nên muốn đổi gì thì đổi ở đây.
+
+name: prompting-qwen35-9b-p2
+git_commit: d76618e            # commit trên main chứa code của bản nộp
+public_scores:                 # điểm leaderboard public của bản nộp
+  task1_qwk: 0.8748
+  task2_macro_f1: 0.2917
+  task3_llm_judge: 0.3948
+
+llm:                           # LLM chấm bài (cả 3 task)
+  model: Qwen/Qwen3.5-9B       # open-weight 9B; DeepInfra không có Qwen3.5-4B
+  base_url: https://api.deepinfra.com/v1/openai
+  api_key_env: DEEPINFRA_API_KEY
+  reasoning_effort: none       # tắt suy luận ẩn để trả lời gọn trong giới hạn token
+  temperature: 0               # trong configs/task*/rag.yaml (do_sample: false)
+  price_usd_per_million: [0.10, 0.15]   # prompt, completion; dùng cho --max-cost
+
+test_generation:               # bước sinh test (chỉ đọc đề, không thấy code sinh viên)
+  config: configs/testgen/groq.yaml     # openai/gpt-oss-120b qua Groq, cần GROQ_API_KEY
+  suites_dir: outputs/testsuites        # bộ test đã sinh; có sẵn thì không gọi lại API
+
+retrieval:                     # RAG
+  method: rag                  # P2 = RAG + bằng chứng biên dịch/test
+  index: bm25
+  key: code
+  k: 1
+  pool: 32 bài train có nhãn (sample_dataset)
+
+task1:
+  prompt: tasks/task1_grading/prompts/v004.txt
+  submit: submission_task1.json          # P2 thuần (không guard), public 0.8748
+  max_cost_usd: 0.6
+  cache: outputs/di9b-cache-2.jsonl
+
+task2:
+  list_prompt: tasks/task2_errors/prompts/v004.txt
+  per_label_prompt: tasks/task2_errors/prompts/per_label_v001.json
+  calibration: scripts/calibrate_task2.py   # luật dựa trên bằng chứng, áp cho cả 2 cách hỏi
+  per_label_threshold: 0.5
+  per_label_workers: 8
+  per_label_max_cost_usd: 2.0
+  combine_rare_labels: ["Lỗi thuật toán", "Lỗi hard-code", "Lỗi style"]
+  # cache của cách hỏi từng nhãn: outputs/api_cache-perlabel.jsonl (mặc định của run_all.py)
+
+task3:
+  prompt: v007                 # tasks/task3_feedback/prompts/v007.txt
+  diagnosis_prompt: v004
+  diagnosis_tokens: 384
+  labels_from: task2_list_calibrated   # nhãn lấy từ pred_task2_calib.json của bước Task 1/2
+  shards: 6
+  timeout_seconds: 300
+  max_cost_usd: 0.6
+  cache: outputs/t3-pub.jsonl  # mỗi shard ghi outputs/t3-pub-task3-shard<k>.jsonl
