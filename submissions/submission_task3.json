@@ -1,0 +1,3097 @@
+[
+  {
+    "sample_id": "Class03-Final-1-S01",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm exercise_1 sai logic khi so sánh từng ký tự và trả về quá sớm, khiến kết quả không phải là tiền tố chung dài nhất có thể."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S02",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do main chỉ đọc một chuỗi không có dấu cách nên không tách được tên, dẫn đến logic so sánh login bị sai hoàn toàn. Em nên dùng cin >> s1 >> s2 để nhập riêng từng tên trước khi xử lý."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S03",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do logic lấy ký tự đầu tiên của họ thay vì ký tự đầu tiên của tên đệm, khiến kết quả không phải là chuỗi con đầu tiên ngắn nhất có thể."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S04",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S05",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S06",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S07",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S08",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Em nhập sai dòng thứ hai nên biến n nhận được ký tự xuống dòng thay vì tên họ, khiến kết quả in ra bị lỗi. Em cần dùng cin >> n thay vì getline để đọc đúng chuỗi."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S09",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm username xử lý sai logic so sánh ký tự và bỏ sót cách ghép tiền tố đúng, khiến đầu ra không khớp yêu cầu. Em nên viết lại thuật toán để duyệt các độ dài tiền tố hợp lệ và chọn kết quả nhỏ nhất theo từ điển."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S10",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai hoàn toàn do logic xử lý chuỗi và nhập/xuất lỗi: biến b khởi tạo rỗng nhưng vòng lặp bắt đầu từ i=1 bỏ qua ký tự đầu, điều kiện gán và so sánh sai khiến đầu ra chỉ là ký tự đầu tiên của tên đầu tiên kèm xuống dòng."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S11",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S12",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai ở vòng lặp so sánh ký tự; điều kiện `s[idx] <= s[lc]` khiến nó lấy quá nhiều ký tự từ tên đầu tiên thay vì dừng đúng lúc, dẫn đến kết quả dài hơn mong đợi trong các trường hợp biên."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S13",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S14",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S15",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài làm của em còn lỗi nhập/xuất, lỗi logic, lỗi thuật toán."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S16",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm tienTo sai logic khi lấy ký tự đầu tiên rồi lại lặp từ đầu, khiến kết quả bị trùng và sai vị trí."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S17",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S18",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S19",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S20",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Chức năng nhập liệu in ra lời nhắc thay vì chỉ đọc dữ liệu, khiến kết quả đầu ra bị kèm theo văn bản không mong muốn."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S21",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S22",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S23",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do thuật toán tìm vị trí cắt không xét hết các trường hợp, dẫn đến kết quả không phải login sớm nhất; vòng lặp kiểm tra ký tự bị dừng sớm và logic ghép chuỗi thiếu chính xác."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S24",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do hàm Process in ra nhiều chuỗi thay vì chỉ chuỗi ngắn nhất; lỗi ở vòng lặp in kết quả và logic so sánh chưa đúng yêu cầu tìm login sớm nhất."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S25",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S26",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic"
+      ],
+      "feedback": "P1 sai do không đọc dữ liệu từ stdin và không in kết quả ra stdout nên mọi test đều trả về chuỗi rỗng."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S27",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S28",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S29",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do thuật toán tìm ký tự nhỏ nhất không đúng yêu cầu ghép tiền tố; đoạn kiểm tra `str[i] <= temp` trong vòng lặp thứ hai gây ra lỗi logic khi xử lý các ký tự sau khoảng trắng, dẫn đến kết quả sai trên các test case biên như 'aaaaaaaaaa aaaaaaaaaa' và 'mnbvcxzlkj poiuytrewq'."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S30",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm getWord sai logic khi khởi tạo mảng name chỉ có 2 phần tử nhưng lặp qua toàn bộ chuỗi, gây tràn bộ nhớ. Vòng lặp so sánh ký tự không đúng thuật toán tìm tiền tố nhỏ nhất, dẫn đến kết quả sai hoàn toàn."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S31",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S32",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài làm của em không giải quyết đề bài về tạo login mà lại viết code xử lý ma trận, dẫn đến kết quả trả về chuỗi rỗng cho mọi test."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S33",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai ở vòng lặp kiểm tra ký tự: em so sánh hoten[i] với biến temp đã cập nhật sai vị trí, khiến điều kiện dừng và lọc ký tự bị lệch so với yêu cầu tìm login ngắn nhất."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S34",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S35",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic"
+      ],
+      "feedback": "P1 sai: biến ten và ho không được khởi tạo nên chứa ký tự rác, dẫn đến kết quả trả về là chuỗi rỗng thay vì tên đăng nhập hợp lệ."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S36",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S37",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S38",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S39",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S40",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S41",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy thành công mọi test, logic ghép tiền tố đúng và kết quả đầu ra chính xác theo yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S42",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S43",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S44",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S45",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp gán mảng ds chỉ chạy đến độ dài tên họ, khiến các phần tử sau đó là chuỗi rỗng và kết quả in ra là chuỗi rỗng. Em nên sửa điều kiện vòng lặp để duyệt đủ tất cả các tổ hợp tiền tố có thể."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S46",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S47",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S48",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi style"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S49",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S50",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Vòng lặp lồng nhau trong hàm main chạy vô tận do điều kiện i < Name.length() không tăng giá trị i, khiến chương trình treo và timeout."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S51",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài làm của em còn lỗi logic, lỗi thuật toán."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S52",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy đúng mọi test, logic ghép tiền tố và so sánh từ điển đều chính xác."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S53",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S54",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S55",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S56",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S57",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi thuật toán",
+        "Lỗi style"
+      ],
+      "feedback": "Bài làm của em bị lỗi thuật toán và style. Em nên kiểm tra lại logic tìm chuỗi con nhỏ nhất và cách đặt tên biến để tránh lỗi style nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S58",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai ở vòng lặp tìm vị trí cắt; điều kiện so sánh sai khiến em lấy quá nhiều ký tự đầu tiên thay vì tìm ký tự nhỏ nhất hợp lệ."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S59",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S60",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Vòng lặp vô hạn do điều kiện while (i == 0 || j == 0) không bao giờ sai khi i và j đều bằng 0, khiến chương trình treo và timeout."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S61",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S62",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do hàm tạo từ khóa chỉ lấy ký tự đầu mỗi từ thay vì lấy tiền tố dài nhất có thể; kết quả trả về không phải login sớm nhất theo thứ tự bảng chữ cái."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S63",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Chức năng xuli chưa được triển khai nên chương trình không thể chạy được."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S64",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai ở vòng lặp tìm vị trí cắt do so sánh ký tự sai logic, khiến trường hợp nhiều ký tự giống nhau bị xử lý không đúng và in ra chuỗi quá dài."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S65",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S66",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S67",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S68",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp gán chỉ chạy đến độ dài tên, bỏ sót các tổ hợp dài hơn và mảng ds bị tràn. Em nên tăng giới hạn vòng lặp và kích thước mảng để bao quát hết các tiền tố có thể."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S69",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic"
+      ],
+      "feedback": "Lỗi biên dịch ở dòng 22 do biến name chưa được khai báo, em chỉ dùng getline(cin, name) mà quên định nghĩa tên biến này trước đó."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S70",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S71",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài làm của em còn lỗi nhập/xuất, lỗi thuật toán."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S72",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Final-1-S73",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S03",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S04",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S05",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S06",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S07",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S09",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S10",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy đúng mọi test, logic tính Armstrong số hoàn toàn chính xác."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S11",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm Ams sai logic khi tính tổng: vòng lặp cuối cộng dồn giá trị ban đầu của mảng arr thay vì tổng lũy thừa các chữ số, khiến kết quả luôn sai. Em nên sửa lại để tính đúng tổng lũy thừa theo số chữ số."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S13",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S14",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S15",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp trong hàm Ammstrong chỉ lấy được chữ số cuối cùng thay vì đếm số chữ số và tính tổng lũy thừa, khiến kết quả luôn sai với các số như 153. Em nên sửa lại logic vòng lặp để đếm đúng số chữ số và tính tổng lũy thừa của từng chữ số theo yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S17",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm tong đọc lại biến n từ đầu nên mất giá trị ban đầu, đồng thời vòng lặp tính lũy thừa chỉ nhân a với chính nó thay vì lũy thừa đúng số mũ, khiến kết quả sai và gây timeout. Em nên tách hàm tính số chữ số ra, lưu n ban đầu để tính tổng lũy thừa chính xác theo công thức Armstrong."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S18",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S19",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt, nhưng em dùng hàm pow trong khi đề bài cấm sử dụng. Em nên thay thế hàm pow bằng vòng lặp để tính lũy thừa."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S20",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S21",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm Armstrong sai do vòng lặp tính lũy thừa dùng nhân lặp n lần thay vì lũy thừa đúng, khiến tổng tính toán bị sai so với giá trị thực tế của số Armstrong. Em nên sửa logic tính lũy thừa bằng cách dùng vòng lặp con đúng số mũ hoặc hàm lũy thừa phù hợp thay vì nhân liên tiếp."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S23",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S25",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S26",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S27",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do dòng đầu tiên khai báo biến sai cú pháp và dòng tiếp theo thiếu biến, khiến chương trình không thể chạy được."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S28",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S29",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S30",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S32",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S34",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S35",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S36",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Em sai logic tính số Armstrong: hàm main thiếu int, vòng lặp đếm số chữ số sai cách và vòng lặp tính tổng lũy thừa dùng sai biến i cũng như bỏ qua việc nâng lũy thừa. Em nên sửa lại logic đếm số chữ số và tính tổng lũy thừa đúng theo công thức."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S38",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp tính số chữ số dùng biến n đã bị chia hết về 0, khiến bước tính tổng lũy thừa chạy sai và không đúng với số gốc. Em nên lưu số gốc vào biến khác trước khi chia để đếm chữ số."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S39",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S40",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S41",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S43",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S45",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S46",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S47",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S48",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S49",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S50",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S51",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S52",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S53",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm arms sai logic khi tính lũy thừa bằng cách nhân lặp thay vì dùng hàm mũ, khiến kết quả sai cho các số như 153 và 370. Em nên dùng vòng lặp đúng cách tính $a^d$ hoặc hàm lũy thừa hợp lệ."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S54",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S55",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S56",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S58",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S60",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S61",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S62",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S63",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S64",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp đếm số chữ số dùng biến n thay vì temp nên làm hỏng giá trị ban đầu, cộng thêm việc tính lũy thừa cố định mũ 4 thay vì số chữ số thực tế và in ra kết quả sai định dạng. Em nên sửa lại logic tính số chữ số bằng biến tạm, dùng vòng lặp để tính lũy thừa đúng số mũ và in ra True hoặc False."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S66",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S67",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S69",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S70",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp tính lũy thừa bị lặp lại nhiều lần gây tràn số và sai kết quả, dẫn đến không kiểm tra đúng Armstrong number. Em nên dùng hàm lũy thừa hoặc tích lũy đúng số lần theo số chữ số để tránh tràn và sai logic."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S71",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S72",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S73",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-1-S74",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S01",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S02",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do dùng mảng làm chỉ mục với giá trị âm hoặc quá lớn, gây lỗi biên dịch hoặc truy cập ngoài vùng nhớ. Em nên kiểm tra điều kiện giá trị phần tử trước khi dùng làm chỉ mục."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S03",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy thành công mọi test, logic loại bỏ phần tử trùng lặp đúng yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S04",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S05",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Em sai logic khi in mảng: biến index tăng thêm 1 trước khi in nên em in thêm phần tử 0 cuối cùng."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S06",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S07",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S08",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic"
+      ],
+      "feedback": "Hàm CheckUnique sai logic khi xóa phần tử trùng lặp, gây mất dữ liệu và sai chỉ số mảng. Em nên kiểm tra lại điều kiện so sánh và cách cập nhật chỉ số trong vòng lặp."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S09",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S10",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai vì hàm RemoveArr chỉ in mảng sau khi xử lý mà không in số lượng phần tử duy nhất ra màn hình. Em nên thêm dòng in kết quả đếm số phần tử trước khi gọi hàm in mảng."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S11",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S12",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S13",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm msin() không có lệnh trả về nhưng kiểu hàm là int, khiến chương trình không chạy được. Em nên thêm lệnh return k; vào cuối hàm để trả về kết quả."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S14",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm RemoveDuplicatesFromArray sai logic khi chỉ so sánh phần tử liền kề nên không loại được các phần tử trùng lặp cách xa nhau, dẫn đến kết quả trả về số lượng và mảng không đúng yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S15",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai vì em chỉ đọc dữ liệu vào mảng mà không thực hiện thuật toán loại bỏ phần tử trùng lặp nên chương trình không in kết quả."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S16",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S17",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy thành công mọi test, logic loại bỏ phần tử trùng lặp đúng yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S18",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S19",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hard-code"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S20",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hard-code"
+      ],
+      "feedback": "Bài có lỗi logic và hard-code ở hàm main. Em nên xóa phần in mảng gốc và mảng sau khi xử lý, đồng thời thay thế bằng việc đọc dữ liệu từ đầu vào và in kết quả theo yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S21",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi edge case"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S22",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do dùng mảng làm chỉ mục với giá trị âm hoặc quá lớn gây lỗi truy cập, đồng thời thuật toán chỉ giữ lại phần tử lớn nhất thay vì loại bỏ trùng lặp. Em nên kiểm tra lại cách xử lý giá trị âm và logic lọc phần tử duy nhất."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S23",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S24",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hàm"
+      ],
+      "feedback": "Hàm Bosotrung có lỗi cú pháp trong điều kiện vòng lặp và thiếu dấu chấm phẩy, khiến chương trình không biên dịch được."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S25",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do khai báo mảng có kích thước biến ở phạm vi toàn cục và thiếu khai báo hàm main trong khối Count_And_Delete."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S26",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S27",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S28",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp lồng nhau và logic gán sai khiến mảng bị ghi đè nhiều lần, kết quả in ra không đúng yêu cầu. Em nên viết lại thuật toán dùng mảng phụ hoặc kiểm tra trùng lặp trước khi lưu vào mảng kết quả."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S29",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic"
+      ],
+      "feedback": "P1 sai do hàm InputArray in số n ra màn hình trước khi nhập mảng, gây lỗi định dạng đầu ra. Em nên xóa dòng in số n trong hàm đó."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S30",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S31",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Chương trình chưa chạy được do thiếu phần thân hàm main và các câu lệnh xử lý dữ liệu, dẫn đến lỗi biên dịch khi gọi hàm chưa định nghĩa."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S32",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở dòng 25 do thiếu dấu chấm phẩy sau lệnh khai báo biến, khiến trình biên dịch không thể xử lý đoạn code tiếp theo."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S33",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy đúng tất cả các test, logic loại bỏ phần tử trùng lặp và in kết quả đều chính xác."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S34",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm main không khai báo kiểu trả về và thiếu dấu ngoặc đóng, khiến chương trình không thể chạy được. Em nên sửa lại khai báo hàm main để trả về int và bổ sung các dấu ngoặc còn thiếu."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S35",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp in bắt đầu từ i=1 nên bỏ sót phần tử đầu tiên và in dư khoảng trắng cuối cùng."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S36",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Hàm remove in ra kết quả sai do điều kiện so sánh dùng toán tử gán thay vì so sánh, khiến mảng bị ghi đè và vòng lặp lồng nhau in ra dữ liệu thừa. Em nên đổi toán tử gán thành toán tử so sánh để kiểm tra đúng giá trị phần tử."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S37",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case"
+      ],
+      "feedback": "Em sai ở hàm sub1 khi dùng mảng f làm bộ nhớ đệm cho các giá trị a[i] có thể lên tới 10^9, gây lỗi logic và tràn bộ nhớ. Em nên dùng cách khác để lưu trạng thái các phần tử đã xuất hiện."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S38",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy đúng tất cả các test, bao gồm cả trường hợp biên giới và dữ liệu lớn, nên kết quả là hoàn chỉnh."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S39",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S40",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi style"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S41",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S42",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S43",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy thành công trên tất cả các test case biên dịch và kiểm thử, logic loại bỏ phần tử trùng lặp đã hoạt động chính xác theo yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S44",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S45",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy thành công mọi test, logic loại bỏ trùng lặp chính xác và giữ nguyên thứ tự xuất hiện đầu tiên."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S46",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở dòng 36 do khai báo mảng `a` thiếu dấu ngoặc đơn sau tên biến `n`, khiến trình biên dịch không thể xác định kiểu dữ liệu."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S47",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Em làm đúng yêu cầu bài toán, xử lý mảng và loại bỏ phần tử trùng lặp chính xác trên mọi trường hợp biên."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S48",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp kiểm tra chỉ so sánh phần tử liền kề, bỏ sót các phần tử trùng không đứng cạnh nhau nên kết quả luôn sai. Em nên dùng mảng tạm hoặc thuật toán hai con trỏ để kiểm tra toàn bộ mảng trước khi thêm vào kết quả."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S49",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S50",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S51",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm remove sai logic khi so sánh phần tử liền kề thay vì kiểm tra toàn bộ mảng, dẫn đến việc xóa nhầm các phần tử duy nhất và làm lệch kích thước mảng."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S52",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy đúng tất cả các test, logic loại bỏ phần tử trùng lặp hoạt động chính xác theo yêu cầu đề bài."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S53",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy thành công mọi test, logic loại bỏ trùng lặp đúng yêu cầu và giữ nguyên thứ tự xuất hiện đầu tiên."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S54",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp xóa phần tử lặp lại không điều chỉnh đúng chỉ số j, gây lỗi truy cập ngoài mảng và sai kết quả. Em nên kiểm tra lại điều kiện dừng và cách cập nhật chỉ số trong vòng lặp con."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S55",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi mảng/chuỗi",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp trong nhap chạy đến n+1 gây tràn mảng và xuat không xử lý đúng logic loại trùng nên in sai số lượng cũng như giá trị mảng."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S56",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài không biên dịch được do thiếu hàm main và phần thân chương trình hoàn toàn trống rỗng."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S57",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do thuật toán xóa phần tử trùng lặp bằng cách dịch chuyển mảng gây mất dữ liệu và thay đổi thứ tự; lỗi logic này khiến kết quả sai ở các test bình thường. Em nên dùng mảng mới hoặc kiểm tra kỹ trước khi xóa để giữ nguyên thứ tự xuất hiện."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S58",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi mảng/chuỗi",
+        "Lỗi edge case"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S59",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S60",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai hoàn toàn do thuật toán chỉ đếm số phần tử trùng lặp thay vì xóa chúng khỏi mảng, dẫn đến không in ra kết quả. Em nên dùng mảng mới hoặc dịch chuyển phần tử để loại bỏ trùng lặp đúng yêu cầu."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S61",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do kiểm tra trùng lặp không xử lý đúng giá trị 0, dẫn đến kết quả sai ở các test bình thường. Em nên điều kiện kiểm tra để loại bỏ 0 khỏi danh sách các phần tử đã xuất hiện."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S62",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Chức năng in ra số phần tử duy nhất bị thiếu, vòng lặp chỉ in giá trị mảng mà không kiểm tra trùng lặp nên kết quả sai hoàn toàn."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S63",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Bài có lỗi biên dịch do mảng frequency và b không khởi tạo đúng với giá trị âm, gây lỗi logic khi xử lý dữ liệu đầu vào. Em nên dùng map hoặc mảng có chỉ số dịch chuyển để lưu tần số các số nguyên âm."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S64",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S65",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp kiểm tra trùng lặp chỉ dừng sau một lần so sánh, khiến các phần tử xuất hiện nhiều lần vẫn được giữ lại trong mảng kết quả. Em nên sửa điều kiện dừng vòng lặp để kiểm tra toàn bộ các phần tử đã có trong mảng trước khi thêm phần tử mới."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S66",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi"
+      ],
+      "feedback": "Em sai logic ở hàm process: mảng cnt dùng làm cờ đánh dấu nhưng không khởi tạo về 0 trước khi đọc dữ liệu, khiến mọi phần tử đều bị coi là trùng lặp và chỉ in ra phần tử đầu tiên. Em nên khởi tạo mảng cnt về 0 trước khi nhập dữ liệu để đảm bảo các phần tử duy nhất được ghi nhận đúng."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S67",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Hàm remove sai logic khi so sánh mảng a với mảng b chưa được khởi tạo, dẫn đến việc không loại được phần tử trùng lặp và in ra toàn bộ mảng gốc thay vì mảng đã lọc. Em nên khởi tạo mảng b bằng giá trị đầu tiên của a trước khi duyệt vòng lặp để so sánh chính xác."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S68",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S69",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Bài làm của em chạy thành công trên tất cả các test, bao gồm cả trường hợp biên giới và dữ liệu lớn, nên kết quả là hoàn toàn chính xác."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S70",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi mảng/chuỗi",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "Vòng lặp in kết quả bị đặt nhầm vị trí và có lệnh return 0 ngay trong thân vòng lặp khiến chương trình chỉ in một phần mảng rồi dừng lại."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S71",
+    "output": {
+      "taxonomy_error": [],
+      "feedback": "Tốt."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S72",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài còn lỗi, em kiểm tra lại nhé."
+    }
+  },
+  {
+    "sample_id": "Class03-Midterm-2-S73",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Hàm RemoveDuplicate sai logic do vòng lặp while không kiểm tra điều kiện thoát, khiến chương trình chạy vô hạn và không xử lý được mảng."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S01",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "Bài không biên dịch được do hàm prob1 và prob2 thiếu lệnh trả về giá trị, ngoài ra các dòng dùng getline với tham số kiểu string cũng sai cú pháp."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S05",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu dấu chấm phẩy sau khai báo struct Node và General."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S06",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hàm"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm prob1 không trả về mảng General mà gán cho biến string. Các hàm prob2, prob3, prob4 cũng chưa có thân hàm nên không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S08",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do khai báo dòng đầu tiên thiếu toán tử mở ngoặc và dùng sai tên biến; P2, P3, P4 không làm vì P1 lỗi biên dịch khiến toàn bộ bài không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S09",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi"
+      ],
+      "feedback": "P1 sai do thiếu giá trị trả về và gán chuỗi vào biến nguyên; P2 sai vì khởi tạo mảng chưa biết kích thước; P3 lỗi logic do vòng lặp không cập nhật con trỏ."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S10",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở dòng 25, 26 và 58 do sinh viên dùng ký tự '/n' thay vì '\\n' trong hàm getline, khiến hàm không tìm thấy ký tự xuống dòng để ngắt chuỗi."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S15",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do đọc dữ liệu không đúng cấu trúc CSV nên mảng General bị lỗi logic; P3 không làm vì thiếu thân hàm và báo lỗi biên dịch."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S16",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do đếm dòng không bỏ qua dòng trống và gán sai biến tổng số trận; P2 sai vì khởi tạo node đầu tiên rồi mới gán next; P4 crash khi xóa node đầu do vòng lặp kiểm tra điều kiện sai."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S17",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do khai báo mảng kiểu General thiếu khởi tạo và hàm trả về nullptr thay vì mảng đã gán giá trị; P2, P3, P4 không biên dịch được do thiếu thân hàm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S18",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu include string và thiếu dấu chấm phẩy sau khai báo struct General."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S19",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở hàm prob2 do khởi tạo Node bằng cấu trúc General và biến curr chưa khai báo trong hàm prob4 khiến toàn bộ bài không biên dịch được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S20",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm prob1 thiếu giá trị trả về và thiếu dấu đóng ngoặc, khiến toàn bộ bài không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S24",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do biến line chưa khai báo và hàm trả về thiếu biểu thức; lỗi biên dịch khiến P2, P3, P4 không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S25",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai vì hàm trả về con trỏ c chưa khởi tạo nên trả về địa chỉ rác, đồng thời vòng lặp đọc file bị lỗi chỉ số mảng a[i+1] gây tràn bộ nhớ."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S26",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "P1 sai do dùng delimiter sai khi đọc ngày tháng; P2 sai vì AddTail không khởi tạo next cho nút mới; P3 và P4 không biên dịch được do thiếu khai báo hàm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S27",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi"
+      ],
+      "feedback": "P1 sai do dùng stringstream để đọc file thay vì ifstream nên không lấy được dữ liệu; P2, P3, P4 không làm vì hàm chưa được viết."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S28",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hàm"
+      ],
+      "feedback": "P1, P2, P3, P4 không làm: các hàm này để trống nên không thực thi được logic yêu cầu."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S29",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hàm"
+      ],
+      "feedback": "P1, P2, P3, P4 đều không làm vì thiếu thân hàm, gây lỗi biên dịch."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S30",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Lỗi biên dịch ở dòng 54 do khai báo hàm sau khi main, khiến P1, P2, P3, P4 không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S31",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu khai báo struct General và các hàm chưa có thân thực thi, khiến trình biên dịch không thể xử lý."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S32",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do khai báo biến n trùng kiểu và dùng hàm cntline chưa định nghĩa."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S33",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic"
+      ],
+      "feedback": "P1 không đọc dữ liệu và trả về con trỏ sai; P2, P3, P4 không được định nghĩa hàm nên không biên dịch được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S35",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Lỗi biên dịch ở hàm prob3 do thiếu giá trị trả về khi điều kiện kiểm tra đầu tiên không thỏa mãn, khiến chương trình không thể chạy được các bài toán tiếp theo."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S36",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P2 sai do khởi tạo con trỏ đầu danh sách rồi gán lại thành nullptr, làm mất dữ liệu ngay lập tức. P3 sai vì chỉ so sánh tuổi người đầu tiên với người kế tiếp, bỏ qua các trường hợp khác. P4 sai do logic xóa nút đầu tiên và xử lý vòng lặp không đúng cách, gây lỗi truy cập."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S37",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở hàm prob1 do dùng biến infile_isopen chưa khai báo, gọi hàm empty sai trên fstream và thiếu dấu chấm phẩy."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S38",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "P1 sai do đếm dòng không đúng và khởi tạo n bằng 0 khiến mảng rỗng; P2, P3, P4 không chạy được do P1 lỗi."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S41",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do sinh viên đếm số dòng trước khi phân tích dữ liệu, dẫn đến việc mảng được cấp phát sai kích thước và vòng lặp đọc file bị lệch vị trí so với dữ liệu thực tế."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S42",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở hàm prob1 do thiếu giá trị trả về và khai báo lại biến n với kiểu khác."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S43",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do khai báo biến chưa khởi tạo và logic đọc file sai; P2 trả về con trỏ con trỏ rỗng thay vì tạo danh sách; P3 và P4 không thực hiện vì hàm chưa được viết."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S45",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hàm"
+      ],
+      "feedback": "P1, P2, P3, P4 đều sai do hàm chưa có thân thực thi, gây lỗi runtime và timeout."
+    }
+  },
+  {
+    "sample_id": "Class01-Test1-S46",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P3 sai vì điều kiện so sánh thiếu dấu hai chấm, khiến vòng lặp không cập nhật giá trị tối đa khi tìm thấy tuổi lớn hơn."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S01",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do hàm không trả về giá trị và gọi getline sai cú pháp; P2, P3, P4 không làm được vì lỗi biên dịch ở P1 khiến toàn bộ chương trình không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S02",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 đúng; P2 sai do hàm insertNode không kiểm tra điều kiện so sánh khi hai ngày sinh bằng nhau nên cây bị mất cân; P3 sai vì hàm so sánh năm không xử lý đúng trường hợp era khác nhau dẫn đến đếm sai; P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S03",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P2 sai do hàm InsertNode bỏ qua so sánh ngày mất khi hai tướng sinh cùng năm, dẫn đến cây không đúng thứ tự BST. P4 chưa được viết nên không hoạt động."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S04",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 đúng; P2 sai do dùng tên biến 'general' và 'node' viết thường thay vì viết hoa 'General' và 'Node' gây lỗi biên dịch; P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S05",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1, P2, P3, P4 không biên dịch được do dòng khai báo hàm có ký tự số pound (#) ở đầu, khiến trình biên dịch hiểu nhầm là chỉ thị tiền xử lý."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S06",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Bài có lỗi biên dịch ở hàm prob1 do thiếu lệnh trả về vector, khiến toàn bộ bài không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S07",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hard-code"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu dấu chấm phẩy sau khai báo biến string filename trong hàm prob2, khiến toàn bộ bài không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S08",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm prob2 nhận vector nhưng em khai báo nhận General, khiến main gọi sai kiểu. Ngoài ra, hàm prob1 chỉ đọc tên và quốc tịch rồi bỏ qua các dòng còn lại nên dữ liệu không đầy đủ."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S09",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch xảy ra do khai báo struct General nằm sau struct Node, khiến trình biên dịch không nhận diện được loại dữ liệu khi định nghĩa Node."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S10",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 đúng; P2 sai do hàm Insert trả về con trỏ mới nhưng không gán lại cho tham số, làm cây bị mất liên kết; P3 sai vì so sánh năm không xét tháng/ngày khi bằng nhau; P4 crash do Remove sửa sai con trỏ cha khi xóa node có hai con."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S11",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do vòng lặp đọc file không khởi tạo mảng và lặp lại lệnh đọc dữ liệu nhiều lần; P2 sai logic so sánh ngày sinh khi có cùng năm; P3 không đếm đúng do so sánh chuỗi không khớp định dạng; P4 gây timeout do gọi đệ quy không cần thiết và xóa node sai cách."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S12",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở hàm prob3 do thiếu giá trị trả về khi gặp nút rỗng, khiến chương trình không biên dịch được nên các câu sau không được chấm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S13",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do gán vector cho biến kiểu General và truy cập thành phần born trên vector thay vì phần tử."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S14",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do vòng lặp đọc file vượt quá số dòng thực tế gây lỗi truy cập mảng; P2, P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S15",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic"
+      ],
+      "feedback": "P1 sai do khai báo biến trong điều kiện thiếu khởi tạo và hàm không trả về giá trị; P2, P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S16",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 đúng; P2 sai do so sánh năm sinh không xét đến kỷ nguyên AD/BC dẫn đến cây sai; P3 và P4 không làm do thiếu hàm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S17",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Bài có lỗi biên dịch do include sai thư viện sstring thay vì string. Ngoài ra, hàm insert trong prob2 gán nhầm vào con trỏ trái thay vì phải khi so sánh năm sinh lớn hơn, gây lỗi logic."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S18",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do hàm không trả về giá trị như khai báo, gây lỗi biên dịch khiến toàn bộ bài không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S19",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do dùng cin thay vì getline để đọc dữ liệu, gây lỗi logic và timeout; P2, P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S20",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "P1 sai do hàm trả về vector rỗng vì vòng lặp đọc file bị lỗi logic khi xử lý chuỗi ngày tháng; P2 sai do hàm insert không cập nhật con trỏ root nên cây không được tạo đúng; P3 và P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S21",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do thiếu biến i và dấu ngoặc trong vòng lặp; P2 sai vì dùng biến filename chưa khai báo và hàm prob2 chưa trả về giá trị."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S22",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do hàm không trả về giá trị như khai báo, khiến toàn bộ bài không biên dịch được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S23",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do sinh viên khai báo mảng Date và General với kích thước count nhưng không khởi tạo vector generals để trả về, dẫn đến trả về mảng địa chỉ con trỏ không hợp lệ. P2 sai vì sinh viên chỉ tạo một nút gốc cố định và không thực hiện logic chèn vào cây."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S24",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do đọc file không đúng định dạng, tách chuỗi ngày tháng sai khiến dữ liệu bị lỗi; P2, P3, P4 không làm vì P1 sai."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S25",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do cố truy cập mảng chưa khởi tạo; P2 sai thuật toán xây dựng cây và vòng lặp lồng nhau; P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S26",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "P1, P2, P3, P4 đều sai do thân hàm chưa có nội dung thực thi, dẫn đến lỗi logic và vòng lặp vô hạn."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S27",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu khai báo struct General trước khi dùng và hàm prob1 không có giá trị trả về."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S28",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Lỗi biên dịch ở dòng 28 do vòng lặp `while()` thiếu điều kiện, khiến trình biên dịch không thể xác định biểu thức."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S29",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm",
+        "Lỗi edge case",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 đúng; P2 sai do hàm insert không khởi tạo con trỏ r và gán lại r sau khi tạo nút mới; P3 không làm; P4 không làm do lỗi biên dịch và thiếu hàm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S30",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do định nghĩa lại hàm saveTree, buildTree và balanceTree ở hai vị trí khác nhau trong file."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S31",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do gán tháng bằng biến ngày và năm cũng dùng biến ngày; P2 sai vì khởi tạo cây chỉ với phần tử đầu tiên nên bỏ sót các tướng còn lại."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S32",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do thiếu dấu chấm phẩy sau khai báo struct và khai báo lại biến filename làm lỗi biên dịch; P2, P3, P4 không làm được vì P1 sai."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S33",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hàm"
+      ],
+      "feedback": "P2, P3, P4 không làm vì em chưa khai báo struct Node và các hàm giải quyết bài toán này bị bỏ trống."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S34",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1, P2, P3, P4 đều không chạy do lỗi biên dịch: thiếu khai báo struct General trước khi sử dụng trong hàm prob1."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S35",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do dòng 40 gọi hàm getline thiếu tham số thứ ba để chỉ ký tự kết thúc dòng, gây lỗi biên dịch khiến các câu sau không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S36",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do hàm parseDate bỏ qua trường era khi đọc chuỗi; P2 sai vì chỉ tạo node gốc mà không gán cây con; P3 không làm; P4 sai thuật toán xóa node do logic duyệt và xóa không đúng cách."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S37",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do hàm không trả về giá trị; P2 sai vì khai báo hàm trả về void thay vì Node*; P3 và P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S38",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic"
+      ],
+      "feedback": "Hàm prob1 không trả về giá trị như khai báo, gây lỗi biên dịch khiến toàn bộ bài không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S39",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do khai báo mảng động `General a[n]` với `n` chưa xác định và hard-code tên file, khiến hàm không đọc được dữ liệu thực tế; P2, P3, P4 không làm được vì P1 thất bại."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S40",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm prob1 được gọi trong main nhưng chưa có định nghĩa trước đó."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S41",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P2 sai do so sánh ngày sinh ngược logic khiến cây bị đảo ngược; P4 sai vì xóa theo thứ tự ngược làm mất dữ liệu cần giữ lại."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S42",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic"
+      ],
+      "feedback": "P1, P2, P3, P4 đều sai do thân hàm chưa được viết, chỉ có khai báo nên không thực thi được logic."
+    }
+  },
+  {
+    "sample_id": "Class01-Test2-S43",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic"
+      ],
+      "feedback": "P1 sai do hàm getline dùng ký tự phân cách sai khiến đọc dữ liệu lệch; P2 sai logic so sánh năm sinh khiến cây nhị phân tìm kiếm không đúng thứ tự."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S01",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi edge case",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do mở file sai tên và dùng toán tử >> thay vì getline; P2 sai vì khởi tạo con trỏ head không đúng cách; P3 và P4 không làm được do lỗi biên dịch từ P1."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S02",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do hàm countRow đếm dòng không chính xác khi bỏ qua dòng đầu tiên và dùng sai delimiter '\\n' trong getline; P2 sai vì khởi tạo con trỏ head không đúng cách dẫn đến truy cập ngoài vùng nhớ; P3 và P4 không làm nên không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S03",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm",
+        "Lỗi edge case",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do gán vào chỉ số mảng vượt quá kích thước và tăng n sau khi gán; P2 sai vì khởi tạo con trỏ next chưa null và truy cập chỉ số mảng sai; P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S04",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do dùng stringstream với tên file thay vì mở file để đọc dòng; P2 sai vì vòng lặp while(head) không tăng i nên vô hạn lặp; P3 và P4 không làm nên không biên dịch được do thiếu thân hàm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S05",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai vì không đọc file theo từng dòng nên dữ liệu bị thiếu; P2, P3, P4 không biên dịch được do thiếu khai báo hàm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S06",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 đúng; P2 đúng; P3 đúng; P4 sai do vòng lặp kiểm tra danh sách tướng không duyệt hết mảng động và logic xóa nút đầu tiên bị sai khiến con trỏ bị lỗi."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S07",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do khai báo struct Battle sau khi dùng trong hàm splitData và biến t chưa định nghĩa."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S08",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm",
+        "Lỗi edge case",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do hàm đếm dòng dùng ký tự xuống dòng làm điều kiện dừng khiến số dòng bị thiếu; P2 không làm vì thiếu thân hàm và gọi lại prob1 với file cứng; P3, P4 không làm do thiếu thân hàm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S09",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do hàm đếm dòng bỏ dòng đầu nên thiếu dữ liệu; P3 và P4 không làm vì chưa có thân hàm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S10",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm",
+        "Lỗi edge case"
+      ],
+      "feedback": "P2, P3, P4 chưa làm; P2 thiếu thân hàm gây lỗi logic, P3 và P4 cũng chưa có thân hàm dẫn đến lỗi logic và vòng lặp vô hạn."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S11",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do trả về Battle thay vì Battle*; P2, P3, P4 không xử lý dữ liệu mà mở file sai tên và bỏ qua logic."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S12",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1, P2, P3, P4 không chạy do lỗi biên dịch: khai báo biến sai, gán nullptr cho int và hàm prob1 không có lệnh return."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S13",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm prob1 trả về kiểu Battle thay vì Battle*, thiếu dấu chấm phẩy sau lệnh return và biến fs chưa khai báo."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S14",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do bỏ qua dòng header khi đọc file; P2 sai vì chèn đầu danh sách làm đảo ngược thứ tự; P3 không làm; P4 crash khi xóa node giữa do truy cập con trỏ next của node hiện tại."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S15",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu dấu ngoặc đơn trong vòng lặp của hàm prob2, khiến trình biên dịch không thể xử lý."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S16",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do hàm prob1 in ra lỗi \"Error\" khi file không mở được, gây sai kết quả test rỗng. P2 sai vì hàm addHead bỏ qua trường hợp danh sách rỗng nên không tạo nút đầu. P3 và P4 không biên dịch được do tham số truyền vào không khớp với prototype đã cho."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S17",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi style"
+      ],
+      "feedback": "P1 sai do hàm chỉ gán tên dòng vào trường name mà bỏ qua các trường khác; P2, P3, P4 không làm vì bị comment toàn bộ."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S18",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài nộp chỉ chứa ký tự vô nghĩa nên không biên dịch được, gây lỗi toàn bộ các câu hỏi."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S19",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do gọi getline với 3 tham số trong khi hàm này chỉ nhận tối đa 2; lỗi này khiến không biên dịch được và các câu sau không chạy."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S20",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do khai báo biến file_name trùng tên với tham số và dùng sai kiểu string thay vì fstream, khiến hàm không thể mở file."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S21",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do khai báo mảng có kích thước biến; P2 và P3 không chạy được vì hàm trả về kiểu Battle* nhưng code trả về đối tượng Battle."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S22",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi nhập/xuất",
+        "Lỗi logic",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do in lỗi khi file không mở được, gây lỗi edge case; P2, P3, P4 chưa làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S23",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do gán con trỏ vào biến tĩnh; P2 sai vì vòng lặp kiểm tra điều kiện sai; P3 sai do so sánh chuỗi ngày không đúng; P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S24",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do hàm countline đếm dòng không chính xác khi dùng getline với ký tự xuống dòng; P2 sai vì addHead chèn ngược thứ tự so với mảng đầu vào; P3 và P4 không làm nên không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S25",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do gán con trỏ địa chỉ biến local vào mảng, P2 sai vì khởi tạo con trỏ tmp bằng NULL rồi truyền vào hàm, P3 và P4 không làm được do P1 sai khiến dữ liệu đầu vào cho các câu sau không chính xác."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S26",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do thiếu dấu ngoặc kép trong include, tên biến viết sai và khai báo mảng động không đúng cú pháp; lỗi biên dịch khiến P2, P3, P4 không chạy được."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S27",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu dấu chấm phẩy trong vòng lặp và khai báo biến p không đúng chỗ, khiến trình biên dịch không thể xử lý được."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S28",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu dấu chấm phẩy sau khai báo struct Battle và struct Node, khiến trình biên dịch không thể xử lý các hàm tiếp theo."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S29",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Cấu trúc dữ liệu Battle thiếu dấu chấm phẩy đóng ngoặc nhọn sau struct Node và các dòng khai báo hàm thiếu dấu chấm phẩy kết thúc, khiến trình biên dịch không thể xử lý."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S30",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do không khai báo hàm theo prototype; P2, P3, P4 không làm vì P1 chưa hoàn thành."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S31",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi mảng/chuỗi",
+        "Lỗi hàm",
+        "Lỗi edge case"
+      ],
+      "feedback": "P1 sai do không xử lý dòng cuối file thiếu xuống dòng khiến đọc dữ liệu bị lỗi; P2 sai vì vòng lặp tìm node cuối không cập nhật đúng khi list rỗng; P3 và P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S32",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "Bài có lỗi biên dịch do hàm addTail trả về kiểu void nhưng được gán cho con trỏ Node, khiến prob2 không thể khởi tạo danh sách. Ngoài ra, hàm main thiếu lệnh return giá trị."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S33",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do hàm không trả về mảng động và bỏ qua việc đọc dữ liệu; P2, P3, P4 không làm nên không biên dịch được với driver test."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S34",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1, P2, P3, P4 không biên dịch được do thiếu dấu chấm phẩy sau khai báo struct, dùng sai cin và gọi hàm close thiếu ngoặc đơn."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S35",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai do hàm prob1 chưa được khai báo, em chỉ viết hàm pro1; P2, P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S36",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1, P2, P3, P4 không chạy được do lỗi biên dịch ở dòng khai báo struct thiếu dấu chấm phẩy và biến mới được định nghĩa sai hoa chữ cái."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S37",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "Bài có lỗi biên dịch do gán con trỏ string vào biến int*, khiến P1 không chạy được và kéo theo P2, P3, P4 đều sai."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S38",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do đếm dòng không bỏ qua dòng trống và khởi tạo mảng chưa kiểm tra mở file; P2 sai vì hàm addTail không gán lại con trỏ head khi danh sách rỗng; P3 sai do so sánh năm không đúng logic đề bài; P4 sai vì vòng lặp xóa nút gây lỗi truy cập và vô hạn."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S39",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai vì hàm thiếu khai báo biến mảng và chưa khởi tạo con trỏ; P2, P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S40",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi edge case",
+        "Lỗi thuật toán"
+      ],
+      "feedback": "P1 sai do hàm countLine bỏ qua dòng đầu tiên nên thiếu dữ liệu; P3 sai vì kiểm tra năm tháng ngày riêng lẻ thay vì so sánh chuỗi ngày tháng đầy đủ."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S41",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu khai báo thư viện string và struct Node thiếu dấu chấm phẩy kết thúc."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S42",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "Bài có lỗi biên dịch do thiếu dấu ngoặc nhọn đóng trong prob2, thiếu dấu chấm phẩy kết thúc prob3 và đặt định nghĩa hàm prob4 ở cuối file."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S43",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi logic",
+        "Lỗi vòng lặp"
+      ],
+      "feedback": "Lỗi biên dịch do khai báo struct Battle nằm sau hàm sử dụng nó trong prob1, khiến trình biên dịch không nhận diện được kiểu dữ liệu."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S44",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "P1 sai do thiếu dấu chấm phẩy kết thúc khai báo biến count ở dòng 30, khiến trình biên dịch không thể xử lý các hàm tiếp theo."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S45",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch",
+        "Lỗi hàm"
+      ],
+      "feedback": "Lỗi biên dịch ở dòng 29 do định nghĩa hàm prob1 nằm bên trong main, khiến P1, P2, P3, P4 đều không thể biên dịch."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S46",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai do gán con trỏ vào biến địa phương và dùng hàm fileSize sai cách; P2 sai vì nhận mảng giá trị thay vì con trỏ và có lệnh gọi hàm cứng; P3 không làm do logic sai hoàn toàn; P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S47",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi hàm"
+      ],
+      "feedback": "P1 sai vì hàm không đọc dữ liệu vào mảng và trả về con trỏ null; P2, P3, P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S48",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi logic",
+        "Lỗi vòng lặp",
+        "Lỗi hàm",
+        "Lỗi hard-code"
+      ],
+      "feedback": "P1 sai vì khởi tạo mảng chưa kiểm tra mở file và không gán giá trị n; P2 sai do hàm addtai không trả về con trỏ mới; P3 và P4 không làm."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S49",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài có lỗi biên dịch do dùng kiểu dữ liệu chưa định nghĩa, biến không khai báo và thiếu tên hàm đúng chuẩn."
+    }
+  },
+  {
+    "sample_id": "Class02-Test1-S50",
+    "output": {
+      "taxonomy_error": [
+        "Lỗi biên dịch"
+      ],
+      "feedback": "Bài làm của em không biên dịch được do thiếu khai báo struct Battle và các hàm prob1, prob2, prob3, prob4 cần thiết."
+    }
+  }
+]

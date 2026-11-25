@@ -13,7 +13,7 @@ Thư mục này chứa phần **Prompting** của nhóm cho cả 3 task, gồm:
 |---|---|---|
 | Task 1 | QWK | 0.8748 |
 | Task 2 | macro-F1 | 0.3027 |
-| Task 3 | LLM judge | 0.3948 (bản trước); bản hiện tại (prompt v008) chưa có điểm |
+| Task 3 | LLM judge | 0.4223 |
 
 ## Pipeline
 

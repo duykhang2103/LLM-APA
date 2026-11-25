@@ -19,9 +19,9 @@ Không huấn luyện mô hình. Dùng Qwen3.5-9B qua API, cùng ba thành phầ
 |---|---|---|
 | Task 1: chấm rubric | QWK | 0.8748 |
 | Task 2: phân loại lỗi | macro-F1 | 0.3027 |
-| Task 3: phản hồi | LLM judge | 0.3948 |
+| Task 3: phản hồi | LLM judge | 0.4223 |
 
-Riêng Task 3: lệnh dưới đây chạy prompt mới v008, bản này chưa có điểm. Điểm 0.3948 trong bảng thuộc về prompt trước đó.
+**File đã nộp tương ứng với kết quả tốt nhất:** thư mục [submissions/](submissions/).
 
 Tạo lại cả 3 file nộp bằng một lệnh:
 
@@ -38,7 +38,7 @@ Mỗi file `vxxx` trong `tasks/<task>/prompts/` là **một phiên bản prompt*
 |---|---|---|
 | Task 1 | `tasks/task1_grading/prompts/v004.txt` | thí nghiệm trước/sau, bản v006–v007 không tốt hơn |
 | Task 2 | `tasks/task2_errors/prompts/v004.txt` (liệt kê nhãn), `per_label_v001.json` (nhãn edge case), `per_label_v002.json` (3 nhãn hiếm) | bản v007 kém hơn v004 trên train nên không dùng |
-| Task 3 | `tasks/task3_feedback/prompts/v008.txt` | bản v007 là bản đạt 0.3948 |
+| Task 3 | `tasks/task3_feedback/prompts/v008.txt` | bản v007 đạt 0.3948 (thấp hơn v008) |
 | Sinh test | `tasks/testgen/prompts/` (phiên bản chỉ định trong `configs/testgen/groq.yaml`) | |
 
 Người chạy lại không cần chọn prompt. `prompting/run_prompting.py` đọc đúng các bản trên từ file cấu hình.
