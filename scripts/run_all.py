@@ -111,6 +111,8 @@ def main():
                              "chat_template_kwargs.enable_thinking=false (local runs already do this)")
     parser.add_argument("--extra-body", dest="extra_body_json", type=json.loads, default=None, metavar="JSON",
                         help='Extra API request fields as JSON, e.g. {"reasoning_effort": "none"}')
+    parser.add_argument("--reasoning-effort", metavar="EFFORT",
+                        help="OpenAI-style reasoning_effort field, e.g. none (Requesty); no JSON quoting needed")
     parser.add_argument("--revision", help="Model revision (local: loaded; api: recorded). "
                         "Default for Qwen/Qwen3.5-4B: the fine-tuned model's revision")
     parser.add_argument("--method", choices=["rag", "zero_shot"], default="rag",
@@ -141,6 +143,8 @@ def main():
         args.no_tests = True
     if args.extra_body_json:
         args.extra_body = {**(args.extra_body or {}), **args.extra_body_json}
+    if args.reasoning_effort:
+        args.extra_body = {**(args.extra_body or {}), "reasoning_effort": args.reasoning_effort}
     if args.no_thinking:
         args.extra_body = {**(args.extra_body or {}), "chat_template_kwargs": {"enable_thinking": False}}
     if args.tasks is None:
