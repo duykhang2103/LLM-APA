@@ -130,6 +130,10 @@ def main():
     parser.add_argument("--attn", help="local only: attention implementation, e.g. sdpa (default from rag.yaml)")
     parser.add_argument("--cache-path", help="Response cache file (default outputs/<provider>_cache.jsonl); "
                         "give parallel runs separate files")
+    parser.add_argument("--task2-method", choices=["list", "per_label"], default="list",
+                        help="list = one prompt returns the label list; per_label = one Yes/No question per label "
+                             "(scripts/predict_task2_per_label.py, API only)")
+    parser.add_argument("--workers", type=int, default=8, help="per_label: questions sent at the same time")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
@@ -236,8 +240,18 @@ def main():
     for task in args.tasks:
         pred = out / f"pred_{task}.json"
         extra = ["--task3-labels", task2_labels] if task == "task3" else []
-        run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
-            *evidence_flag, *tests_flag, *extra, *limit)
+        if task == "task2" and args.task2_method == "per_label":
+            cache = Path(args.cache_path or ROOT / "outputs" / "api_cache.jsonl")
+            run("predict_task2_per_label.py", "--input", data, "--output", pred, *evidence_flag, *tests_flag,
+                "--base-url", args.base_url, "--api-key-env", args.api_key_env, "--model", model,
+                *(["--extra-body", json.dumps(args.extra_body)] if args.extra_body else []),
+                *(["--price", *args.price] if args.price else []), "--max-cost", args.max_cost,
+                "--timeout", 120, "--workers", args.workers,
+                "--cache", cache.with_name(cache.stem + "-perlabel.jsonl"), *limit,
+                *(["--labeled"] if args.eval else []))
+        else:
+            run("predict.py", "--config", configs[task], "--input", data, "--output", pred,
+                *evidence_flag, *tests_flag, *extra, *limit)
         if task == "task1" and not args.no_tests:
             # Hybrid copy: compilable follows the real compile result (scripts/guard_task1.py);
             # pred_task1.json stays the pure prompting result.
