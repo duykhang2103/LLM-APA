@@ -34,3 +34,11 @@ def test_hidden_evidence_is_hidden_in_rag_examples_too():
     assert not any(word in prompt for word in ("QUERY_LOG", "QUERY_TESTS", "EXAMPLE_LOG", "EXAMPLE_TESTS"))
     shown = render_task_prompt(sample, "task1", {"prompt": {"version": "v004"}}, [example])
     assert "EXAMPLE_LOG" in shown and json.dumps("QUERY_LOG") in shown
+
+
+def test_price_sets_the_cost_cap_rates(tmp_path):
+    paths = make_configs(tmp_path, tmp_path / "train", "runware/qwen3.5-4b", "v004",
+                         max_cost=1.0, price=(0.0525, 0.0735), extra_body={"reasoning_effort": "none"})
+    model = yaml.safe_load(paths["task1"].read_text(encoding="utf-8"))["model"]
+    assert model["cost_per_million_tokens"] == {"prompt": 0.0525, "completion": 0.0735}
+    assert model["max_cost_usd"] == 1.0 and model["extra_body"] == {"reasoning_effort": "none"}

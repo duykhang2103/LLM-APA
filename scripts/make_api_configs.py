@@ -35,7 +35,7 @@ def prompt_for(task, wanted):
 def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_tests=None,
                  eval_mode=False, base_url="https://api.groq.com/openai/v1", key_env="GROQ_API_KEY",
                  max_cost=20.0, cache_path=None, provider="api", dtype=None, extra_body=None,
-                 method="rag", evidence=True, revision=None):
+                 method="rag", evidence=True, revision=None, price=None):
     """method rag|zero_shot; evidence=False hides compile/test results from the prompt
     (statement + code only, like the fine-tuned Task 1 model's public inference)."""
     out_dir = Path(out_dir)
@@ -72,7 +72,8 @@ def make_configs(out_dir, train_dir, model, prompt, train_compile=None, train_te
                 "api_key_env": key_env,
                 "allow_private_data": True,  # lecturer allowed sending student code to an API
                 "timeout_seconds": 120,
-                "cost_per_million_tokens": PRICES.get(model, {}),
+                "cost_per_million_tokens": (dict(zip(("prompt", "completion"), price)) if price
+                                            else PRICES.get(model, {})),
                 "max_cost_usd": max_cost,
                 "cache_path": cache,
             }

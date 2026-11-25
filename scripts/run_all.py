@@ -109,6 +109,8 @@ def main():
     parser.add_argument("--no-thinking", action="store_true",
                         help="Qwen3/3.5 behind vLLM-style APIs (e.g. Hugging Face router): send "
                              "chat_template_kwargs.enable_thinking=false (local runs already do this)")
+    parser.add_argument("--extra-body", dest="extra_body_json", type=json.loads, default=None, metavar="JSON",
+                        help='Extra API request fields as JSON, e.g. {"reasoning_effort": "none"}')
     parser.add_argument("--revision", help="Model revision (local: loaded; api: recorded). "
                         "Default for Qwen/Qwen3.5-4B: the fine-tuned model's revision")
     parser.add_argument("--method", choices=["rag", "zero_shot"], default="rag",
@@ -116,6 +118,11 @@ def main():
     parser.add_argument("--no-evidence", action="store_true",
                         help="Prompt with statement + code only, no compile/test results (P0/P1); "
                              "implies --no-tests and skips the evidence-based Task 2 calibration")
+    parser.add_argument("--price", nargs=2, type=float, metavar=("IN", "OUT"),
+                        help="API price in USD per million prompt/completion tokens, e.g. 0.0525 0.0735; "
+                             "makes the cost estimate and --max-cost work for this model")
+    parser.add_argument("--max-cost", type=float, default=20.0,
+                        help="Stop a Task 1 or Task 2 step once its estimated API cost reaches this many USD")
     parser.add_argument("--dtype", help="local only: bfloat16 (default) or float16 for T4/P100")
     parser.add_argument("--testgen-config", default=str(ROOT / "configs" / "testgen" / "groq.yaml"))
     parser.add_argument("--testgen-model", help="Model that writes test suites (default: from --testgen-config)")
@@ -132,6 +139,8 @@ def main():
     args = parser.parse_args()
     if args.no_evidence:
         args.no_tests = True
+    if args.extra_body_json:
+        args.extra_body = {**(args.extra_body or {}), **args.extra_body_json}
     if args.no_thinking:
         args.extra_body = {**(args.extra_body or {}), "chat_template_kwargs": {"enable_thinking": False}}
     if args.tasks is None:
@@ -211,7 +220,8 @@ def main():
                            provider=args.provider, dtype=args.dtype,
                            base_url=args.base_url, key_env=args.api_key_env,
                            extra_body=args.extra_body, method=args.method,
-                           evidence=not args.no_evidence, revision=revision)
+                           evidence=not args.no_evidence, revision=revision, max_cost=args.max_cost,
+                           price=args.price)
     limit = ["--max-samples", args.max_samples] if args.max_samples else []
     task2_labels = out / "pred_task2.json"
     for task in args.tasks:
