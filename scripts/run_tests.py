@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
-from llm_grading.data.evidence import default_compiler
+from llm_grading.data.evidence import default_compiler, evidence_code
 from llm_grading.data.loader import load_samples
 from llm_grading.data.testing import run_suite
 from llm_grading.runtime import read_json, write_json
@@ -87,7 +87,8 @@ def main():
         print(f"Reusing {len(reports)} reports from {args.output}; running {len(pending)} submissions")
 
     def run(sample):
-        return run_suite(sample["code"], suites[sample["problem_id"]], compiler, data_dir, args.timeout)
+        # A wholly commented-out file is tested on its commented code (see evidence_code).
+        return run_suite(evidence_code(sample["code"]), suites[sample["problem_id"]], compiler, data_dir, args.timeout)
 
     # Building one program per test is slow (minutes per exam), so report progress.
     with ThreadPoolExecutor(args.jobs) as pool:

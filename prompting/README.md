@@ -11,7 +11,7 @@ Thư mục này chứa phần **Prompting** của nhóm cho cả 3 task, gồm:
 
 | Task | Metric | Điểm |
 |---|---|---|
-| Task 1 | QWK | 0.8748 |
+| Task 1 | QWK | 0.8817 |
 | Task 2 | macro-F1 | 0.3027 |
 | Task 3 | LLM judge | 0.4223 |
 
@@ -19,7 +19,7 @@ Thư mục này chứa phần **Prompting** của nhóm cho cả 3 task, gồm:
 
 ![Pipeline prompting](../reports/figures/prompting_pipeline.png)
 
-1. **Biên dịch** từng bài ở chế độ C++11 (dùng g++ nếu máy có, nếu không thì clang qua gói `ziglang`), ra compile log.
+1. **Biên dịch** từng bài ở chế độ C++11 (dùng g++ nếu máy có, nếu không thì clang qua gói `ziglang`), ra compile log. Bài bị comment toàn bộ được biên dịch và chạy test trên phần code trong comment, vì giảng viên chấm theo code đó (bài train EX02-S214 bị comment hết vẫn được 10/10).
 2. **Sinh test bằng LLM:** `openai/gpt-oss-120b` (qua Groq) chỉ đọc đề bài, viết lời giải mẫu và input test. Output mong đợi lấy từ việc chạy lời giải mẫu. Sau đó chạy code sinh viên trên bộ test này, ra test report. Không có test viết tay.
 3. **RAG:** BM25 truy xuất 1 bài giống nhất theo code, từ 32 bài train có nhãn.
 4. **Prompt (P2)** cho `Qwen/Qwen3.5-9B` qua DeepInfra, temperature 0. Prompt gồm hướng dẫn, 1 ví dụ, đề bài, code, compile log và test report.
