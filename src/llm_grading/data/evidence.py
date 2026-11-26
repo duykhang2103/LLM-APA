@@ -24,6 +24,28 @@ PRELUDE = "".join(
 VOID_MAIN = re.compile(r"\bvoid\s+main\s*\(")
 
 
+COMMENTS = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
+
+
+def uncomment_whole_file(code):
+    """Return the code with comment markers removed when the WHOLE file is
+    commented out, else None.
+
+    The teacher grades such a file by its commented code (train EX02-S214, all
+    commented, scored 10/10), so compile and test evidence must use that code.
+    """
+    if COMMENTS.sub("", code).strip() or "main" not in code and "(" not in code:
+        return None
+    lines = [re.sub(r"^(\s*)//", r"\1", line) for line in code.splitlines()]
+    text = re.sub(r"/\*|\*/", "", "\n".join(lines))
+    return text if COMMENTS.sub("", text).strip() else None
+
+
+def evidence_code(code):
+    """Code that compile/test evidence is built from (see uncomment_whole_file)."""
+    return uncomment_whole_file(code) or code
+
+
 def default_compiler(native=False):
     """g++ when installed (Kaggle/Linux, the teacher's compiler); otherwise the
     pip `ziglang` clang. native=True builds executables for this machine
@@ -88,15 +110,28 @@ def _compile(code, compiler, timeout):
 
 def compile_evidence(code, compiler=None, timeout=60):
     compiler = compiler or default_compiler()
+    uncommented = uncomment_whole_file(code)
+    code = uncommented or code
     strict, errors = _compile(code, compiler, timeout)
     relaxed = strict
     if not strict:
         relaxed, _ = _compile(PRELUDE + VOID_MAIN.sub("int main(", code), compiler, timeout)
-    return {"strict": strict, "relaxed": relaxed, "errors": errors}
+    result = {"strict": strict, "relaxed": relaxed, "errors": errors}
+    if uncommented:
+        result["commented_out"] = True
+    return result
+
+
+COMMENTED_NOTE = (
+    "The whole file is commented out; the teacher grades it by the commented code, "
+    "so this check and the tests use the code with the comment markers removed. "
+)
 
 
 def evidence_log(evidence):
     """Short compile_log text placed in the model input."""
+    if evidence.get("commented_out"):
+        return COMMENTED_NOTE + evidence_log({k: v for k, v in evidence.items() if k != "commented_out"})
     if evidence["strict"]:
         return "Pipeline compile check (C++11): compiled without errors."
     if evidence["relaxed"]:

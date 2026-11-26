@@ -17,7 +17,7 @@ Không huấn luyện mô hình. Dùng Qwen3.5-9B qua API, cùng ba thành phầ
 
 | Task | Metric | Điểm public tốt nhất |
 |---|---|---|
-| Task 1: chấm rubric | QWK | 0.8748 |
+| Task 1: chấm rubric | QWK | 0.8817 |
 | Task 2: phân loại lỗi | macro-F1 | 0.3027 |
 | Task 3: phản hồi | LLM judge | 0.4223 |
 

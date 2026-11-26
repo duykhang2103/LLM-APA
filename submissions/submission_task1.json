@@ -661,14 +661,14 @@
     "sample_id": "Class03-Final-1-S48",
     "output": {
       "rubric": {
-        "compilable": 0,
+        "compilable": 1,
         "io_format": 0,
         "logic": 0,
         "edge_case": 0,
         "complexity": 0,
         "code_quality": 0
       },
-      "total_score": 0
+      "total_score": 1
     }
   },
   {
@@ -787,14 +787,14 @@
     "sample_id": "Class03-Final-1-S57",
     "output": {
       "rubric": {
-        "compilable": 0,
-        "io_format": 0,
-        "logic": 0,
-        "edge_case": 0,
-        "complexity": 0,
-        "code_quality": 0
+        "compilable": 1,
+        "io_format": 1,
+        "logic": 4,
+        "edge_case": 2,
+        "complexity": 1,
+        "code_quality": 1
       },
-      "total_score": 0
+      "total_score": 10
     }
   },
   {
