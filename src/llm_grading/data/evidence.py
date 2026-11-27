@@ -77,7 +77,12 @@ def _gnu_shim():
 
 def compiler_flags(compiler):
     flags = ["-std=c++11", "-w"]
-    return flags if Path(compiler[0]).name.startswith("g++") else [*flags, "-isystem", _gnu_shim()]
+    if Path(compiler[0]).name.startswith("g++"):
+        return flags
+    # Behave like the teacher's plain `g++ id.cpp --std=c++11`: zig enables UBSan by
+    # default and clang traps a value-returning function that falls off its end, so a
+    # correct program that only forgets an unused `return` would crash on every test.
+    return [*flags, "-isystem", _gnu_shim(), "-fno-sanitize=undefined", "-fno-strict-return"]
 
 
 def build(code, output, compiler, timeout=60, link=False):
@@ -88,7 +93,9 @@ def build(code, output, compiler, timeout=60, link=False):
     output = Path(output)
     source = output.with_name(output.stem + "_src.cpp")
     source.write_text(code, encoding="utf-8")
-    command = [*compiler, *compiler_flags(compiler), *(["-O1"] if link else ["-c"]), "-o", str(output), str(source)]
+    # Executables are unoptimised (-O0), as in the statement's g++ command: optimisation
+    # can delete an infinite loop or change what undefined behaviour prints.
+    command = [*compiler, *compiler_flags(compiler), *(["-O0"] if link else ["-c"]), "-o", str(output), str(source)]
     try:
         done = subprocess.run(
             command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout

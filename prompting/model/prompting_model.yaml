@@ -7,7 +7,7 @@
 
 name: prompting-qwen35-9b-best
 public_scores:                 # điểm leaderboard public của bản tốt nhất
-  task1_qwk: 0.8817
+  task1_qwk: 0.8865
   task2_macro_f1: 0.3027
   task3_llm_judge: 0.4223     # prompt v008 (bản v007 trước đó: 0.3948)
 
@@ -32,7 +32,7 @@ retrieval:                     # RAG
 
 task1:
   prompt: tasks/task1_grading/prompts/v004.txt
-  submit: submission_task1.json          # P2 thuần (không guard) + xử lý bài comment toàn bộ, public 0.8817
+  submit: submission_task1.json          # P2 thuần (không guard) + xử lý bài comment toàn bộ + biên dịch test như g++ -O0, public 0.8865
   max_cost_usd: 0.6
   cache: outputs/di9b-cache-2.jsonl
 
