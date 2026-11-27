@@ -119,10 +119,10 @@
         "io_format": 0,
         "logic": 0,
         "edge_case": 0,
-        "complexity": 1,
+        "complexity": 0,
         "code_quality": 0
       },
-      "total_score": 2
+      "total_score": 1
     }
   },
   {
@@ -315,10 +315,10 @@
         "io_format": 1,
         "logic": 0,
         "edge_case": 0,
-        "complexity": 0,
+        "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 3
+      "total_score": 4
     }
   },
   {
@@ -1167,12 +1167,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 1,
+        "logic": 0,
         "edge_case": 0,
         "complexity": 0,
         "code_quality": 1
       },
-      "total_score": 4
+      "total_score": 3
     }
   },
   {
@@ -1405,12 +1405,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 1,
+        "logic": 0,
         "edge_case": 0,
-        "complexity": 1,
+        "complexity": 0,
         "code_quality": 1
       },
-      "total_score": 5
+      "total_score": 3
     }
   },
   {
@@ -1699,12 +1699,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 0,
-        "edge_case": 0,
+        "logic": 4,
+        "edge_case": 2,
         "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 4
+      "total_score": 10
     }
   },
   {
@@ -1715,10 +1715,10 @@
         "io_format": 0,
         "logic": 0,
         "edge_case": 0,
-        "complexity": 1,
-        "code_quality": 1
+        "complexity": 0,
+        "code_quality": 0
       },
-      "total_score": 3
+      "total_score": 1
     }
   },
   {
@@ -1769,12 +1769,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 0,
-        "edge_case": 0,
+        "logic": 2,
+        "edge_case": 1,
         "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 4
+      "total_score": 7
     }
   },
   {
@@ -1897,10 +1897,10 @@
         "io_format": 0,
         "logic": 1,
         "edge_case": 0,
-        "complexity": 1,
+        "complexity": 0,
         "code_quality": 1
       },
-      "total_score": 4
+      "total_score": 3
     }
   },
   {
@@ -2343,12 +2343,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 2,
-        "edge_case": 1,
+        "logic": 1,
+        "edge_case": 0,
         "complexity": 0,
         "code_quality": 1
       },
-      "total_score": 6
+      "total_score": 4
     }
   },
   {
@@ -2441,12 +2441,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 2,
-        "edge_case": 1,
-        "complexity": 0,
+        "logic": 4,
+        "edge_case": 2,
+        "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 6
+      "total_score": 10
     }
   },
   {
@@ -2959,12 +2959,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 2,
-        "edge_case": 1,
+        "logic": 1,
+        "edge_case": 0,
         "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 7
+      "total_score": 5
     }
   },
   {
@@ -3421,12 +3421,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 1,
-        "logic": 1,
-        "edge_case": 0,
+        "logic": 2,
+        "edge_case": 1,
         "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 5
+      "total_score": 7
     }
   },
   {
@@ -3437,10 +3437,10 @@
         "io_format": 1,
         "logic": 1,
         "edge_case": 0,
-        "complexity": 0,
+        "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 4
+      "total_score": 5
     }
   },
   {
@@ -4078,13 +4078,13 @@
     "output": {
       "rubric": {
         "compilable": 1,
-        "io_format": 1,
+        "io_format": 0,
         "logic": 1,
         "edge_case": 0,
         "complexity": 1,
         "code_quality": 1
       },
-      "total_score": 5
+      "total_score": 4
     }
   },
   {
@@ -4191,12 +4191,12 @@
       "rubric": {
         "compilable": 1,
         "io_format": 0,
-        "logic": 0,
+        "logic": 1,
         "edge_case": 0,
-        "complexity": 0,
-        "code_quality": 0
+        "complexity": 1,
+        "code_quality": 1
       },
-      "total_score": 1
+      "total_score": 4
     }
   },
   {
@@ -4414,13 +4414,13 @@
     "output": {
       "rubric": {
         "compilable": 1,
-        "io_format": 1,
-        "logic": 1,
+        "io_format": 0,
+        "logic": 0,
         "edge_case": 0,
-        "complexity": 1,
-        "code_quality": 1
+        "complexity": 0,
+        "code_quality": 0
       },
-      "total_score": 5
+      "total_score": 1
     }
   },
   {
